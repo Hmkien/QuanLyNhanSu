@@ -1,0 +1,65 @@
+﻿@model QuanLyNhanLuc.Models.Entities.MenuQuanTri
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h3> Chỉnh sửa menu </h3>
+<div class="row justify-content-center " >
+    <div class="col-md-12">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="TenMenu" class="control-label"></label>
+                <input asp-for="TenMenu" class="form-control" />
+                <span asp-validation-for="TenMenu" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ViTri" class="control-label"></label>
+                <input asp-for="ViTri" class="form-control" />
+                <span asp-validation-for="ViTri" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="IconClass" class="control-label"></label>
+                <input asp-for="IconClass" class="form-control" />
+                <span asp-validation-for="IconClass" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DuongDan" class="control-label"></label>
+                <input asp-for="DuongDan" class="form-control" />
+                <span asp-validation-for="DuongDan" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ControllerName" class="control-label"></label>
+                <input asp-for="ControllerName" class="form-control" />
+                <span asp-validation-for="ControllerName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ActionName" class="control-label"></label>
+                <input asp-for="ActionName" class="form-control" />
+                <span asp-validation-for="ActionName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Area" class="control-label"></label>
+                <input asp-for="Area" class="form-control" />
+                <span asp-validation-for="Area" class="text-danger"></span>
+            </div>
+             <div class="form-group">
+                <label asp-for="ParentId" class="control-label"></label>
+                <select asp-for="ParentId" class="form-control" asp-items="ViewBag.ParentMenu">
+                    <option value="">-- Chọn menu cha --</option>
+                </select>
+                <span asp-validation-for="ParentId" class="text-danger"></span>
+            </div>
+            <input type="hidden" asp-for="Id" />
+           
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,51 @@
+@model IEnumerable<QuanLyNhanLuc.Models.Entities.VaiTro>
+
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary">Danh sách vai trò</h5>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Thêm mới
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên Vai trò</th>
+                            <th>Cấu hình</th>
+                            <th class="text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="align-middle">
+                                    <i class="fas fa-user-shield me-2 text-primary"></i>
+                                    @Html.DisplayFor(modelItem => item.Name)
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="AssignMenu" asp-route-id="@item.Id" class="btn  btn-sm">
+                                        <i class="fas fa-cog me-1"></i>Cấu hình
+                                    </a>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn  btn-sm me-1">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn text-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

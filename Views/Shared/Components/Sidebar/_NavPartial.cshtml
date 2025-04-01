@@ -1,0 +1,74 @@
+@using Microsoft.AspNetCore.Identity
+@using QuanLyNhanLuc.Models.Entities
+@model IEnumerable<QuanLyNhanLuc.Models.Entities.MenuQuanTri>
+@inject SignInManager<NguoiDung> SignInManager
+@inject UserManager<NguoiDung> UserManager
+<div class="sidebar">
+   
+        <div class="accordion" id="sidebarAccordion">
+            @foreach (var menu in Model.Where(m => m.ParentId == null))
+            {
+                @if (menu.SubMenus?.Any() == true)
+                {
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading_@menu.Id">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapse_@menu.Id" aria-expanded="false" aria-controls="collapse_@menu.Id">
+                                <i class="@menu.IconClass"></i><span>@menu.TenMenu</span>
+                            </button>
+                        </h2>
+                        <div id="collapse_@menu.Id" class="accordion-collapse collapse" aria-labelledby="heading_@menu.Id"
+                             data-bs-parent="#sidebarAccordion">
+                            <div class="accordion-body">
+                                @foreach (var subMenu in menu.SubMenus)
+                                {
+                                    <a asp-controller="@subMenu.ControllerName" asp-action="@subMenu.ActionName" asp-area="@subMenu.Area">@subMenu.TenMenu</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="@menu.ControllerName" asp-action="@menu.ActionName" asp-area="@menu.Area" class="mt-2">
+                        <i class="@menu.IconClass"></i><span>@menu.TenMenu</span>
+                    </a>
+                }
+            }
+        </div>
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <div class="text-center mt-4">
+            <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="btn btn-outline-primary text-dark w-100" style="display:block !important" id="logout">
+                    <i class="bi bi-box-arrow-right me-2"></i>@UserManager.GetUserName(User)
+                </button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mt-4">
+            <a style="display:block !important" class="btn btn-outline-primary text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+            </a>
+        </div>
+    }
+</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentUrl = window.location.pathname;
+            const links = document.querySelectorAll(".sidebar a");
+
+            links.forEach(link => {
+                if (link.getAttribute("href") === currentUrl) {
+                    link.classList.add("active");
+                    const accordionItem = link.closest(".accordion-collapse");
+                    if (accordionItem) {
+                        accordionItem.classList.add("show");
+                        accordionItem.previousElementSibling.querySelector(".accordion-button").classList.remove("collapsed");
+                    }
+                }
+            });
+        });
+    </script>

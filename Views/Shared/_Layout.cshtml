@@ -1,0 +1,92 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using QuanLyNhanLuc.Models.Entities
+@inject SignInManager<NguoiDung> SignInManager
+@inject UserManager<NguoiDung> UserManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] Hệ Thống Quản Lý Nhân Sự</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/QuanLyNhanLuc.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link href="~/css/style.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <div class="header">
+            <div class="row">
+                <div class="col d-flex align-items-center">
+                    <i class="bi bi-list me-3" style="font-size: 24px; cursor: pointer;"></i>
+                    <div class="d-flex flex-column">
+                        <p class="text-dark fw-medium mb-1">Hệ thống quản lý nhân sự</p>
+                        <h6 class="mb-0">CÔNG TY CỔ PHẦN PHÁT TRIỂN PHẦN MỀM ASIA</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="header-icons d-flex align-items-center">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Tìm kiếm...">
+                    <i class="bi bi-search search-icon"></i>
+                </div>
+                <i class="bi bi-house"></i>
+                <div class="icon-container dropdown">
+                    <i class="bi bi-bell" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></i>
+                    <span class="notification-badge">2</span>
+                    <ul class="dropdown-menu dropdown-menu-end notification-dropdown"
+                    aria-labelledby="notificationDropdown">
+                        <li class="p-2"><strong>Bạn có 2 thông báo mới</strong></li>
+                        <li class="notification-item"><a class="dropdown-item" href="#">📄 Hồ sơ nhân viên mới đã được
+                                thêm</a></li>
+                        <li class="notification-item"><a class="dropdown-item" href="#">🔔 Bảng lương tháng 3 đã
+                                duyệt</a></li>
+                        <li><a class="dropdown-item notification-footer" href="#">Xem tất cả</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar">
+            @await Component.InvokeAsync("Sidebar")
+            
+            
+        </div>
+    </header>
+    <div class="content">
+        <div class="container-fluid">
+            @RenderBody()
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/home.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentUrl = window.location.pathname;
+            const links = document.querySelectorAll(".sidebar a");
+
+            links.forEach(link => {
+                if (link.getAttribute("href") === currentUrl) {
+                    link.classList.add("active");
+                    const accordionItem = link.closest(".accordion-collapse");
+                    if (accordionItem) {
+                        accordionItem.classList.add("show");
+                        accordionItem.previousElementSibling.querySelector(".accordion-button").classList.remove("collapsed");
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

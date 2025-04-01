@@ -1,0 +1,127 @@
+@model IEnumerable<QuanLyNhanLuc.Models.ViewModels.ChamCongVM>
+
+<style>
+    .table th,
+    .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .bg-red {
+        background-color: #f8d7da !important;
+    }
+
+    .bg-warning {
+        background-color: #fff3cd !important;
+    }
+
+    .bg-green {
+        background-color: #d4edda !important;
+    }
+</style>
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary" href="#">
+                        <i class="bi bi-house-door"></i>
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary" href="#">Chấm công</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Bảng chấm công</li>
+            </ol>
+        </nav>
+    </div>
+    <h3 class="text-primary">Bảng chấm công</h3>
+    <div class="d-flex justify-content-start gap-2 align-items-center mb-3">
+        <select class="form-select w-auto">
+            <option>7/2023</option>
+        </select>
+        <select class="form-select w-auto">
+            <option>--Chọn loại tính chất--</option>
+        </select>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th rowspan="2" class="text-center">STT</th>
+                <th rowspan="2" class="text-center">Tên nhân viên</th>
+                <th rowspan="2" class="text-center">Phòng ban</th>
+                <th rowspan="2" class="text-center">Ngày phép còn lại</th>
+                <th rowspan="2" class="bg-danger text-center">Số ca nghỉ</th>
+                <th rowspan="2" class="bg-warning text-center">Số ca có lương</th>
+                <th colspan="2" class="text-center">01/07/2023 (Thứ bảy)</th>
+                <th colspan="2" class="text-center">02/07/2023 (Chủ nhật)</th>
+                <th colspan="2" class="text-center">03/07/2023 (Thứ hai)</th>
+            </tr>
+            <tr>
+                <th>Sáng</th>
+                <th>Chiều</th>
+                <th>Sáng</th>
+                <th>Chiều</th>
+                <th>Sáng</th>
+                <th>Chiều</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var nhanVienGroups = Model.GroupBy(x => x.MaNhanVien);
+                var stt = 1;
+            }
+            @foreach (var group in nhanVienGroups)
+            {
+                var nhanVien = group.First();
+                <tr>
+                    <td>@stt</td>
+                    <td>@nhanVien.HoTen</td>
+                    <td>@nhanVien.PhongBan</td>
+                    <td>10</td>
+                    <td class="bg-danger text-light">0</td>
+                    <td class="bg-warning">15</td>
+                    @{
+                        var chamCongNgay1 = group.FirstOrDefault(x => x.NgayChamCong.Day == 1);
+                        var chamCongNgay2 = group.FirstOrDefault(x => x.NgayChamCong.Day == 2);
+                        var chamCongNgay3 = group.FirstOrDefault(x => x.NgayChamCong.Day == 3);
+                    }
+                    <td class="@(chamCongNgay1 != null ? "bg-green" : "bg-red")">@(chamCongNgay1 != null ? "✔" : "✖")</td>
+                    <td class="@(chamCongNgay1 != null ? "bg-green" : "bg-red")">@(chamCongNgay1 != null ? "✔" : "✖")</td>
+                    <td class="@(chamCongNgay2 != null ? "bg-green" : "bg-red")">@(chamCongNgay2 != null ? "✔" : "✖")</td>
+                    <td class="@(chamCongNgay2 != null ? "bg-green" : "bg-red")">@(chamCongNgay2 != null ? "✔" : "✖")</td>
+                    <td class="@(chamCongNgay3 != null ? "bg-green" : "bg-red")">@(chamCongNgay3 != null ? "✔" : "✖")</td>
+                    <td class="@(chamCongNgay3 != null ? "bg-green" : "bg-red")">@(chamCongNgay3 != null ? "✔" : "✖")</td>
+                </tr>
+                stt++;
+            }
+        </tbody>
+    </table>
+</div>
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <select class="form-select d-inline-block text-primary" style="width: auto;">
+            <option>20</option>
+            <option>50</option>
+            <option>100</option>
+        </select>
+        <span class="ms-2 text-primary">Tổng số bản ghi: @nhanVienGroups.Count()</span>
+    </div>
+    <nav>
+        <ul class="pagination custom-pagination mb-0">
+            <li class="page-item">
+                <a class="page-link rounded-circle" href="#"><i class="bi bi-chevron-left"></i></a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item active"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+            <li class="page-item"><a class="page-link" href="#">8</a></li>
+            <li class="page-item"><a class="page-link" href="#">9</a></li>
+            <li class="page-item"><a class="page-link" href="#">10</a></li>
+            <li class="page-item">
+                <a class="page-link rounded-circle" href="#"><i class="bi bi-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+</div>

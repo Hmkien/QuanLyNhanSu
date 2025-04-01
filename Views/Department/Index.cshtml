@@ -1,0 +1,40 @@
+@model IEnumerable<QuanLyNhanLuc.Models.Entities.Department>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+    <h3>Phòng ban</h3>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Thêm mới</a>
+</p>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.TenPhongBan)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MoTa)
+            </th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.TenPhongBan)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MoTa)
+            </td>
+            <td class="text-center">
+                <a asp-action="Edit" class="btn text-primary" asp-route-id="@item.Id"><i class="fa-solid fa-pen-to-square"></i></a>
+                <a asp-action="Delete" class="btn text-danger" asp-route-id="@item.Id"><i class="fa-solid fa-trash"></i></a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

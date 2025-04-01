@@ -1,0 +1,99 @@
+﻿                    <div class="col-md-6 mb-3">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb custom-breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a class="text-decoration-none text-secondary" href="#">
+                                        <i class="bi bi-house-door"></i>
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a class="text-decoration-none text-secondary" href="#">Quản lý </a>
+                                </li>
+                                <li class="breadcrumb-item active text-primary" aria-current="page">Tổng quan</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="row ">
+                        <div class="col-md-4">
+                            <div class="card h-100 d-flex flex-column">
+                                <div class="card-header fw-semibold text-primary bg-xanh-la-nhat" >
+                                    Thống kê hôm nay
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <p>Nhân viên nghỉ phép: <span class="text-primary fs-5">5</span></p>
+                                    <p>Nhân viên công tác: <span class="text-primary">10</span></p>
+                                    <p>Nhân viên sinh nhật: <span class="text-primary">2</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 d-flex flex-column">
+                                <div class="card-header bg-cam-nhat fw-semibold text-primary" >
+                                    Nhân sự
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <p>Tổng số nhân sự: <span class="text-primary fs-5">250</span></p>
+                                    <p>Nam: <span class="text-primary">150</span></p>
+                                    <p>Nữ: <span class="text-primary">100</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 d-flex flex-column">
+                                <div class="card-header bg-blue-nhat text-primary fw-semibold" >
+                                    Thủ tục hành chính
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <p>Tổng số thủ tục: <span class="text-primary fs-5">6</span></p>
+                                    <p>Chờ duyệt: <span class="text-primary">3</span></p>
+                                    <p>Duyệt: <span class="text-primary">3</span></p>
+                                    <p>Từ chối duyệt: <span class="text-primary">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header text-primary">
+                            Thống Kê Nhân Viên
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chart1"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header text-primary">
+                            Tỷ Lệ Nhân Viên
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chart3"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header text-primary">
+                            Thống Kê Tuyển Dụng
+                           
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chart4"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header text-primary">
+                            Số Lượng Nhân Viên Theo Tháng
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chart2"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
