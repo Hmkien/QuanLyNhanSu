@@ -789,4 +789,3 @@ D:\Visual Studio\QuanLyNhanLuc\bin\Debug\net9.0\refs\WindowsBase.dll
 D:\Visual Studio\QuanLyNhanLuc\obj\Debug\net9.0\QuanLyNhanLuc.genruntimeconfig.cache
 D:\Visual Studio\QuanLyNhanLuc\obj\Debug\net9.0\ref\QuanLyNhanLuc.dll
 D:\Visual Studio\QuanLyNhanLuc\obj\Debug\net9.0\QuanLyNhanLuc.sourcelink.json
-D:\Visual Studio\QuanLyNhanLuc\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

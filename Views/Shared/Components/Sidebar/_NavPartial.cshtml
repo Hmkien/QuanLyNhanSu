@@ -34,9 +34,7 @@
                         <i class="@menu.IconClass"></i><span>@menu.TenMenu</span>
                     </a>
                 }
-            }
-        </div>
-    @if (SignInManager.IsSignedIn(User))
+            } @if (SignInManager.IsSignedIn(User))
     {
         <div class="text-center mt-4">
             <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
@@ -54,6 +52,9 @@
             </a>
         </div>
     }
+            
+        </div>
+   
 </div>
     <script>
         document.addEventListener("DOMContentLoaded", function () {

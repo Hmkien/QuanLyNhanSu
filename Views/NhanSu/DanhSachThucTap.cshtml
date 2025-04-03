@@ -131,7 +131,6 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Xử lý sự kiện click nút thêm mới
             $('.btn-primary[data-bs-target="#themNhanVienModal"]').click(function(e) {
                 e.preventDefault();
                 loadModalThemNhanSu();
@@ -141,7 +140,6 @@
         function loadModalThemNhanSu() {
             $.get('/NhanSu/GetModalThemNhanSu', function(data) {
                 $('#modalContainer').html(data);
-                // Khởi tạo modal sau khi load
                 var modal = new bootstrap.Modal(document.getElementById('themNhanVienModal'));
                 modal.show();
             });
