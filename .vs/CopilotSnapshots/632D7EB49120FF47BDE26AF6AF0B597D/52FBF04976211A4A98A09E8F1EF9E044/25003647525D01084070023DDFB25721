@@ -1,0 +1,87 @@
+﻿<div class="modal fade" id="EditinfoModal" tabindex="-1" aria-labelledby="EditinfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary" id="EditinfoModalLabel">Thông tin cơ bản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label text-primary">Họ và tên *</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-primary">Tên gọi khác (nếu có)</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-primary">CMND/CCCD *</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Nơi sinh</label>
+                                <input type="text" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Quê quán</label>
+                                <input type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Ngày sinh *</label>
+                                <input type="date" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Giới tính *</label>
+                                <select class="form-select">
+                                    <option>--Chọn--</option>
+                                    <option>Nam</option>
+                                    <option>Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Dân tộc</label>
+                                <select class="form-select">
+                                    <option>--Chọn--</option>
+                                    <option>Kinh</option>
+                                    <option>Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Tôn giáo</label>
+                                <select class="form-select">
+                                    <option>--Chọn--</option>
+                                    <option>Không</option>
+                                    <option>Phật giáo</option>
+                                    <option>Thiên chúa giáo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label class="form-label text-primary">Nơi ở hiện nay</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Ngày được tuyển dụng</label>
+                                <input type="date" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-primary">Ngày vào cơ quan hiện tại</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-orange" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-orange">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>

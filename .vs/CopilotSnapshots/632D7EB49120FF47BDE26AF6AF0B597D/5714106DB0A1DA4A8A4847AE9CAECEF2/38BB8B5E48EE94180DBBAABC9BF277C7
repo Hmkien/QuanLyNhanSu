@@ -1,0 +1,732 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung
+
+@{
+    ViewData["Title"] = "Chi tiết nhân viên";
+    var isApproved = Model.Status == QuanLyNhanLuc.Models.Enums.Status.Approved;
+    var canEdit = !isApproved;
+}
+
+<div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb custom-breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-secondary">
+                    <i class="bi bi-house-door"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="DanhSachNhanVien" class="text-decoration-none text-secondary">Hồ sơ nhân sự</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="DanhSachNhanVien" class="text-decoration-none text-secondary">Danh sách nhân sự</a>
+            </li>
+            <li class="breadcrumb-item active text-primary" aria-current="page">Chi tiết nhân sự</li>
+        </ol>
+    </nav>
+    <div class="header-section mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <div class="row g-4">
+                <div class="d-flex align-items-center gap-3 mt-5">
+                    <h5 class="text-primary mb-0">@Model.FullName</h5>
+                    @if (isApproved)
+                    {
+                        <span class="badge bg-success">Đã duyệt</span>
+                    }
+                    else if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                    {
+                        <span class="badge bg-warning">Chờ duyệt</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Vô hiệu</span>
+                    }
+                </div>
+                <div class="col-md-2 text-secondary"><i class="fas fa-building"></i> Phòng ban:</div>
+                <div class="col-md-4 text-primary">@(Model.Department?.TenPhongBan ?? "Chưa cập nhật")</div>
+
+                <div class="col-md-2 text-secondary"><i class="fas fa-calendar-alt"></i> Ngày sinh:</div>
+                <div class="col-md-4 text-primary">@(Model.BirthDay.ToString("dd/MM/yyyy"))</div>
+
+                <div class="col-md-2 text-secondary"><i class="fas fa-user-tie"></i> Chức vụ:</div>
+                <div class="col-md-4 text-primary">@(Model.ChucVu?.TenChucVu ?? "Chưa cập nhật")</div>
+
+                <div class="col-md-2 text-secondary"><i class="fas fa-envelope"></i> Email:</div>
+                <div class="col-md-4 text-primary">@(Model.User?.Email ?? "Chưa cập nhật")</div>
+
+                <div class="col-md-2 text-secondary"><i class="fas fa-clipboard-list"></i> Loại nhân viên:</div>
+                <div class="col-md-4 text-primary">@(Model.NhanSuTypeStxt ?? "Chưa cập nhật")</div>
+
+                <div class="col-md-2 text-secondary"><i class="fas fa-phone"></i> Số điện thoại:</div>
+                <div class="col-md-4 text-primary">@(Model.User?.PhoneNumber ?? "Chưa cập nhật")</div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            @if (isApproved)
+            {
+                <button class="btn btn-warning btn-sm" id="btnHuyDuyet" data-id="@Model.Id">
+                    <i class="bi bi-x-circle me-1"></i>Hủy duyệt
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-success btn-sm" id="btnDuyet" data-id="@Model.Id">
+                    <i class="bi bi-check-circle me-1"></i>Duyệt
+                </button>
+                <button class="btn btn-danger btn-sm" id="btnXoa" data-id="@Model.Id">
+                    <i class="bi bi-trash me-1"></i>Xóa
+                </button>
+            }
+            <a asp-action="DanhSachNhanVien" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại
+            </a>
+        </div>
+    </div>
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link text-primary menu-link-top" data-target-top="#thong-tin-chung">Thông tin chung</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#hop-dong-bao-hiem">Hợp đồng và bảo hiểm</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#khen-thuong-ky-luat">Khen thưởng kỷ luật</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#luong">Lương</a>
+        </li>
+    </ul>
+
+    <!-- Các section tương ứng -->
+    <section id="thong-tin-chung" class="content-section-top">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="bg-white rounded p-3 shadow-sm">
+                    <ul class="list-unstyled">
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-primary"
+                                data-target="ThongTinChung">Thông tin chung</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="ViTriCongTac">Vị trí công tác</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="TaiKhoanNganHang">Tài khoản ngân hàng</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="TrinhDo">Trình độ</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="HoKhau">Hộ khẩu</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <section id="ThongTinChung" class="content-section">
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary ">Thông tin tài khoản</h5>
+                            @if (canEdit)
+                            {
+                                <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#editTaiKhoanModal"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-pen text-muted" title="Không thể sửa nhân viên đã duyệt"></i>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1 text-secondary">Mã nhân viên</p>
+                            <p class="text-primary ">@(Model.UserId ?? "Chưa cập nhật")</p>
+
+                            <div class="row">
+                                <div class="col text-secondary">Email</div>
+                                <div class="col text-secondary text-end">Số điện thoại</div>
+                            </div>
+                            <div class="row ">
+                                <div class="col">
+                                    <a href="mailto:@Model.User?.Email"
+                                        class="text-primary text-decoration-none">@(Model.User?.Email ?? "Chưa cập nhật")</a>
+                                </div>
+                                <div class="col text-primary text-end">@(Model.User?.PhoneNumber ?? "Chưa cập nhật")</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Thông tin cơ bản</h5>
+                            @if (canEdit)
+                            {
+                                <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#EditinfoModal"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-pen text-muted" title="Không thể sửa nhân viên đã duyệt"></i>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="text-secondary">Tên nhân viên</p>
+                                    <p class="text-primary">@Model.FullName</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="text-secondary">CMND/CCCD</p>
+                                    <p class="text-primary">@(Model.IdentityNumber ?? "Chưa cập nhật")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="text-secondary">Ngày sinh</p>
+                                    <p class="text-primary">@Model.BirthDay.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="text-secondary">Giới tính</p>
+                                    <p class="text-primary">@Model.GioiTinhStxt</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary ">Thông tin khác</h5>
+                            @if (canEdit)
+                            {
+                                <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#editThongTinKhacModal"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-pen text-muted" title="Không thể sửa nhân viên đã duyệt"></i>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Các thông tin khác chưa có trong hệ thống</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="ViTriCongTac" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Thông tin công tác</h5>
+                            @if (canEdit)
+                            {
+                                <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#ModalSuaViTriCongTac"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-pen text-muted" title="Không thể sửa nhân viên đã duyệt"></i>
+                            }
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <p class="mb-1">Phòng ban</p>
+                                <p class="text-primary">@(Model.Department?.TenPhongBan ?? "Chưa cập nhật")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">Chức vụ</p>
+                                <p class="text-primary">@(Model.ChucVu?.TenChucVu ?? "Chưa cập nhật")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">Loại nhân viên</p>
+                                <p class="text-primary">@(Model.NhanSuTypeStxt ?? "Chưa cập nhật")</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="TaiKhoanNganHang" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Tài khoản ngân hàng</h5>
+                            @if (canEdit)
+                            {
+                                <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#ModalSuaThongTinNganHang"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-pen text-muted" title="Không thể sửa nhân viên đã duyệt"></i>
+                            }
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-secondary">Ngân hàng</p>
+                                <p class="text-primary">Việt Nam thịnh vượng (VPBank)</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-secondary">Chi nhánh</p>
+                                <p class="text-primary">Tây Hồ</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <p class="mb-1 text-secondary">Số tài khoản</p>
+                            <p class="text-primary">999999</p>
+                        </div>
+
+                        <div class="mt-3">
+                            <p class="mb-1 text-secondary">Tên chủ tài khoản</p>
+                            <p class="text-primary">NGUYEN VAN A</p>
+                        </div>
+                    </div>
+                </section>
+                <section id="TrinhDo" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Trình độ</h5>
+                            <i class="bi bi-pen"></i>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-secondary">Trình độ học vấn (Giáo dục phổ thông)</p>
+                                <p class="text-primary">12/12</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-secondary">Học hàm, học vị cao nhất</p>
+                                <p class="text-primary">Cử nhân</p>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-secondary">Lý luận chính trị</p>
+                                <p class="text-primary">Cao cấp</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-secondary">Ngoại ngữ</p>
+                                <p class="text-primary">B2</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card border-0 p-3 mt-3 shadow-sm ">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Đào tạo, bồi dưỡng chuyên môn, nghiệp vụ, lý luận chính
+                                trị,
+                                ngoại
+                                ngữ</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trainingModal">+
+                                Thêm
+                                mới </button>
+                        </div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-bordered">
+                                <thead class="text-primary">
+                                    <tr>
+                                        <th class="text-primary">STT</th>
+                                        <th class="text-primary">Tên trường/ Tổ chức</th>
+                                        <th class="text-primary">Ngành học hoặc tên lớp học</th>
+                                        <th class="text-primary">Thời gian học</th>
+                                        <th class="text-primary">Hình thức học</th>
+                                        <th class="text-primary">Văn bằng chứng chỉ, trình độ gì</th>
+                                        <th class="text-primary">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Đại học quốc gia Hà Nội</td>
+                                        <td>Công nghệ thông tin</td>
+                                        <td>18/6/2023</td>
+                                        <td>Tập trung</td>
+                                        <td>Xuất sắc</td>
+                                        <td>
+                                            <i class="fas fa-eye text-dark action-icon"></i>
+                                            <i class="bi bi-pen text-primary"></i>
+                                            <i class="bi bi-trash text-primary"></i>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Đại học quốc gia Hà Nội</td>
+                                        <td>Ngoại ngữ</td>
+                                        <td>18/6/2023</td>
+                                        <td>Từ xa</td>
+                                        <td>B2</td>
+                                        <td>
+                                            <i class="fas fa-eye text-dark action-icon"></i>
+                                            <i class="bi bi-pen text-primary"></i>
+                                            <i class="bi bi-trash text-primary"></i>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                <section id="HoKhau" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Quan hệ gia đình</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#familyModal">+ Thêm
+                                mới </button>
+                        </div>
+                        <div class="row mt-3">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th class="text-primary">STT</th>
+                                        <th class="text-primary">Tên người thân</th>
+                                        <th class="text-primary">Giới tính</th>
+                                        <th class="text-primary">Ngày sinh</th>
+                                        <th class="text-primary">Điện thoại</th>
+                                        <th class="text-primary">Quan hệ với chủ hộ</th>
+                                        <th class="text-primary">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td class="text-primary">Lê Văn B</td>
+                                        <td>Nam</td>
+                                        <td>19/5/1993</td>
+                                        <td class="text-primary">035998956</td>
+                                        <td class="text-primary">Anh em</td>
+                                        <td>
+                                            <i class="bi bi-pencil-square text-primary mx-2"
+                                                style="cursor: pointer;"></i>
+                                            <i class="bi bi-eye text-primary mx-2" style="cursor: pointer;"
+                                                data-bs-toggle="modal" data-bs-target="#familyDetailModal"></i>
+                                            <i class="bi bi-trash text-primary mx-2" style="cursor: pointer;"></i>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td class="text-primary">Nguyễn Thị C</td>
+                                        <td>Nữ</td>
+                                        <td>19/5/1993</td>
+                                        <td class="text-primary">035998956</td>
+                                        <td class="text-primary">Anh em</td>
+                                        <td>
+                                            <i class="bi bi-pencil-square text-primary mx-2"
+                                                style="cursor: pointer;"></i>
+                                            <i class="bi bi-eye text-primary mx-2" style="cursor: pointer;"
+                                                data-bs-toggle="modal" data-bs-target="#familyDetailModal"></i>
+                                            <i class="bi bi-trash text-primary mx-2" style="cursor: pointer;"></i>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section id="hop-dong-bao-hiem" class="content-section-top d-none">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="bg-white rounded p-3 shadow-sm">
+                    <ul class="list-unstyled">
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-primary"
+                                data-target="HopDong">Hợp đồng</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="ThongTinBaoHiem">Thông tin bảo hiểm</a></li>
+
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <section id="HopDong" class="content-section">
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Thông tin cơ bản</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#familyModal">+ Thêm
+                                mới </button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th class="text-primary">STT</th>
+                                        <th class="text-primary">Số hợp đồng</th>
+                                        <th class="text-primary">Loại hợp đồng</th>
+                                        <th class="text-primary">Ngày ký hợp đồng</th>
+                                        <th class="text-primary">Ngày bắt đầu</th>
+                                        <th class="text-primary">Ngày kết thúc</th>
+                                        <th class="text-primary">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>HD99913</td>
+                                        <td>Thời hạn</td>
+                                        <td>19/5/2023</td>
+                                        <td>19/5/2023</td>
+                                        <td>19/5/2023</td>
+                                        <td>
+                                            <button class="btn text-primary"><i
+                                                    class="bi bi-pencil-square"></i></button>
+                                            <button class="btn"><i class="bi bi-eye"></i></button>
+                                            <button class="btn text-primary"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>HD99913</td>
+                                        <td>Thời hạn</td>
+                                        <td>19/5/2023</td>
+                                        <td>19/5/2023</td>
+                                        <td>19/5/2023</td>
+                                        <td>
+                                            <button class="btn text-primary"><i
+                                                    class="bi bi-pencil-square"></i></button>
+                                            <button class="btn"><i class="bi bi-eye"></i></button>
+                                            <button class="btn text-primary"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                <section id="ThongTinBaoHiem" class="content-section d-none">
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Bảo hiểm xã hội</h5>
+                            <i class="bi bi-pen"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <p>Số sổ BHXH: <br><span class="text-primary">321648743133</span></p>
+                                <p>Số sổ BHXH cũ:<br> ---</p>
+                                <p>Ngày tham gia: <br><span class="text-primary">19/5/2023</span></p>
+                                <div class="col-md-6">
+                                    <p>Nơi cấp sổ BHXH: <br><span class="text-primary">Bảo hiểm Hà Nội</span></p>
+                                    <p>Nơi nộp sổ BHXH: <br><span class="text-primary">Bảo hiểm Hà Nội</span></p>
+                                    <p>Ngày trả sổ BHXH: <br><span class="text-primary">19/5/2023</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p>Ngày nộp:<br> <span class="text-primary">19/5/2023</span></p>
+                                    <p>Ngày cấp: <br><span class="text-primary">19/5/2023</span></p>
+                                    <p>Ngày nhận sổ BHXH:<br> <span class="text-primary">19/5/2023</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Bảo hiểm thất nghiệp</h5>
+                            <i class="bi bi-pen"></i>
+                        </div>
+                        <div class="card-body">
+                            <p>Ngày tham gia BHTN:<br> <span class="text-primary">19/5/2023</span><br></p>
+                            <p> Thời gian đóng BHTN trước khi vào công ty (tháng):</p><span
+                                class="text-primary">24</span>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary"> Bảo hiểm y tế</h5>
+                            <i class="bi bi-pen"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <p>Số thẻ BHYT:<br> <span class="text-primary">01035675487</span></p>
+                                <div class="col-md-6">
+                                    <p>Ngày cấp thẻ:<br> <span class="text-primary">19/5/2023</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p>Ngày hết hạn:<br><span class="text-primary">19/5/2023</span></p>
+                                </div>
+                                <p>Nơi đăng ký khám bệnh: <br><span class="text-primary">Bệnh viện E</span></p>
+                                <div class="row">
+                                    <div class="col-md-6">Mã bệnh viện đăng ký khám: <br><span
+                                            class="text-primary">12</span></div>
+                                    <div class="col-md-6"> Mã bệnh viện khám KCB: <br><span
+                                            class="text-primary">29</span></div>
+                                </div>
+                                <span class="text-primary">
+                                    <i class="bi bi-check-square text-primary"></i> Đã trả thẻ BHYT
+                                </span>
+
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+    </section>
+    <section id="khen-thuong-ky-luat" class="content-section-top d-none">
+        <div class="card border-0 p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-primary fw-bold">Khen thưởng</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#familyModal">+ Thêm
+                    mới </button>
+            </div>
+            <div class="row mt-3">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-primary">STT</th>
+                            <th class="text-primary">Nội dung khen thưởng</th>
+                            <th class="text-primary">Hình thức </th>
+                            <th class="text-primary">Ngày ký</th>
+                            <th class="text-primary">Ngày hiệu lực</th>
+                            <th class="text-primary">Số quyết định</th>
+                            <th class="text-primary">Giá trị khen thưởng</th>
+                            <th class="text-primary">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td class="text-primary">Nhân viên xuất sắc</td>
+                            <td>Tiền mặt</td>
+                            <td>19/2/2025</td>
+                            <td class="text-primary">20/2/2025</td>
+                            <td class="text-primary">QD01</td>
+                            <td class="text-primary">100.000</td>
+                            <td>
+                                <i class="bi bi-pencil-square text-primary mx-2" style="cursor: pointer;"></i>
+                                <i class="bi bi-eye text-primary mx-2" style="cursor: pointer;" data-bs-toggle="modal"
+                                    data-bs-target="#familyDetailModal"></i>
+                                <i class="bi bi-trash text-primary mx-2" style="cursor: pointer;"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card border-0 p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-primary fw-bold">Kỷ luật</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#familyModal">+ Thêm
+                    mới </button>
+            </div>
+            <div class="row mt-3">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-primary">STT</th>
+                            <th class="text-primary">Nội dung kỉ luật</th>
+                            <th class="text-primary">Ngày ra quyết định</th>
+                            <th class="text-primary">Hình thức kỉ luật</th>
+                            <th class="text-primary">Lý do kỉ luật</th>
+                            <th class="text-primary">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="luong" class="content-section-top d-none">
+        <div class="container mt-4">
+        <h4 class="text-primary">Bảng lương</h4>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <select class="form-select" id="yearSelect">
+                    <option>--Chọn năm--</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="monthSelect">
+                    <option>--Chọn tháng--</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Tiêu đề bảng lương">
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary w-75"><i class="fas fa-search me-2"></i>Tìm kiếm</button>
+            </div>
+        </div>
+
+        <table class="table table-bordered text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>STT</th>
+                    <th>Tiêu đề bảng lương</th>
+                    <th>Tháng</th>
+                    <th>Năm</th>
+                    <th>Phòng ban</th>
+                    <th>Người tạo</th>
+                    <th>Lương</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Bảng lương tháng 5</td>
+                    <td>5</td>
+                    <td>2024</td>
+                    <td>Hành chính</td>
+                    <td>Kế toán</td>
+                    <td>30.000.000</td>
+                    <td><span class="badge bg-success">Duyệt</span></td>
+                    <td><button class="btn "> <i class="fas fa-eye text-dark action-icon"></i></button></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Bảng lương tháng 4</td>
+                    <td>4</td>
+                    <td>2024</td>
+                    <td>Hành chính</td>
+                    <td>Kế toán</td>
+                    <td>30.000.000</td>
+                    <td><span class="badge bg-success">Duyệt</span></td>
+                    <td><button class="btn "> <i class="fas fa-eye text-dark action-icon"></i></button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </section>
+
+
+</div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        $(".menu-link").click(function (e) {
+            e.preventDefault();
+            let targetSection = $(this).data("target");
+            $(".content-section").addClass("d-none");
+            $("#" + targetSection).removeClass("d-none");
+            $(".menu-link").removeClass("text-primary").addClass("text-dark");
+            $(this).removeClass("text-dark").addClass("text-primary");
+        });
+        $(".menu-link-top").click(function (e) {
+            e.preventDefault();
+            let targetSection = $(this).data("target-top");
+            $(".content-section-top").addClass("d-none");
+            $(targetSection).removeClass("d-none");
+            $(".menu-link-top").removeClass("text-primary").addClass("text-dark");
+            $(this).removeClass("text-dark").addClass("text-primary");
+        });
+    });
+</script> 
+<script>
+        // Lấy phần tử select
+        const yearSelect = document.getElementById("yearSelect");
+        const monthSelect = document.getElementById("monthSelect");
+
+        // Thêm các năm từ 2020 đến 2030
+        for (let year = 2020; year <= 2030; year++) {
+            let option = document.createElement("option");
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        }
+
+        // Thêm các tháng từ 1 đến 12
+        for (let month = 1; month <= 12; month++) {
+            let option = document.createElement("option");
+            option.value = month;
+            option.textContent = `Tháng ${month}`;
+            monthSelect.appendChild(option);
+        }
+    </script>
+
+<partial name="~/Views/Modals/_ModalSuaThongTinCoBan.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaThongTinTaiKhoan.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaThongTinKhac.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaViTriCongTac.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaThongTinNganHang.cshtml" />
+<partial name="~/Views/Modals/_ModalThemMoiTrinhDo.cshtml" />
+<partial name="~/Views/Modals/_ModalChiTietQuanHeGiaDinh.cshtml" />
+<partial name="~/Views/Modals/_ModalThemQuanHeGiaDinh.cshtml" />

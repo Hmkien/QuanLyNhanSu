@@ -1,0 +1,177 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+
+namespace QuanLyNhanLuc.Controllers
+{
+    public class ChucVuController : Controller
+    {
+        private readonly QLNLContext _context;
+
+        public ChucVuController(QLNLContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+        {
+            var query = _context.ChucVus.OrderBy(x => x.TenChucVu).AsNoTracking();
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+
+            return View(items);
+        }
+
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("TenChucVu,Id,Status,Created")] ChucVu chucVu)
+        {
+            if (ModelState.IsValid)
+            {
+                chucVu.Id = Guid.NewGuid();
+                _context.Add(chucVu);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(chucVu);
+        }
+
+        public async Task<IActionResult> Edit(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var chucVu = await _context.ChucVus.FindAsync(id);
+            if (chucVu == null)
+            {
+                return NotFound();
+            }
+            return View(chucVu);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, [Bind("TenChucVu,Id,Status,Created")] ChucVu chucVu)
+        {
+            if (id != chucVu.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(chucVu);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ChucVuExists(chucVu.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(chucVu);
+        }
+
+        public async Task<IActionResult> Delete(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var chucVu = await _context.ChucVus
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (chucVu == null)
+            {
+                return NotFound();
+            }
+
+            return View(chucVu);
+        }
+        
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        {
+            var chucVu = await _context.ChucVus.FindAsync(id);
+            if (chucVu != null)
+            {
+                _context.ChucVus.Remove(chucVu);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool ChucVuExists(Guid id)
+        {
+            return _context.ChucVus.Any(e => e.Id == id);
+        }
+
+        // AJAX endpoints for modal operations
+        [HttpGet]
+        public async Task<IActionResult> GetChucVu(Guid id)
+        {
+            var cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null) return NotFound();
+            return Json(new { id = cv.Id, ten = cv.TenChucVu });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAjax([FromForm] string tenChucVu)
+        {
+            if (string.IsNullOrWhiteSpace(tenChucVu)) return Json(new { success = false, message = "Tên chức vụ không được để trống" });
+            var chucVu = new ChucVu
+            {
+                Id = Guid.NewGuid(),
+                TenChucVu = tenChucVu,
+                Created = DateTime.Now
+            };
+            _context.ChucVus.Add(chucVu);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditAjax([FromForm] Guid id, [FromForm] string tenChucVu)
+        {
+            var cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null) return Json(new { success = false, message = "Chức vụ không tồn tại" });
+            cv.TenChucVu = tenChucVu;
+            _context.ChucVus.Update(cv);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
+        {
+            var cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null) return Json(new { success = false, message = "Chức vụ không tồn tại" });
+            _context.ChucVus.Remove(cv);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+    }
+}

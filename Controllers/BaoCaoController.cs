@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhanLuc.Data;
-using QuanLyNhanLuc.Models.Entities;
 using QuanLyNhanLuc.Models.Enums;
 using QuanLyNhanLuc.Models.ViewModels;
-using System.Linq;
 
 namespace QuanLyNhanLuc.Controllers
 {
@@ -26,15 +24,15 @@ namespace QuanLyNhanLuc.Controllers
             ViewBag.TongNu = _context.ThongTinNguoiDungs.Count(x => x.GioiTinh == GioiTinh.Female);
 
             // Thống kê theo phòng ban
-            var thongKePhongBan = _context.Departments
-                .Include(d => d.NhanSus)
+            List<ThongKePhongBanVM> thongKePhongBan = _context.PhongBans
+                .Include(d => d.ThongTinNguoiDungs)
                 .Select(d => new ThongKePhongBanVM
                 {
                     TenPhongBan = d.TenPhongBan,
-                    TongSo = d.NhanSus.Count,
-                    SoNam = d.NhanSus.Count(x => x.GioiTinh == GioiTinh.Male),
-                    SoNu = d.NhanSus.Count(x => x.GioiTinh == GioiTinh.Female),
-                    SoThucTapSinh = d.NhanSus.Count(x => x.NhanSuType == NhanSuType.ThucTapSinh)
+                    TongSo = d.ThongTinNguoiDungs.Count,
+                    SoNam = d.ThongTinNguoiDungs.Count(x => x.GioiTinh == GioiTinh.Male),
+                    SoNu = d.ThongTinNguoiDungs.Count(x => x.GioiTinh == GioiTinh.Female),
+                    SoThucTapSinh = d.ThongTinNguoiDungs.Count(x => x.NhanSuType == NhanSuType.ThucTapSinh)
                 })
                 .ToList();
 
@@ -43,7 +41,7 @@ namespace QuanLyNhanLuc.Controllers
             ViewBag.DepartmentData = thongKePhongBan.Select(x => x.TongSo).ToList();
 
             // Thống kê theo chức vụ
-            var thongKeChucVu = _context.ChucVus
+            List<ThongKeChucVuVM> thongKeChucVu = _context.ChucVus
                 .Include(c => c.NhanSus)
                 .Select(c => new ThongKeChucVuVM
                 {

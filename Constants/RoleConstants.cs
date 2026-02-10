@@ -1,0 +1,48 @@
+namespace QuanLyNhanLuc.Constants;
+
+/// <summary>
+/// ??nh ngh?a các vai trò trong h? th?ng
+/// </summary>
+public static class RoleNames
+{
+    public const string Admin = "Admin";
+    public const string HR = "HR";
+    public const string KeToan = "KeToan";
+    public const string BGD = "BGD";
+    public const string NhanVien = "NhanVien";
+    
+    /// <summary>
+    /// Các vai trò có quy?n qu?n lý nhân s?
+    /// </summary>
+    public const string QuanLyNhanSu = $"{Admin},{HR}";
+    
+    /// <summary>
+    /// Các vai trò có quy?n qu?n lý l??ng
+    /// </summary>
+    public const string QuanLyLuong = $"{Admin},{KeToan}";
+    
+    /// <summary>
+    /// Các vai trò có quy?n xem báo cáo
+    /// </summary>
+    public const string XemBaoCao = $"{Admin},{BGD},{HR},{KeToan}";
+    
+    /// <summary>
+    /// Các vai trò có quy?n qu?n tr? h? th?ng
+    /// </summary>
+    public const string QuanTriHeThong = Admin;
+}
+
+/// <summary>
+/// ??nh ngh?a các Policy trong h? th?ng
+/// </summary>
+public static class PolicyNames
+{
+    public const string RequireAdmin = "RequireAdmin";
+    public const string RequireHR = "RequireHR";
+    public const string RequireKeToan = "RequireKeToan";
+    public const string RequireBGD = "RequireBGD";
+    public const string QuanLyNhanSu = "QuanLyNhanSu";
+    public const string QuanLyLuong = "QuanLyLuong";
+    public const string XemBaoCao = "XemBaoCao";
+    public const string QuanTriHeThong = "QuanTriHeThong";
+}

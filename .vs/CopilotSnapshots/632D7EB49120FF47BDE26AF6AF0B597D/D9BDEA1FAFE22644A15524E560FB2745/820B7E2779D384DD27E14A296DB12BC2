@@ -1,0 +1,25 @@
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.Enums;
+
+namespace QuanLyNhanLuc.Models.ViewModels;
+
+public class SuaNhanVienVM
+{
+    public Guid Id { get; set; }
+    public string HoVaTen { get; set; } = string.Empty;
+    public GioiTinh GioiTinh { get; set; }
+    public DateTime NgaySinh { get; set; }
+    public string? CCCD { get; set; }
+    public Guid? PhongBanId { get; set; }
+    public Guid? ChucVuId { get; set; }
+    public NhanSuType LoaiNhanSu { get; set; }
+    public string? Email { get; set; }
+    public string? SoDienThoai { get; set; }
+    public string? MaNhanVien { get; set; }
+    public string? ImageLink { get; set; }
+    public IFormFile? AnhDaiDien { get; set; }
+    
+    public SelectList? Departments { get; set; }
+    public SelectList? ChucVus { get; set; }
+}

@@ -1,0 +1,164 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.Enums;
+
+namespace QuanLyNhanLuc.Controllers
+{
+    public class TaiKhoanController : Controller
+    {
+        private readonly UserManager<NguoiDung> _userManager;
+        private readonly RoleManager<VaiTro> _roleManager;
+        private readonly QLNLContext _context;
+        
+        public TaiKhoanController(UserManager<NguoiDung> userManager, RoleManager<VaiTro> roleManager, QLNLContext context)
+        {
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _context = context;
+        }
+
+        public async Task<IActionResult> DanhSachTaiKhoan(int page = 1, int pageSize = 10)
+        {
+            var query = _userManager.Users.OrderBy(u => u.UserName).AsQueryable();
+            var total = await query.CountAsync();
+            var accountList = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+            ViewBag.TotalItems = total;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.AllRoles = await _roleManager.Roles.Select(r => new { r.Id, r.Name }).ToListAsync();
+            return View(accountList);
+        }
+
+        // AJAX endpoints
+        [HttpGet]
+        public async Task<IActionResult> GetUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+            
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var allRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+            
+            return Json(new
+            {
+                userId = user.Id,
+                userName = user.UserName,
+                email = user.Email,
+                phoneNumber = user.PhoneNumber,
+                status = (int)user.Status,
+                allRoles = allRoles,
+                selectedRoles = userRoles
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditUserAjax([FromForm] string userId, [FromForm] string email, [FromForm] string? phoneNumber)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy người dùng" });
+
+            if (user.Status == Status.Approved)
+                return Json(new { success = false, message = "Không thể sửa tài khoản đã duyệt. Vui lòng huỷ duyệt trước." });
+
+            user.Email = email;
+            user.PhoneNumber = phoneNumber;
+            await _userManager.UpdateAsync(user);
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePasswordAjax([FromForm] string userId, [FromForm] string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy người dùng" });
+
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+                return Json(new { success = false, message = "Mật khẩu phải có ít nhất 6 ký tự" });
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (result.Succeeded)
+                return Json(new { success = true });
+            
+            return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AssignRolesAjax([FromForm] string userId, [FromForm] List<string>? selectedRoles)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy người dùng" });
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            selectedRoles ??= [];
+
+            foreach (var role in currentRoles)
+            {
+                if (!selectedRoles.Contains(role))
+                    await _userManager.RemoveFromRoleAsync(user, role);
+            }
+
+            foreach (var role in selectedRoles)
+            {
+                if (!currentRoles.Contains(role))
+                {
+                    var roleExists = await _roleManager.RoleExistsAsync(role);
+                    if (roleExists)
+                        await _userManager.AddToRoleAsync(user, role);
+                }
+            }
+
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveAjax([FromForm] string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy người dùng" });
+
+            user.Status = Status.Approved;
+            await _userManager.UpdateAsync(user);
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectAjax([FromForm] string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy người dùng" });
+
+            user.Status = Status.Rejected;
+            await _userManager.UpdateAsync(user);
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAjax([FromForm] string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "Không tìm thấy người dùng" });
+
+            if (user.Status == Status.Approved)
+                return Json(new { success = false, message = "Không thể xóa tài khoản đã duyệt. Vui lòng huỷ duyệt trước." });
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+                return Json(new { success = true });
+            
+            return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+        }
+    }
+}

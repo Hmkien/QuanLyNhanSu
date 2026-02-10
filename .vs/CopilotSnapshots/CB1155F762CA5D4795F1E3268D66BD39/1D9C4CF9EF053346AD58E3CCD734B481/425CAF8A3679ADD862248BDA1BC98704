@@ -1,0 +1,135 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.Enums;
+
+namespace QuanLyNhanLuc.Data;
+
+public static class DbInitializer
+{
+    public static void Initialize(QLNLContext context)
+    {
+        // Ensure database created
+        _ = context.Database.EnsureCreated();
+
+        // If PhongBans already exist, skip initial seeding
+        if (context.PhongBans.Any())
+        {
+            return;
+        }
+
+        // Seed sample PhongBan
+        PhongBan[] phongBans = new PhongBan[]
+        {
+            new() { MaPhongBan = "FE", TenPhongBan = "Frontend", MoTa = "Phòng phát triển Frontend" },
+            new() { MaPhongBan = "BE", TenPhongBan = "Backend", MoTa = "Phòng phát triển Backend" },
+            new() { MaPhongBan = "QA", TenPhongBan = "Quality Assurance", MoTa = "Phòng kiểm thử chất lượng" },
+            new() { MaPhongBan = "HR", TenPhongBan = "Human Resources", MoTa = "Phòng nhân sự" }
+        };
+        context.PhongBans.AddRange(phongBans);
+        _ = context.SaveChanges();
+
+        // Seed sample NhanSu
+        NhanSu[] nhanSus = new NhanSu[]
+        {
+            new() { MaNhanVien = "NS001", HoVaTen = "Nguyễn Văn A", PhongBanId = phongBans[0].Id },
+            new() { MaNhanVien = "NS002", HoVaTen = "Trần Thị B", PhongBanId = phongBans[1].Id },
+            new() { MaNhanVien = "NS003", HoVaTen = "Lê Văn C", PhongBanId = phongBans[2].Id },
+            new() { MaNhanVien = "NS004", HoVaTen = "Phạm Thị D", PhongBanId = phongBans[3].Id }
+        };
+        context.NhanSus.AddRange(nhanSus);
+        _ = context.SaveChanges();
+
+        // Seed sample ChamCong
+        ChamCong[] chamCongs = new ChamCong[]
+        {
+            new() { NhanSuId = nhanSus[0].Id, NgayChamCong = new DateTime(2023,7,1), GioVao = new TimeSpan(8,0,0), GioRa = new TimeSpan(17,0,0), TrangThai = TrangThaiChamCong.DiLam, GhiChu = "Đi làm đúng giờ" },
+            new() { NhanSuId = nhanSus[0].Id, NgayChamCong = new DateTime(2023,7,2), GioVao = new TimeSpan(8,0,0), GioRa = new TimeSpan(17,0,0), TrangThai = TrangThaiChamCong.DiLam, GhiChu = "Đi làm đúng giờ" },
+            new() { NhanSuId = nhanSus[1].Id, NgayChamCong = new DateTime(2023,7,1), GioVao = new TimeSpan(8,0,0), GioRa = new TimeSpan(17,0,0), TrangThai = TrangThaiChamCong.DiLam, GhiChu = "Đi làm đúng giờ" }
+        };
+        context.ChamCongs.AddRange(chamCongs);
+        _ = context.SaveChanges();
+
+        // Seed sample LichLamThem
+        LichLamThem[] lichLamThems = new LichLamThem[]
+        {
+            new() { NhanSuId = nhanSus[2].Id, NgayLamThem = new DateTime(2023,7,4), GioBatDau = new TimeSpan(18,0,0), GioKetThuc = new TimeSpan(21,0,0), LyDo = "Hoàn thành dự án gấp", TrangThai = TrangThaiLamThem.ChuaDuyet, NguoiDuyet = "Admin" },
+            new() { NhanSuId = nhanSus[3].Id, NgayLamThem = new DateTime(2023,7,5), GioBatDau = new TimeSpan(18,0,0), GioKetThuc = new TimeSpan(22,0,0), LyDo = "Họp dự án", TrangThai = TrangThaiLamThem.DaDuyet, NguoiDuyet = "Admin" }
+        };
+        context.LichLamThems.AddRange(lichLamThems);
+        _ = context.SaveChanges();
+    }
+
+    public static async Task SeedAsync(IServiceProvider services)
+    {
+        using IServiceScope scope = services.CreateScope();
+        IServiceProvider provider = scope.ServiceProvider;
+        UserManager<NguoiDung> userManager = provider.GetRequiredService<UserManager<NguoiDung>>();
+        RoleManager<VaiTro> roleManager = provider.GetRequiredService<RoleManager<VaiTro>>();
+        QLNLContext context = provider.GetRequiredService<QLNLContext>();
+
+        // Create default menus if not exist
+        if (!context.MenuQuanTris.Any())
+        {
+            List<MenuQuanTri> menus =
+            [
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Tổng quan", ViTri = 1, IconClass = "fas fa-home", ControllerName = "TongQuan", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Nhân sự", ViTri = 2, IconClass = "fas fa-users", ControllerName = "NhanSu", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Chấm công", ViTri = 3, IconClass = "fas fa-clock", ControllerName = "ChamCong", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Lương", ViTri = 4, IconClass = "fas fa-money-bill-wave", ControllerName = "Luong", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Báo cáo", ViTri = 5, IconClass = "fas fa-chart-line", ControllerName = "BaoCao", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Bảo hiểm", ViTri = 6, IconClass = "fas fa-file-medical", ControllerName = "BaoHiem", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Thủ tục hành chính", ViTri = 7, IconClass = "fas fa-file-alt", ControllerName = "ThuTucHanhChinh", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Quản trị hệ thống", ViTri = 8, IconClass = "fas fa-cogs", ControllerName = "QuanTriHeThong", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Vai trò", ViTri = 9, IconClass = "fas fa-user-shield", ControllerName = "VaiTro", ActionName = "Index" },
+                new MenuQuanTri { Id = Guid.NewGuid(), TenMenu = "Tài khoản", ViTri = 10, IconClass = "fas fa-user", ControllerName = "TaiKhoan", ActionName = "Index" }
+            ];
+
+            context.MenuQuanTris.AddRange(menus);
+            _ = await context.SaveChangesAsync();
+        }
+
+        // Create Admin role
+        const string adminRoleName = "Admin";
+        if (await roleManager.FindByNameAsync(adminRoleName) == null)
+        {
+            _ = await roleManager.CreateAsync(new VaiTro { Name = adminRoleName });
+        }
+
+        // Create super admin user
+        const string adminEmail = "admin@gmail.com";
+        const string adminPassword = "123456aA@";
+        NguoiDung? existing = await userManager.FindByEmailAsync(adminEmail);
+        if (existing == null)
+        {
+            NguoiDung admin = new()
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                isSuperAdmin = true
+            };
+            IdentityResult createResult = await userManager.CreateAsync(admin, adminPassword);
+            if (createResult.Succeeded)
+            {
+                _ = await userManager.AddToRoleAsync(admin, adminRoleName);
+            }
+        }
+
+        // Assign all menus to Admin role (VaiTroMenu)
+        VaiTro? roleEntity = await context.VaiTros.FirstOrDefaultAsync(r => r.Name == adminRoleName);
+        if (roleEntity != null)
+        {
+            List<Guid> menuIds = await context.MenuQuanTris.Select(m => m.Id).ToListAsync();
+            foreach (Guid menuId in menuIds)
+            {
+                bool exists = await context.VaiTroMenus.AnyAsync(vm => vm.VaiTroId == roleEntity.Id && vm.MenuId == menuId);
+                if (!exists)
+                {
+                    _ = context.VaiTroMenus.Add(new VaiTroMenu { VaiTroId = roleEntity.Id, MenuId = menuId });
+                }
+            }
+            _ = await context.SaveChangesAsync();
+        }
+    }
+}

@@ -1,0 +1,55 @@
+﻿@* Modal Thêm/Sửa đào tạo *@
+<div class="modal fade" id="ModalDaoTao" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">Thêm thông tin đào tạo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formDaoTao">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="daoTaoId" />
+                <input type="hidden" name="NguoiDungId" id="daoTaoNguoiDungId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên trường/ Tổ chức <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="TenTruongToChuc" id="tenTruongToChuc" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngành học hoặc tên lớp học <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="NganhHocTenLop" id="nganhHocTenLop" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Thời gian bắt đầu</label>
+                            <input type="date" class="form-control" name="ThoiGianBatDau" id="thoiGianBatDau" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Thời gian kết thúc</label>
+                            <input type="date" class="form-control" name="ThoiGianKetThuc" id="thoiGianKetThuc" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hình thức học</label>
+                        <select class="form-select" name="HinhThucHoc" id="hinhThucHoc">
+                            <option value="">--Chọn--</option>
+                            <option value="Tập trung">Tập trung</option>
+                            <option value="Từ xa">Từ xa</option>
+                            <option value="Vừa học vừa làm">Vừa học vừa làm</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Văn bằng chứng chỉ, trình độ</label>
+                        <input type="text" class="form-control" name="VanBangChungChi" id="vanBangChungChi" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+

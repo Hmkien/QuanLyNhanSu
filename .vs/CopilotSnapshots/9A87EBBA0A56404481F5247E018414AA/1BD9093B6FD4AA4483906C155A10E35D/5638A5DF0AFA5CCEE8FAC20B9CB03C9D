@@ -1,0 +1,22 @@
+﻿namespace QuanLyNhanLuc.Models.ViewModels;
+
+public class BaoHiemVM
+{
+    public Guid Id { get; set; }
+    public string MaNhanVien { get; set; } = string.Empty;
+    public string HoTen { get; set; } = string.Empty;
+    public string PhongBan { get; set; } = string.Empty;
+    public string SoBHXH { get; set; } = string.Empty;
+    public string SoBHXHCu { get; set; } = string.Empty;
+    public string SoBHYT { get; set; } = string.Empty;
+    public DateTime NgayThamGia { get; set; }
+    public DateTime NgayCapThe { get; set; }
+    public DateTime NgayHetHan { get; set; }
+    public string NoiDangKyBHXH { get; set; } = string.Empty;
+    public string NoiDangKyKCB { get; set; } = string.Empty;
+    public string MaKCB { get; set; } = string.Empty;
+    public string MaTinhBenhVien { get; set; } = string.Empty;
+    public bool DaTraTheBHYT { get; set; }
+    public DateTime NgayThamGiaBHTN { get; set; }
+    public int ThoiGianDongBHTN { get; set; }
+} 

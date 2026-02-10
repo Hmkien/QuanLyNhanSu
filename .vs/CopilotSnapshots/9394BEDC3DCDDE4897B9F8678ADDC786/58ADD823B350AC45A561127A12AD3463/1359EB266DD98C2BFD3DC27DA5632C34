@@ -1,0 +1,364 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Extensions;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.ViewModels;
+
+namespace QuanLyNhanLuc.Controllers;
+
+public class NhanSuController : Controller
+{
+    private readonly QLNLContext _context;
+    private readonly UserManager<NguoiDung> _userManager;
+    public NhanSuController(QLNLContext context, UserManager<NguoiDung> userManager)
+    {
+        _context = context;
+        _userManager = userManager;
+    }
+    public async Task<IActionResult> DanhSachNhanVien(int page = 1, int pageSize = 10, string? search = null, string? gioiTinh = null, Guid? phongBanId = null)
+    {
+        var query = _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .Where(t => t.NhanSuType != NhanSuType.ThucTapSinh)
+            .AsQueryable();
+
+        // Search
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => t.FullName.Contains(search) || 
+                                    (t.IdentityNumber != null && t.IdentityNumber.Contains(search)) ||
+                                    (t.User != null && t.User.Email != null && t.User.Email.Contains(search)) ||
+                                    (t.User != null && t.User.PhoneNumber != null && t.User.PhoneNumber.Contains(search)));
+        }
+
+        // Filter by Gender
+        if (!string.IsNullOrWhiteSpace(gioiTinh))
+        {
+            query = query.Where(t => t.GioiTinhStxt == gioiTinh);
+        }
+
+        // Filter by Department
+        if (phongBanId.HasValue)
+        {
+            query = query.Where(t => t.DepartmentId == phongBanId);
+        }
+
+        var total = await query.CountAsync();
+        
+        var nhanvien = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(ttnd => new NhanVienListVM
+            {
+                Id = ttnd.Id,
+                FullName = ttnd.FullName,
+                IdentityNumber = ttnd.IdentityNumber,
+                GioiTinhStxt = ttnd.GioiTinhStxt,
+                DepartmentName = ttnd.Department != null ? ttnd.Department.TenPhongBan : string.Empty,
+                PositionName = ttnd.ChucVu != null ? ttnd.ChucVu.TenChucVu : string.Empty,
+                Email = ttnd.User != null ? ttnd.User.Email : string.Empty,
+                PhoneNumber = ttnd.User != null ? ttnd.User.PhoneNumber : string.Empty,
+                Status = ttnd.Status
+            })
+            .ToListAsync();
+
+        // Always set ViewBag values
+        ViewBag.TotalPages = total > 0 ? (int)Math.Ceiling(total / (double)pageSize) : 1;
+        ViewBag.TotalItems = total;
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.GioiTinh = gioiTinh;
+        ViewBag.PhongBanId = phongBanId;
+
+        return View(nhanvien);
+    }
+    
+    public async Task<IActionResult> DanhSachThucTap(int page = 1, int pageSize = 10, string? search = null, string? gioiTinh = null, Guid? phongBanId = null)
+    {
+        var query = _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .Where(t => t.NhanSuType == NhanSuType.ThucTapSinh)
+            .AsQueryable();
+
+        // Search
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => t.FullName.Contains(search) ||
+                                    (t.IdentityNumber != null && t.IdentityNumber.Contains(search)) ||
+                                    (t.User != null && t.User.Email != null && t.User.Email.Contains(search)) ||
+                                    (t.User != null && t.User.PhoneNumber != null && t.User.PhoneNumber.Contains(search)));
+        }
+
+        // Filter by Gender
+        if (!string.IsNullOrWhiteSpace(gioiTinh))
+        {
+            query = query.Where(t => t.GioiTinhStxt == gioiTinh);
+        }
+
+        // Filter by Department
+        if (phongBanId.HasValue)
+        {
+            query = query.Where(t => t.DepartmentId == phongBanId);
+        }
+
+        var total = await query.CountAsync();
+        
+        var thucTapSinh = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(ttnd => new NhanVienListVM
+            {
+                Id = ttnd.Id,
+                FullName = ttnd.FullName,
+                IdentityNumber = ttnd.IdentityNumber,
+                GioiTinhStxt = ttnd.GioiTinhStxt,
+                DepartmentName = ttnd.Department != null ? ttnd.Department.TenPhongBan : string.Empty,
+                PositionName = ttnd.ChucVu != null ? ttnd.ChucVu.TenChucVu : string.Empty,
+                Email = ttnd.User != null ? ttnd.User.Email : string.Empty,
+                PhoneNumber = ttnd.User != null ? ttnd.User.PhoneNumber : string.Empty,
+                Status = ttnd.Status
+            })
+            .ToListAsync();
+
+        // Always set ViewBag values
+        ViewBag.TotalPages = total > 0 ? (int)Math.Ceiling(total / (double)pageSize) : 1;
+        ViewBag.TotalItems = total;
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.GioiTinh = gioiTinh;
+        ViewBag.PhongBanId = phongBanId;
+
+        return View(thucTapSinh);
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetNhanVienDetail(Guid id)
+    {
+        var nhanVien = await _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (nhanVien == null)
+            return NotFound();
+
+        return Json(new
+        {
+            fullName = nhanVien.FullName,
+            identityNumber = nhanVien.IdentityNumber,
+            gioiTinh = nhanVien.GioiTinhStxt,
+            email = nhanVien.User?.Email,
+            phoneNumber = nhanVien.User?.PhoneNumber,
+            departmentName = nhanVien.Department?.TenPhongBan,
+            positionName = nhanVien.ChucVu?.TenChucVu
+        });
+    }
+    public async Task<IActionResult> GetModalThemNhanSu()
+    {
+        try
+        {
+            ThemNhanVienVM model = new();
+            List<Department> departments = await _context.Departments
+                .Where(d => d.Status == Models.Enums.Status.Approved)
+                .OrderBy(d => d.TenPhongBan)
+                .ToListAsync();
+            List<ChucVu> chucVus = await _context.ChucVus
+                .Where(c => c.Status == Models.Enums.Status.Approved)
+                .OrderBy(c => c.TenChucVu)
+                .ToListAsync();
+            
+            model.Departments = new SelectList(departments, "Id", "TenPhongBan");
+            model.ChucVus = new SelectList(chucVus, "Id", "TenChucVu");
+            
+            return PartialView("~/Views/Modals/_ModalThemNhanSuClean.cshtml", model);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+    public async Task<IActionResult> ChiTietNhanVien(Guid id)
+    {
+        var nhanVien = await _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (nhanVien == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy nhân viên";
+            return RedirectToAction("DanhSachNhanVien");
+        }
+
+        return View(nhanVien);
+    }
+    public IActionResult GetModalConfirmDelete(Guid id)
+    {
+        return PartialView("~/Views/Modals/_ModalConfirmDelete.cshtml", id);
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> ActivateNhanVien(Guid id)
+    {
+        try
+        {
+            var nhanVien = await _context.ThongTinNguoiDungs.FindAsync(id);
+            if (nhanVien == null)
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+
+            nhanVien.Status = Models.Enums.Status.Approved;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Kích hoạt nhân viên thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeactivateNhanVien(Guid id)
+    {
+        try
+        {
+            var nhanVien = await _context.ThongTinNguoiDungs.FindAsync(id);
+            if (nhanVien == null)
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+
+            nhanVien.Status = Models.Enums.Status.Canceled;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Vô hiệu hóa nhân viên thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> XoaNhanVien(Guid id)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (nhanVien == null)
+            {
+                return NotFound();
+            }
+
+            // Xóa thông tin người dùng
+            _ = _context.ThongTinNguoiDungs.Remove(nhanVien);
+
+            // Xóa người dùng
+            if (nhanVien.User != null)
+            {
+                _ = await _userManager.DeleteAsync(nhanVien.User);
+            }
+
+            _ = await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Xóa nhân viên thành công!";
+            return RedirectToAction(nameof(DanhSachNhanVien));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa nhân viên: " + ex.Message;
+            return RedirectToAction(nameof(DanhSachNhanVien));
+        }
+    }
+    [HttpPost]
+    public async Task<IActionResult> Create(EmployeeViewModel model)
+    {
+        try
+        {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(model.HoVaTen))
+                return Json(new { success = false, message = "Họ và tên không được để trống" });
+            
+            if (string.IsNullOrWhiteSpace(model.Email))
+                return Json(new { success = false, message = "Email không được để trống" });
+            
+            if (string.IsNullOrWhiteSpace(model.MatKhau))
+                return Json(new { success = false, message = "Mật khẩu không được để trống" });
+
+            // Check if email already exists
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                return Json(new { success = false, message = "Email đã tồn tại trong hệ thống" });
+
+            string fileName = string.Empty;
+            if (model.AnhDaiDien != null && model.AnhDaiDien.Length > 0)
+            {
+                fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.AnhDaiDien.FileName);
+                string imagesDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Image");
+                Directory.CreateDirectory(imagesDir);
+                string filePath = Path.Combine(imagesDir, fileName);
+                using (FileStream stream = new(filePath, FileMode.Create))
+                {
+                    await model.AnhDaiDien.CopyToAsync(stream);
+                }
+            }
+
+            // Create user account
+            NguoiDung user = new()
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                PhoneNumber = model.SoDienThoai,
+                MaNhanVien = model.MaNhanVien,
+                EmailConfirmed = true
+            };
+
+            IdentityResult result = await _userManager.CreateAsync(user, model.MatKhau);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Json(new { success = false, message = errors });
+            }
+
+            // Create employee info
+            ThongTinNguoiDung employee = new()
+            {
+                FullName = model.HoVaTen,
+                GioiTinh = model.GioiTinh,
+                GioiTinhStxt = model.GioiTinh.GetDescription(),
+                BirthDay = model.NgaySinh,
+                IdentityNumber = model.CCCD,
+                DepartmentId = model.PhongBanId,
+                ChucVuId = model.ChucVuId,
+                NhanSuType = model.LoaiNhanSu,
+                NhanSuTypeStxt = model.LoaiNhanSu.GetDescription(),
+                ImageLink = fileName,
+                UserId = user.Id
+            };
+
+            await _context.ThongTinNguoiDungs.AddAsync(employee);
+            await _context.SaveChangesAsync();
+            
+            string redirectUrl = model.LoaiNhanSu == NhanSuType.ThucTapSinh 
+                ? Url.Action("DanhSachThucTap") ?? "/NhanSu/DanhSachThucTap"
+                : Url.Action("DanhSachNhanVien") ?? "/NhanSu/DanhSachNhanVien";
+            
+            return Json(new { success = true, redirectUrl = redirectUrl });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Có lỗi xảy ra: " + ex.Message });
+        }
+    }
+}

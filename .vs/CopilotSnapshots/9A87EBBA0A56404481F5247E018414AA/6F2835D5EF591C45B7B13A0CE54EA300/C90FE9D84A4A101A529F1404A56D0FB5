@@ -1,0 +1,183 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.MenuQuanTri>
+
+@{
+    ViewData["Title"] = "Quản lý Menu";
+}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Quản trị hệ thống</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Quản lý menu</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Quản lý Menu</h2>
+    <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0"><i class="bi bi-diagram-3 me-2"></i>Cây Menu Quản Trị</h5>
+    </div>
+    <div class="card-body">
+        <div id="menu-treeview">
+            @await Html.PartialAsync("_MenuTreePartial", Model)
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Menu -->
+<div class="modal fade" id="menuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="menuModalTitle">Thêm menu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="menuForm">
+                    <input type="hidden" id="menuId" name="id" />
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tên menu <span class="text-danger">*</span></label>
+                            <input type="text" id="tenMenu" name="tenMenu" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Menu cha</label>
+                            <select id="parentId" name="parentId" class="form-select">
+                                <option value="">-- Không có (menu gốc) --</option>
+                                @foreach (var parent in ViewBag.ParentMenus as List<QuanLyNhanLuc.Models.Entities.MenuQuanTri> ?? new List<QuanLyNhanLuc.Models.Entities.MenuQuanTri>())
+                                {
+                                    <option value="@parent.Id">@parent.TenMenu</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Vị trí</label>
+                            <input type="number" id="viTri" name="viTri" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Icon Class</label>
+                            <input type="text" id="iconClass" name="iconClass" class="form-control" placeholder="bi bi-house" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Đường dẫn</label>
+                            <input type="text" id="duongDan" name="duongDan" class="form-control" placeholder="/Controller/Action" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Controller</label>
+                            <input type="text" id="controllerName" name="controllerName" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Action</label>
+                            <input type="text" id="actionName" name="actionName" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Area</label>
+                            <input type="text" id="area" name="area" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="text-danger" id="menuError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="menuSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteMenuModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa menu này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteMenuConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+
+            // Create
+            $("button[data-action='create']").on('click', function() {
+                $('#menuModalTitle').text('Thêm menu mới');
+                $('#menuForm')[0].reset();
+                $('#menuId').val('');
+                $('#viTri').val(0);
+                $('#menuError').hide();
+                new bootstrap.Modal(document.getElementById('menuModal')).show();
+            });
+
+            // Edit
+            $(document).on('click', "button[data-action='edit']", function() {
+                var id = $(this).data('id');
+                $('#menuModalTitle').text('Chỉnh sửa menu');
+                $('#menuError').hide();
+                $.get('/QuanTriHeThong/GetMenu', { id: id }).done(function(res) {
+                    $('#menuId').val(res.id);
+                    $('#tenMenu').val(res.tenMenu);
+                    $('#viTri').val(res.viTri);
+                    $('#iconClass').val(res.iconClass);
+                    $('#duongDan').val(res.duongDan);
+                    $('#controllerName').val(res.controllerName);
+                    $('#actionName').val(res.actionName);
+                    $('#area').val(res.area);
+                    $('#parentId').val(res.parentId || '');
+                    new bootstrap.Modal(document.getElementById('menuModal')).show();
+                });
+            });
+
+            // Save
+            $('#menuSaveBtn').on('click', function() {
+                var id = $('#menuId').val();
+                var url = id ? '/QuanTriHeThong/EditAjax' : '/QuanTriHeThong/CreateAjax';
+                $.post(url, $('#menuForm').serialize()).done(function(res) {
+                    if (res.success) location.reload();
+                    else { $('#menuError').text(res.message).show(); }
+                }).fail(function() { alert('Có lỗi xảy ra'); });
+            });
+
+            // Delete
+            $(document).on('click', "button[data-action='delete']", function() {
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteMenuModal')).show();
+            });
+
+            $('#deleteMenuConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $.post('/QuanTriHeThong/DeleteAjax', { id: deleteId }).done(function(res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                });
+            });
+        });
+    </script>
+}

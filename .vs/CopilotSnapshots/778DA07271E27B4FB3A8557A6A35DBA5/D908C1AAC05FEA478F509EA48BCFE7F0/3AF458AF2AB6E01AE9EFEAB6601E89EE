@@ -1,0 +1,1819 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Constants;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Extensions;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.Enums;
+using QuanLyNhanLuc.Models.ViewModels;
+
+namespace QuanLyNhanLuc.Controllers;
+
+[Authorize(Policy = PolicyNames.QuanLyNhanSu)]
+public class NhanSuController : Controller
+{
+    private readonly QLNLContext _context;
+    private readonly UserManager<NguoiDung> _userManager;
+    public NhanSuController(QLNLContext context, UserManager<NguoiDung> userManager)
+    {
+        _context = context;
+        _userManager = userManager;
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> DanhSachNhanVien(int page = 1, int pageSize = 10, string? search = null, string? gioiTinh = null, Guid? phongBanId = null, string? sortBy = null, string? sortOrder = "asc")
+    {
+        IQueryable<ThongTinNguoiDung> query = _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .Where(t => t.NhanSuType != NhanSuType.ThucTapSinh)
+            .AsQueryable();
+
+        // Search
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => t.FullName.Contains(search) ||
+                                    (t.IdentityNumber != null && t.IdentityNumber.Contains(search)) ||
+                                    (t.User != null && t.User.Email != null && t.User.Email.Contains(search)) ||
+                                    (t.User != null && t.User.PhoneNumber != null && t.User.PhoneNumber.Contains(search)));
+        }
+
+        // Filter by Gender
+        if (!string.IsNullOrWhiteSpace(gioiTinh))
+        {
+            query = query.Where(t => t.GioiTinhStxt == gioiTinh);
+        }
+
+        // Filter by Department
+        if (phongBanId.HasValue)
+        {
+            query = query.Where(t => t.DepartmentId == phongBanId);
+        }
+
+        // Sorting
+        query = sortBy?.ToLower() switch
+        {
+            "name" => sortOrder == "desc" ? query.OrderByDescending(t => t.FullName) : query.OrderBy(t => t.FullName),
+            "department" => sortOrder == "desc" ? query.OrderByDescending(t => t.Department!.TenPhongBan) : query.OrderBy(t => t.Department!.TenPhongBan),
+            "position" => sortOrder == "desc" ? query.OrderByDescending(t => t.ChucVu!.TenChucVu) : query.OrderBy(t => t.ChucVu!.TenChucVu),
+            "status" => sortOrder == "desc" ? query.OrderByDescending(t => t.Status) : query.OrderBy(t => t.Status),
+            _ => query.OrderByDescending(t => t.Created)
+        };
+
+        int total = await query.CountAsync();
+
+        List<NhanVienListVM> nhanvien = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(ttnd => new NhanVienListVM
+            {
+                Id = ttnd.Id,
+                FullName = ttnd.FullName,
+                IdentityNumber = ttnd.IdentityNumber,
+                GioiTinhStxt = ttnd.GioiTinhStxt,
+                DepartmentName = ttnd.Department != null ? ttnd.Department.TenPhongBan : string.Empty,
+                PositionName = ttnd.ChucVu != null ? ttnd.ChucVu.TenChucVu : string.Empty,
+                Email = ttnd.User != null ? ttnd.User.Email : string.Empty,
+                PhoneNumber = ttnd.User != null ? ttnd.User.PhoneNumber : string.Empty,
+                Status = ttnd.Status
+            })
+            .ToListAsync();
+
+        // Load departments for dropdown
+        var departments = await _context.Departments
+            .Where(d => d.Status == Models.Enums.Status.Approved)
+            .OrderBy(d => d.TenPhongBan)
+            .Select(d => new { d.Id, d.TenPhongBan })
+            .ToListAsync();
+
+        // Always set ViewBag values
+        ViewBag.TotalPages = total > 0 ? (int)Math.Ceiling(total / (double)pageSize) : 1;
+        ViewBag.TotalItems = total;
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.GioiTinh = gioiTinh;
+        ViewBag.PhongBanId = phongBanId;
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortOrder = sortOrder;
+        ViewBag.Departments = departments;
+
+        return View(nhanvien);
+    }
+
+    public async Task<IActionResult> DanhSachThucTap(int page = 1, int pageSize = 10, string? search = null, string? gioiTinh = null, Guid? phongBanId = null, string? sortBy = null, string? sortOrder = "asc")
+    {
+        IQueryable<ThongTinNguoiDung> query = _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .Where(t => t.NhanSuType == NhanSuType.ThucTapSinh)
+            .AsQueryable();
+
+        // Search
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => t.FullName.Contains(search) ||
+                                    (t.IdentityNumber != null && t.IdentityNumber.Contains(search)) ||
+                                    (t.User != null && t.User.Email != null && t.User.Email.Contains(search)) ||
+                                    (t.User != null && t.User.PhoneNumber != null && t.User.PhoneNumber.Contains(search)));
+        }
+
+        // Filter by Gender
+        if (!string.IsNullOrWhiteSpace(gioiTinh))
+        {
+            query = query.Where(t => t.GioiTinhStxt == gioiTinh);
+        }
+
+        // Filter by Department
+        if (phongBanId.HasValue)
+        {
+            query = query.Where(t => t.DepartmentId == phongBanId);
+        }
+
+        // Sorting
+        query = sortBy?.ToLower() switch
+        {
+            "name" => sortOrder == "desc" ? query.OrderByDescending(t => t.FullName) : query.OrderBy(t => t.FullName),
+            "department" => sortOrder == "desc" ? query.OrderByDescending(t => t.Department!.TenPhongBan) : query.OrderBy(t => t.Department!.TenPhongBan),
+            "position" => sortOrder == "desc" ? query.OrderByDescending(t => t.ChucVu!.TenChucVu) : query.OrderBy(t => t.ChucVu!.TenChucVu),
+            "status" => sortOrder == "desc" ? query.OrderByDescending(t => t.Status) : query.OrderBy(t => t.Status),
+            _ => query.OrderByDescending(t => t.Created)
+        };
+
+        int total = await query.CountAsync();
+
+        List<NhanVienListVM> thucTapSinh = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(ttnd => new NhanVienListVM
+            {
+                Id = ttnd.Id,
+                FullName = ttnd.FullName,
+                IdentityNumber = ttnd.IdentityNumber,
+                GioiTinhStxt = ttnd.GioiTinhStxt,
+                DepartmentName = ttnd.Department != null ? ttnd.Department.TenPhongBan : string.Empty,
+                PositionName = ttnd.ChucVu != null ? ttnd.ChucVu.TenChucVu : string.Empty,
+                Email = ttnd.User != null ? ttnd.User.Email : string.Empty,
+                PhoneNumber = ttnd.User != null ? ttnd.User.PhoneNumber : string.Empty,
+                Status = ttnd.Status
+            })
+            .ToListAsync();
+
+        // Load departments for dropdown
+        var departments = await _context.Departments
+            .Where(d => d.Status == Models.Enums.Status.Approved)
+            .OrderBy(d => d.TenPhongBan)
+            .Select(d => new { d.Id, d.TenPhongBan })
+            .ToListAsync();
+
+        // Always set ViewBag values
+        ViewBag.TotalPages = total > 0 ? (int)Math.Ceiling(total / (double)pageSize) : 1;
+        ViewBag.TotalItems = total;
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.GioiTinh = gioiTinh;
+        ViewBag.PhongBanId = phongBanId;
+        ViewBag.SortBy = sortBy;
+        ViewBag.SortOrder = sortOrder;
+        ViewBag.Departments = departments;
+
+        return View(thucTapSinh);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetNhanVienDetail(Guid id)
+    {
+        ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        return nhanVien == null
+            ? NotFound()
+            : Json(new
+            {
+                fullName = nhanVien.FullName,
+                identityNumber = nhanVien.IdentityNumber,
+                gioiTinh = nhanVien.GioiTinhStxt,
+                email = nhanVien.User?.Email,
+                phoneNumber = nhanVien.User?.PhoneNumber,
+                departmentName = nhanVien.Department?.TenPhongBan,
+                positionName = nhanVien.ChucVu?.TenChucVu
+            });
+    }
+    public async Task<IActionResult> GetModalThemNhanSu()
+    {
+        try
+        {
+            ThemNhanVienVM model = new();
+            List<Department> departments = await _context.Departments
+                .Where(d => d.Status == Models.Enums.Status.Approved)
+                .OrderBy(d => d.TenPhongBan)
+                .ToListAsync();
+            List<ChucVu> chucVus = await _context.ChucVus
+                .Where(c => c.Status == Models.Enums.Status.Approved)
+                .OrderBy(c => c.TenChucVu)
+                .ToListAsync();
+
+            model.Departments = new SelectList(departments, "Id", "TenPhongBan");
+            model.ChucVus = new SelectList(chucVus, "Id", "TenChucVu");
+
+            return PartialView("~/Views/Modals/_ModalThemNhanSuClean.cshtml", model);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+    public async Task<IActionResult> ChiTietNhanVien(Guid id)
+    {
+        ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs
+            .Include(t => t.Department)
+            .Include(t => t.ChucVu)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (nhanVien == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy nhân viên";
+            return RedirectToAction("DanhSachNhanVien");
+        }
+
+        return View(nhanVien);
+    }
+    public IActionResult GetModalConfirmDelete(Guid id)
+    {
+        return PartialView("~/Views/Modals/_ModalConfirmDelete.cshtml", id);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ActivateNhanVien(Guid id)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs.FindAsync(id);
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            nhanVien.Status = Models.Enums.Status.Approved;
+            _ = await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Kích hoạt nhân viên thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeactivateNhanVien(Guid id)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs.FindAsync(id);
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            nhanVien.Status = Models.Enums.Status.Canceled;
+            _ = await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Vô hiệu hóa nhân viên thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    [HttpPost]
+    public async Task<IActionResult> XoaNhanVien(Guid id)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            // Xóa các thông tin liên quan
+            List<TaiKhoanNganHang> taiKhoanNganHangs = await _context.TaiKhoanNganHangs.Where(x => x.NguoiDungId == nhanVien.UserId).ToListAsync();
+            _context.TaiKhoanNganHangs.RemoveRange(taiKhoanNganHangs);
+
+            List<TrinhDo> trinhDos = await _context.TrinhDos.Where(x => x.NguoiDungId == nhanVien.UserId).ToListAsync();
+            _context.TrinhDos.RemoveRange(trinhDos);
+
+            List<DaoTao> daoTaos = await _context.DaoTaos.Where(x => x.NguoiDungId == nhanVien.UserId).ToListAsync();
+            _context.DaoTaos.RemoveRange(daoTaos);
+
+            List<QuanHeGiaDinh> quanHeGiaDinhs = await _context.QuanHeGiaDinhs.Where(x => x.NguoiDungId == nhanVien.UserId).ToListAsync();
+            _context.QuanHeGiaDinhs.RemoveRange(quanHeGiaDinhs);
+
+            // Xóa thông tin người dùng
+            _ = _context.ThongTinNguoiDungs.Remove(nhanVien);
+
+            // Xóa người dùng
+            if (nhanVien.User != null)
+            {
+                _ = await _userManager.DeleteAsync(nhanVien.User);
+            }
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Xóa nhân viên thành công!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Có lỗi xảy ra khi xóa nhân viên: " + ex.Message });
+        }
+    }
+    [HttpPost]
+    public async Task<IActionResult> Create(EmployeeViewModel model)
+    {
+        try
+        {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(model.HoVaTen))
+            {
+                return Json(new { success = false, message = "Họ và tên không được để trống" });
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                return Json(new { success = false, message = "Email không được để trống" });
+            }
+
+            if (string.IsNullOrWhiteSpace(model.MatKhau))
+            {
+                return Json(new { success = false, message = "Mật khẩu không được để trống" });
+            }
+
+            // Check if email already exists
+            NguoiDung? existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+            {
+                return Json(new { success = false, message = "Email đã tồn tại trong hệ thống" });
+            }
+
+            string fileName = string.Empty;
+            if (model.AnhDaiDien != null && model.AnhDaiDien.Length > 0)
+            {
+                fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.AnhDaiDien.FileName);
+                string imagesDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Image");
+                _ = Directory.CreateDirectory(imagesDir);
+                string filePath = Path.Combine(imagesDir, fileName);
+                using FileStream stream = new(filePath, FileMode.Create);
+                await model.AnhDaiDien.CopyToAsync(stream);
+            }
+
+            // Create user account
+            NguoiDung user = new()
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                PhoneNumber = model.SoDienThoai,
+                MaNhanVien = model.MaNhanVien,
+                EmailConfirmed = true
+            };
+
+            IdentityResult result = await _userManager.CreateAsync(user, model.MatKhau);
+            if (!result.Succeeded)
+            {
+                string errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Json(new { success = false, message = errors });
+            }
+
+            // Create employee info
+            ThongTinNguoiDung employee = new()
+            {
+                FullName = model.HoVaTen,
+                GioiTinh = model.GioiTinh,
+                GioiTinhStxt = model.GioiTinh.GetDescription(),
+                BirthDay = model.NgaySinh,
+                IdentityNumber = model.CCCD,
+                DepartmentId = model.PhongBanId,
+                ChucVuId = model.ChucVuId,
+                NhanSuType = model.LoaiNhanSu,
+                NhanSuTypeStxt = model.LoaiNhanSu.GetDescription(),
+                ImageLink = fileName,
+                UserId = user.Id
+            };
+
+            _ = await _context.ThongTinNguoiDungs.AddAsync(employee);
+            _ = await _context.SaveChangesAsync();
+
+            string redirectUrl = model.LoaiNhanSu == NhanSuType.ThucTapSinh
+                ? Url.Action("DanhSachThucTap") ?? "/NhanSu/DanhSachThucTap"
+                : Url.Action("DanhSachNhanVien") ?? "/NhanSu/DanhSachNhanVien";
+
+            return Json(new { success = true, redirectUrl });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Có lỗi xảy ra: " + ex.Message });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "Vui lòng chọn file ảnh" });
+            }
+
+            // Validate file type
+            string[] allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+            {
+                return Json(new { success = false, message = "Chỉ cho phép upload file ảnh (JPG, PNG, GIF, WEBP)" });
+            }
+
+            // Validate file size (max 5MB)
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                return Json(new { success = false, message = "Kích thước file không được vượt quá 5MB" });
+            }
+
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs.FindAsync(id);
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            // Delete old image if exists
+            if (!string.IsNullOrEmpty(nhanVien.ImageLink) && nhanVien.ImageLink != "/Image/AvatarMIG.png")
+            {
+                string oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Image", nhanVien.ImageLink);
+                if (System.IO.File.Exists(oldImagePath))
+                {
+                    System.IO.File.Delete(oldImagePath);
+                }
+            }
+
+            // Save new image
+            string fileName = $"{id}_{DateTime.Now:yyyyMMddHHmmss}{Path.GetExtension(file.FileName)}";
+            string imagesDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Image");
+            _ = Directory.CreateDirectory(imagesDir);
+            string filePath = Path.Combine(imagesDir, fileName);
+
+            using (FileStream stream = new(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Update database
+            nhanVien.ImageLink = fileName;
+            _ = await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Cập nhật ảnh đại diện thành công", imageUrl = "/Image/" + fileName });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Có lỗi xảy ra: " + ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetModalSuaNhanVien(Guid id)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (nhanVien == null)
+            {
+                return NotFound();
+            }
+
+            List<Department> departments = await _context.Departments
+                .Where(d => d.Status == Models.Enums.Status.Approved)
+                .OrderBy(d => d.TenPhongBan)
+                .ToListAsync();
+            List<ChucVu> chucVus = await _context.ChucVus
+                .Where(c => c.Status == Models.Enums.Status.Approved)
+                .OrderBy(c => c.TenChucVu)
+                .ToListAsync();
+
+
+            SuaNhanVienVM model = new()
+            {
+                Id = nhanVien.Id,
+                HoVaTen = nhanVien.FullName,
+                GioiTinh = nhanVien.GioiTinh,
+                NgaySinh = nhanVien.BirthDay,
+                CCCD = nhanVien.IdentityNumber,
+                PhongBanId = nhanVien.DepartmentId,
+                ChucVuId = nhanVien.ChucVuId,
+                LoaiNhanSu = nhanVien.NhanSuType ?? NhanSuType.NhanVienChinhThuc,
+                Email = nhanVien.User?.Email,
+                SoDienThoai = nhanVien.User?.PhoneNumber,
+                MaNhanVien = nhanVien.User?.MaNhanVien,
+                ImageLink = nhanVien.ImageLink,
+                Departments = new SelectList(departments, "Id", "TenPhongBan", nhanVien.DepartmentId),
+                ChucVus = new SelectList(chucVus, "Id", "TenChucVu", nhanVien.ChucVuId)
+            };
+
+            return PartialView("~/Views/Modals/_ModalSuaNhanVien.cshtml", model);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Update(SuaNhanVienVM model)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Id == model.Id);
+
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            // Không cho phép sửa nếu đã duyệt
+            if (nhanVien.Status == Models.Enums.Status.Approved)
+            {
+                return Json(new { success = false, message = "Không thể sửa nhân viên đã được duyệt" });
+            }
+
+            // Cập nhật ảnh nếu có
+            if (model.AnhDaiDien != null && model.AnhDaiDien.Length > 0)
+            {
+                // Xóa ảnh cũ
+                if (!string.IsNullOrEmpty(nhanVien.ImageLink) && nhanVien.ImageLink != "AvatarMIG.png")
+                {
+                    string oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Image", nhanVien.ImageLink);
+                    if (System.IO.File.Exists(oldImagePath))
+                    {
+                        System.IO.File.Delete(oldImagePath);
+                    }
+                }
+
+                // Lưu ảnh mới
+                string fileName = $"{model.Id}_{DateTime.Now:yyyyMMddHHmmss}{Path.GetExtension(model.AnhDaiDien.FileName)}";
+                string imagesDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Image");
+                _ = Directory.CreateDirectory(imagesDir);
+                string filePath = Path.Combine(imagesDir, fileName);
+
+                using (FileStream stream = new(filePath, FileMode.Create))
+                {
+                    await model.AnhDaiDien.CopyToAsync(stream);
+                }
+                nhanVien.ImageLink = fileName;
+            }
+
+            // Cập nhật thông tin
+            nhanVien.FullName = model.HoVaTen;
+            nhanVien.GioiTinh = model.GioiTinh;
+            nhanVien.GioiTinhStxt = model.GioiTinh.GetDescription();
+            nhanVien.BirthDay = model.NgaySinh;
+            nhanVien.IdentityNumber = model.CCCD ?? string.Empty;
+            nhanVien.DepartmentId = model.PhongBanId;
+            nhanVien.ChucVuId = model.ChucVuId;
+            nhanVien.NhanSuType = model.LoaiNhanSu;
+            nhanVien.NhanSuTypeStxt = model.LoaiNhanSu.GetDescription();
+
+            // Cập nhật thông tin tài khoản
+            if (nhanVien.User != null)
+            {
+                nhanVien.User.PhoneNumber = model.SoDienThoai;
+                nhanVien.User.MaNhanVien = model.MaNhanVien ?? string.Empty;
+            }
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Cập nhật nhân viên thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Có lỗi xảy ra: " + ex.Message });
+        }
+    }
+
+    #region Tài khoản ngân hàng
+    [HttpPost]
+    public async Task<IActionResult> SaveTaiKhoanNganHang(TaiKhoanNganHang model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
+            }
+
+            // ✅ FIX: Tìm entity dựa trên NguoiDungId thay vì Id
+            TaiKhoanNganHang? entity = await _context.TaiKhoanNganHangs
+                .FirstOrDefaultAsync(t => t.NguoiDungId == model.NguoiDungId);
+
+            if (entity == null)
+            {
+                // Thêm mới
+                entity = new TaiKhoanNganHang
+                {
+                    Id = Guid.NewGuid(),
+                    NguoiDungId = model.NguoiDungId
+                };
+                _ = _context.TaiKhoanNganHangs.Add(entity);
+            }
+
+            // Update thông tin
+            entity.TenNganHang = model.TenNganHang;
+            entity.ChiNhanh = model.ChiNhanh;
+            entity.SoTaiKhoan = model.SoTaiKhoan;
+            entity.TenChuTaiKhoan = model.TenChuTaiKhoan;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu thông tin ngân hàng thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTaiKhoanNganHang(string nguoiDungId)
+    {
+        try
+        {
+            TaiKhoanNganHang? tknh = await _context.TaiKhoanNganHangs
+                .FirstOrDefaultAsync(t => t.NguoiDungId == nguoiDungId);
+            return Json(new { success = true, data = tknh });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Đào tạo
+    [HttpPost]
+    public async Task<IActionResult> SaveDaoTao(DaoTao model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
+            }
+
+            // Tìm entity theo Id nếu có Id hợp lệ
+            DaoTao? entity = null;
+            if (model.Id != Guid.Empty)
+            {
+                entity = await _context.DaoTaos.FindAsync(model.Id);
+            }
+
+            if (entity == null)
+            {
+                // Thêm mới
+                entity = new DaoTao
+                {
+                    Id = Guid.NewGuid(),
+                    NguoiDungId = model.NguoiDungId
+                };
+                _ = _context.DaoTaos.Add(entity);
+            }
+
+            // Update thông tin
+            entity.TenTruongToChuc = model.TenTruongToChuc;
+            entity.NganhHocTenLop = model.NganhHocTenLop;
+            entity.ThoiGianBatDau = model.ThoiGianBatDau;
+            entity.ThoiGianKetThuc = model.ThoiGianKetThuc;
+            entity.HinhThucHoc = model.HinhThucHoc;
+            entity.VanBangChungChi = model.VanBangChungChi;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu thông tin đào tạo thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachDaoTao(string nguoiDungId)
+    {
+        try
+        {
+            List<DaoTao> daoTaos = await _context.DaoTaos
+                .Where(d => d.NguoiDungId == nguoiDungId)
+                .OrderByDescending(d => d.Created)
+                .ToListAsync();
+            return Json(new { success = true, data = daoTaos });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteDaoTao(Guid id)
+    {
+        try
+        {
+            DaoTao? entity = await _context.DaoTaos.FindAsync(id);
+            if (entity == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy thông tin" });
+            }
+
+            _ = _context.DaoTaos.Remove(entity);
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Xóa thông tin đào tạo thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Quan hệ gia đình
+    [HttpPost]
+    public async Task<IActionResult> SaveQuanHeGiaDinh(QuanHeGiaDinh model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
+            }
+
+            // Tìm entity theo Id nếu có Id hợp lệ
+            QuanHeGiaDinh? entity = null;
+            if (model.Id != Guid.Empty)
+            {
+                entity = await _context.QuanHeGiaDinhs.FindAsync(model.Id);
+            }
+
+            if (entity == null)
+            {
+                // Thêm mới
+                entity = new QuanHeGiaDinh
+                {
+                    Id = Guid.NewGuid(),
+                    NguoiDungId = model.NguoiDungId
+                };
+                _ = _context.QuanHeGiaDinhs.Add(entity);
+            }
+
+            // Update thông tin
+            entity.TenNguoiThan = model.TenNguoiThan;
+            entity.GioiTinh = model.GioiTinh;
+            entity.NgaySinh = model.NgaySinh;
+            entity.DienThoai = model.DienThoai;
+            entity.QuanHeVoiChuHo = model.QuanHeVoiChuHo;
+            entity.DiaChi = model.DiaChi;
+            entity.NgheNghiep = model.NgheNghiep;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu thông tin gia đình thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachQuanHeGiaDinh(string nguoiDungId)
+    {
+        try
+        {
+            List<QuanHeGiaDinh> quanHes = await _context.QuanHeGiaDinhs
+                .Where(q => q.NguoiDungId == nguoiDungId)
+                .OrderByDescending(q => q.Created)
+                .ToListAsync();
+            return Json(new { success = true, data = quanHes });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteQuanHeGiaDinh(Guid id)
+    {
+        try
+        {
+            QuanHeGiaDinh? entity = await _context.QuanHeGiaDinhs.FindAsync(id);
+            if (entity == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy thông tin" });
+            }
+
+            _ = _context.QuanHeGiaDinhs.Remove(entity);
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Xóa thông tin gia đình thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Trình độ
+    [HttpPost]
+    public async Task<IActionResult> SaveTrinhDo(TrinhDo model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ" });
+            }
+
+            TrinhDo? entity = await _context.TrinhDos
+                .FirstOrDefaultAsync(t => t.NguoiDungId == model.NguoiDungId);
+
+            if (entity == null)
+            {
+                entity = new TrinhDo
+                {
+                    Id = Guid.NewGuid(),
+                    NguoiDungId = model.NguoiDungId
+                };
+                _ = _context.TrinhDos.Add(entity);
+            }
+
+            entity.TrinhDoHocVan = model.TrinhDoHocVan;
+            entity.HocHamHocVi = model.HocHamHocVi;
+            entity.LyLuanChinhTri = model.LyLuanChinhTri;
+            entity.NgoaiNgu = model.NgoaiNgu;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu thông tin trình độ thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTrinhDo(string nguoiDungId)
+    {
+        try
+        {
+            TrinhDo? trinhDo = await _context.TrinhDos
+                .FirstOrDefaultAsync(t => t.NguoiDungId == nguoiDungId);
+            return Json(new { success = true, data = trinhDo });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Update Thông tin cơ bản
+    [HttpPost]
+    public async Task<IActionResult> UpdateThongTinCoBan(Guid Id, string FullName, string? IdentityNumber,
+        DateTime BirthDay, int GioiTinh)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs.FindAsync(Id);
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            nhanVien.FullName = FullName;
+            nhanVien.IdentityNumber = IdentityNumber ?? "";
+            nhanVien.BirthDay = BirthDay;
+            nhanVien.GioiTinh = (Models.Enums.GioiTinh)GioiTinh;
+            nhanVien.GioiTinhStxt = GioiTinh == 0 ? "Nam" : "Nữ";
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Cập nhật thông tin cơ bản thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Update Thông tin tài khoản
+    [HttpPost]
+    public async Task<IActionResult> UpdateThongTinTaiKhoan(string UserId, string? MaNhanVien, string Email, string? PhoneNumber)
+    {
+        try
+        {
+            NguoiDung? user = await _userManager.FindByIdAsync(UserId);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy tài khoản" });
+            }
+
+            user.MaNhanVien = MaNhanVien ?? string.Empty;
+            user.Email = Email;
+            user.NormalizedEmail = Email.ToUpper();
+            user.PhoneNumber = PhoneNumber;
+
+            IdentityResult result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = "Cập nhật thông tin tài khoản thành công" });
+            }
+            else
+            {
+                return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+            }
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Update Vị trí công tác
+    [HttpPost]
+    public async Task<IActionResult> UpdateViTriCongTac(Guid Id, Guid? DepartmentId, Guid? ChucVuId, int? NhanSuType)
+    {
+        try
+        {
+            ThongTinNguoiDung? nhanVien = await _context.ThongTinNguoiDungs.FindAsync(Id);
+            if (nhanVien == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy nhân viên" });
+            }
+
+            nhanVien.DepartmentId = DepartmentId;
+            nhanVien.ChucVuId = ChucVuId;
+            if (NhanSuType.HasValue)
+            {
+                nhanVien.NhanSuType = (global::NhanSuType)NhanSuType.Value;
+                nhanVien.NhanSuTypeStxt = nhanVien.NhanSuType switch
+                {
+                    global::NhanSuType.NhanVien => "Nhân viên",
+                    global::NhanSuType.ThucTapSinh => "Thực tập sinh",
+                    global::NhanSuType.NhanVienChinhThuc => "Nhân viên chính thức",
+                    global::NhanSuType.NhanVienThoiVu => "Nhân viên thời vụ",
+                    _ => ""
+                };
+            }
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Cập nhật vị trí công tác thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Hợp đồng - REMOVED OLD METHODS
+    // REMOVED: Old GetDanhSachHopDong, DeleteHopDong - see new implementations below
+    #endregion
+
+    #region Khen thưởng - Kỷ luật - REMOVED OLD METHODS
+    // REMOVED: Old GetDanhSachKhenThuong, GetDanhSachKyLuat, DeleteKhenThuong, DeleteKyLuat - see new implementations below
+    #endregion
+
+    #region Lương
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachLuong(string nguoiDungId, int? nam = null, int? thang = null)
+    {
+        try
+        {
+            NhanSu? nhanSu = await _context.NhanSus.FirstOrDefaultAsync(n => n.MaNhanVien == nguoiDungId);
+            if (nhanSu == null)
+            {
+                return Json(new { success = true, data = new List<object>() });
+            }
+
+            IQueryable<BangLuong> query = _context.BangLuongs.Where(l => l.NhanSuId == nhanSu.Id);
+
+            if (nam.HasValue && nam.Value > 0)
+            {
+                query = query.Where(l => l.Nam == nam.Value);
+            }
+
+            if (thang.HasValue && thang.Value > 0)
+            {
+                query = query.Where(l => l.Thang == thang.Value);
+            }
+
+            var luongs = await query
+                .OrderByDescending(l => l.Nam)
+                .ThenByDescending(l => l.Thang)
+                .Select(l => new
+                {
+                    l.Id,
+                    l.Thang,
+                    l.Nam,
+                    luongCoBan = l.LuongCoBan,
+                    phuCap = (l.PhuCapAnTrua ?? 0) + (l.PhuCapXangXe ?? 0) + (l.PhuCapDienThoai ?? 0) + (l.PhuCapKhac ?? 0),
+                    khauTru = l.TongKhauTru,
+                    thucLinh = l.LuongThucNhan,
+                    trangThai = (int)l.TrangThai,
+                    trangThaiStxt = l.TrangThai == Models.Enums.TrangThaiBangLuong.DaDuyet ? "Đã duyệt" : "Chờ duyệt"
+                })
+                .ToListAsync();
+            return Json(new { success = true, data = luongs });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    // REMOVED: Old SaveHopDong with individual parameters - replaced by SaveHopDong with SaveHopDongRequest
+    // REMOVED: Old SaveKhenThuongKyLuat with individual parameters - replaced by SaveKhenThuong/SaveKyLuat with Request models
+
+
+    #region Bảo hiểm
+    [HttpGet]
+    public async Task<IActionResult> GetBaoHiem(string nguoiDungId, string loai)
+    {
+        try
+        {
+            NhanSu? nhanSu = await _context.NhanSus.FirstOrDefaultAsync(n => n.MaNhanVien == nguoiDungId);
+            if (nhanSu == null)
+            {
+                return Json(new { success = true, data = (object?)null });
+            }
+
+            // Parse loai string sang enum
+            if (!Enum.TryParse<Models.Enums.LoaiBaoHiem>(loai, true, out LoaiBaoHiem loaiBaoHiem))
+            {
+                return Json(new { success = false, message = "Loại bảo hiểm không hợp lệ" });
+            }
+
+            BaoHiem? baoHiem = await _context.BaoHiems
+                .FirstOrDefaultAsync(b => b.NhanSuId == nhanSu.Id && b.LoaiBaoHiem == loaiBaoHiem);
+
+            if (baoHiem == null)
+            {
+                return Json(new { success = true, data = (object?)null });
+            }
+
+            object data = baoHiem.LoaiBaoHiem switch
+            {
+                Models.Enums.LoaiBaoHiem.BHXH => new
+                {
+                    soSo = baoHiem.SoBHXH,
+                    noiDangKy = baoHiem.NoiDangKyBHXH,
+                    ngayBatDau = baoHiem.NgayThamGia,
+                    ngayKetThuc = (DateTime?)null,
+                    trangThai = (int)baoHiem.TrangThaiBaoHiem,
+                    trangThaiStxt = baoHiem.TrangThaiBaoHiem.GetDescription()
+                },
+                Models.Enums.LoaiBaoHiem.BHTN => new
+                {
+                    soSo = baoHiem.SoBHXH, // Dùng chung số BH
+                    noiDangKy = baoHiem.NoiDangKyBHXH,
+                    ngayBatDau = baoHiem.NgayThamGiaBHTN,
+                    ngayKetThuc = (DateTime?)null,
+                    thoiGianDong = baoHiem.ThoiGianDongBHTN,
+                    trangThai = (int)baoHiem.TrangThaiBaoHiem,
+                    trangThaiStxt = baoHiem.TrangThaiBaoHiem.GetDescription()
+                },
+                Models.Enums.LoaiBaoHiem.BHYT => new
+                {
+                    soSo = baoHiem.SoBHYT,
+                    noiDangKy = baoHiem.NoiDangKyKCB,
+                    ngayBatDau = baoHiem.NgayCapThe,
+                    ngayKetThuc = baoHiem.NgayHetHan,
+                    maKCB = baoHiem.MaKCB,
+                    daTraThe = baoHiem.DaTraTheBHYT,
+                    trangThai = (int)baoHiem.TrangThaiBaoHiem,
+                    trangThaiStxt = baoHiem.TrangThaiBaoHiem.GetDescription()
+                },
+                _ => null
+            };
+
+            return Json(new { success = true, data });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveBaoHiem(string NguoiDungId, Guid? Id, string Loai, string? SoSo,
+        string? NoiDangKy, DateTime? NgayBatDau, DateTime? NgayKetThuc, int? TrangThai)
+    {
+        try
+        {
+            // Parse loai
+            if (!Enum.TryParse<Models.Enums.LoaiBaoHiem>(Loai, true, out LoaiBaoHiem loaiBaoHiem))
+            {
+                return Json(new { success = false, message = "Loại bảo hiểm không hợp lệ" });
+            }
+
+            NhanSu? nhanSu = await _context.NhanSus.FirstOrDefaultAsync(n => n.MaNhanVien == NguoiDungId);
+            if (nhanSu == null)
+            {
+                ThongTinNguoiDung? thongTin = await _context.ThongTinNguoiDungs.FirstOrDefaultAsync(t => t.UserId == NguoiDungId);
+                if (thongTin == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy thông tin nhân viên" });
+                }
+
+                // Validate PhongBanId - lấy từ bảng PhongBans
+                PhongBan? defaultPhongBan = await _context.PhongBans
+                    .Where(p => p.Status == Models.Enums.Status.Approved)
+                    .FirstOrDefaultAsync();
+
+                if (defaultPhongBan == null)
+                {
+                    return Json(new { success = false, message = "Hệ thống chưa có phòng ban nào. Vui lòng tạo phòng ban trước." });
+                }
+
+                nhanSu = new NhanSu
+                {
+                    Id = Guid.NewGuid(),
+                    MaNhanVien = NguoiDungId,
+                    HoVaTen = thongTin.FullName,
+                    PhongBanId = defaultPhongBan.Id,
+                    Status = Models.Enums.Status.Approved
+                };
+                _ = _context.NhanSus.Add(nhanSu);
+                _ = await _context.SaveChangesAsync();
+            }
+
+            BaoHiem entity;
+            if (Id.HasValue && Id.Value != Guid.Empty)
+            {
+                entity = await _context.BaoHiems.FindAsync(Id.Value);
+                if (entity == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy thông tin bảo hiểm" });
+                }
+            }
+            else
+            {
+                entity = new BaoHiem { Id = Guid.NewGuid(), NhanSuId = nhanSu.Id };
+                _ = _context.BaoHiems.Add(entity);
+            }
+
+            entity.LoaiBaoHiem = loaiBaoHiem;
+            entity.TrangThaiBaoHiem = TrangThai.HasValue
+                ? (Models.Enums.TrangThaiBaoHiem)TrangThai.Value
+                : Models.Enums.TrangThaiBaoHiem.DangThamGia;
+
+            // Cập nhật theo loại
+            switch (loaiBaoHiem)
+            {
+                case Models.Enums.LoaiBaoHiem.BHXH:
+                    entity.SoBHXH = SoSo ?? string.Empty;
+                    entity.NoiDangKyBHXH = NoiDangKy ?? string.Empty;
+                    if (NgayBatDau.HasValue)
+                    {
+                        entity.NgayThamGia = NgayBatDau.Value;
+                    }
+
+                    break;
+
+                case Models.Enums.LoaiBaoHiem.BHTN:
+                    entity.SoBHXH = SoSo ?? string.Empty;
+                    entity.NoiDangKyBHXH = NoiDangKy ?? string.Empty;
+                    if (NgayBatDau.HasValue)
+                    {
+                        entity.NgayThamGiaBHTN = NgayBatDau.Value;
+                    }
+
+                    break;
+
+                case Models.Enums.LoaiBaoHiem.BHYT:
+                    entity.SoBHYT = SoSo ?? string.Empty;
+                    entity.NoiDangKyKCB = NoiDangKy ?? string.Empty;
+                    if (NgayBatDau.HasValue)
+                    {
+                        entity.NgayCapThe = NgayBatDau.Value;
+                    }
+
+                    if (NgayKetThuc.HasValue)
+                    {
+                        entity.NgayHetHan = NgayKetThuc.Value;
+                    }
+
+                    break;
+            }
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu thông tin bảo hiểm thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachBaoHiem(string nguoiDungId)
+    {
+        try
+        {
+            NhanSu? nhanSu = await _context.NhanSus.FirstOrDefaultAsync(n => n.MaNhanVien == nguoiDungId);
+            if (nhanSu == null)
+            {
+                return Json(new { success = true, data = new List<object>() });
+            }
+
+            var baoHiems = await _context.BaoHiems
+                .Where(b => b.NhanSuId == nhanSu.Id)
+                .OrderBy(b => b.LoaiBaoHiem)
+                .Select(b => new
+                {
+                    b.Id,
+                    loaiBaoHiem = (int)b.LoaiBaoHiem,
+                    loaiBaoHiemStxt = b.LoaiBaoHiem.GetDescription(),
+                    trangThai = (int)b.TrangThaiBaoHiem,
+                    trangThaiStxt = b.TrangThaiBaoHiem.GetDescription(),
+                    soSo = b.LoaiBaoHiem == Models.Enums.LoaiBaoHiem.BHYT ? b.SoBHYT : b.SoBHXH,
+                    noiDangKy = b.LoaiBaoHiem == Models.Enums.LoaiBaoHiem.BHYT ? b.NoiDangKyKCB : b.NoiDangKyBHXH
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data = baoHiems });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Hợp đồng
+    [HttpPost]
+    public async Task<IActionResult> SaveHopDong(SaveHopDongRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
+            }
+
+            // Tìm hoặc tạo NhanSu
+            NhanSu? nhanSu = await _context.NhanSus
+                .FirstOrDefaultAsync(n => n.MaNhanVien == request.NguoiDungId);
+
+            if (nhanSu == null)
+            {
+                // Tạo NhanSu mới từ ThongTinNguoiDung
+                ThongTinNguoiDung? thongTin = await _context.ThongTinNguoiDungs
+                    .Include(t => t.User)
+                    .FirstOrDefaultAsync(t => t.UserId == request.NguoiDungId);
+
+                if (thongTin == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy thông tin nhân viên" });
+                }
+
+                // Validate PhongBanId - lấy từ bảng PhongBans
+                Guid? validPhongBanId = null;
+
+                // Lấy PhongBan đầu tiên có trong hệ thống
+                PhongBan? defaultPhongBan = await _context.PhongBans
+                    .Where(p => p.Status == Models.Enums.Status.Approved)
+                    .FirstOrDefaultAsync();
+
+                if (defaultPhongBan == null)
+                {
+                    return Json(new { success = false, message = "Hệ thống chưa có phòng ban nào. Vui lòng tạo phòng ban trước." });
+                }
+
+                validPhongBanId = defaultPhongBan.Id;
+
+                nhanSu = new NhanSu
+                {
+                    Id = Guid.NewGuid(),
+                    MaNhanVien = request.NguoiDungId,
+                    HoVaTen = thongTin.FullName,
+                    PhongBanId = validPhongBanId.Value,
+                    Status = Models.Enums.Status.Approved
+                };
+                _ = _context.NhanSus.Add(nhanSu);
+                _ = await _context.SaveChangesAsync();
+            }
+
+            // Tìm entity theo Id nếu có
+            HopDong? entity = null;
+            if (request.Id != Guid.Empty)
+            {
+                entity = await _context.HopDongs.FindAsync(request.Id);
+            }
+
+            if (entity == null)
+            {
+                // Thêm mới
+                entity = new HopDong
+                {
+                    Id = Guid.NewGuid(),
+                    NhanSuId = nhanSu.Id
+                };
+                _ = _context.HopDongs.Add(entity);
+            }
+
+            // Update thông tin
+            entity.MaHopDong = request.MaHopDong;
+            entity.LoaiHopDong = request.LoaiHopDong;
+            entity.NgayKy = request.NgayKy;
+            entity.NgayBatDau = request.NgayBatDau;
+            entity.NgayKetThuc = request.NgayKetThuc;
+            entity.LuongCoBan = request.LuongCoBan;
+            entity.GhiChu = request.GhiChu;
+            entity.TrangThai = TrangThaiHopDong.HieuLuc;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu hợp đồng thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    // ViewModel for HopDong request
+    public class SaveHopDongRequest
+    {
+        public Guid Id { get; set; }
+        public string NguoiDungId { get; set; } = string.Empty;
+        public string MaHopDong { get; set; } = string.Empty;
+        public LoaiHopDong LoaiHopDong { get; set; }
+        public DateTime NgayKy { get; set; }
+        public DateTime NgayBatDau { get; set; }
+        public DateTime? NgayKetThuc { get; set; }
+        public decimal LuongCoBan { get; set; }
+        public string? GhiChu { get; set; }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachHopDong(string nguoiDungId)
+    {
+        try
+        {
+            NhanSu? nhanSu = await _context.NhanSus
+                .FirstOrDefaultAsync(n => n.MaNhanVien == nguoiDungId);
+
+            if (nhanSu == null)
+            {
+                return Json(new { success = true, data = new List<object>() });
+            }
+
+            var hopDongs = await _context.HopDongs
+                .Where(h => h.NhanSuId == nhanSu.Id)
+                .OrderByDescending(h => h.NgayKy)
+                .Select(h => new
+                {
+                    h.Id,
+                    h.MaHopDong,
+                    SoHopDong = h.MaHopDong,
+                    LoaiHopDongStxt = h.LoaiHopDong == LoaiHopDong.ThuViec ? "Thử việc" :
+                                      h.LoaiHopDong == LoaiHopDong.CoThoiHan ? "Có thời hạn" :
+                                      h.LoaiHopDong == LoaiHopDong.KhongThoiHan ? "Không thời hạn" : "Thời vụ",
+                    h.NgayKy,
+                    NgayKyHopDong = h.NgayKy,
+                    h.NgayBatDau,
+                    h.NgayKetThuc,
+                    h.LuongCoBan,
+                    h.GhiChu
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data = hopDongs });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteHopDong(Guid id)
+    {
+        try
+        {
+            HopDong? entity = await _context.HopDongs.FindAsync(id);
+            if (entity == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy hợp đồng" });
+            }
+
+            _ = _context.HopDongs.Remove(entity);
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Xóa hợp đồng thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetHopDong(Guid id)
+    {
+        try
+        {
+            HopDong? hopDong = await _context.HopDongs.FindAsync(id);
+            if (hopDong == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy hợp đồng" });
+            }
+
+            return Json(new
+            {
+                success = true,
+                data = new
+                {
+                    hopDong.Id,
+                    maHopDong = hopDong.MaHopDong,
+                    loaiHopDong = (int)hopDong.LoaiHopDong,
+                    ngayKy = hopDong.NgayKy.ToString("yyyy-MM-dd"),
+                    ngayBatDau = hopDong.NgayBatDau.ToString("yyyy-MM-dd"),
+                    ngayKetThuc = hopDong.NgayKetThuc?.ToString("yyyy-MM-dd"),
+                    luongCoBan = hopDong.LuongCoBan,
+                    ghiChu = hopDong.GhiChu
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+
+    #region Khen thưởng kỷ luật
+    [HttpPost]
+    public async Task<IActionResult> SaveKhenThuong(SaveKhenThuongKyLuatRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
+            }
+
+            // Tìm hoặc tạo NhanSu
+            NhanSu? nhanSu = await _context.NhanSus
+                .FirstOrDefaultAsync(n => n.MaNhanVien == request.NguoiDungId);
+
+            if (nhanSu == null)
+            {
+                // Tạo NhanSu mới từ ThongTinNguoiDung
+                ThongTinNguoiDung? thongTin = await _context.ThongTinNguoiDungs
+                    .Include(t => t.User)
+                    .FirstOrDefaultAsync(t => t.UserId == request.NguoiDungId);
+
+                if (thongTin == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy thông tin nhân viên" });
+                }
+
+                // Validate PhongBanId - lấy từ bảng PhongBans
+                PhongBan? defaultPhongBan = await _context.PhongBans
+                    .Where(p => p.Status == Models.Enums.Status.Approved)
+                    .FirstOrDefaultAsync();
+
+                if (defaultPhongBan == null)
+                {
+                    return Json(new { success = false, message = "Hệ thống chưa có phòng ban nào. Vui lòng tạo phòng ban trước." });
+                }
+
+                nhanSu = new NhanSu
+                {
+                    Id = Guid.NewGuid(),
+                    MaNhanVien = request.NguoiDungId,
+                    HoVaTen = thongTin.FullName,
+                    PhongBanId = defaultPhongBan.Id,
+                    Status = Models.Enums.Status.Approved
+                };
+                _ = _context.NhanSus.Add(nhanSu);
+                _ = await _context.SaveChangesAsync();
+            }
+
+            // Tìm entity theo Id
+            KhenThuongKyLuat? entity = null;
+            if (request.Id != Guid.Empty)
+            {
+                entity = await _context.KhenThuongKyLuats.FindAsync(request.Id);
+            }
+
+            if (entity == null)
+            {
+                entity = new KhenThuongKyLuat
+                {
+                    Id = Guid.NewGuid(),
+                    NhanSuId = nhanSu.Id,
+                    Loai = LoaiKhenThuongKyLuat.KhenThuong
+                };
+                _ = _context.KhenThuongKyLuats.Add(entity);
+            }
+
+            entity.MaQuyetDinh = request.MaQuyetDinh;
+            entity.NgayQuyetDinh = request.NgayQuyetDinh;
+            entity.HinhThuc = request.HinhThuc;
+            entity.SoTien = request.SoTien;
+            entity.LyDo = request.LyDo;
+            entity.GhiChu = request.GhiChu;
+            entity.TrangThai = TrangThaiKhenThuongKyLuat.DaDuyet;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu khen thưởng thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveKyLuat(SaveKhenThuongKyLuatRequest request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
+            }
+
+            // Tìm hoặc tạo NhanSu
+            NhanSu? nhanSu = await _context.NhanSus
+                .FirstOrDefaultAsync(n => n.MaNhanVien == request.NguoiDungId);
+
+            if (nhanSu == null)
+            {
+                // Tạo NhanSu mới từ ThongTinNguoiDung
+                ThongTinNguoiDung? thongTin = await _context.ThongTinNguoiDungs
+                    .Include(t => t.User)
+                    .FirstOrDefaultAsync(t => t.UserId == request.NguoiDungId);
+
+                if (thongTin == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy thông tin nhân viên" });
+                }
+
+                // Validate PhongBanId - lấy từ bảng PhongBans
+                PhongBan? defaultPhongBan = await _context.PhongBans
+                    .Where(p => p.Status == Models.Enums.Status.Approved)
+                    .FirstOrDefaultAsync();
+
+                if (defaultPhongBan == null)
+                {
+                    return Json(new { success = false, message = "Hệ thống chưa có phòng ban nào. Vui lòng tạo phòng ban trước." });
+                }
+
+                nhanSu = new NhanSu
+                {
+                    Id = Guid.NewGuid(),
+                    MaNhanVien = request.NguoiDungId,
+                    HoVaTen = thongTin.FullName,
+                    PhongBanId = defaultPhongBan.Id,
+                    Status = Models.Enums.Status.Approved
+                };
+                _ = _context.NhanSus.Add(nhanSu);
+                _ = await _context.SaveChangesAsync();
+            }
+
+            // Tìm entity theo Id
+            KhenThuongKyLuat? entity = null;
+            if (request.Id != Guid.Empty)
+            {
+                entity = await _context.KhenThuongKyLuats.FindAsync(request.Id);
+            }
+
+            if (entity == null)
+            {
+                entity = new KhenThuongKyLuat
+                {
+                    Id = Guid.NewGuid(),
+                    NhanSuId = nhanSu.Id,
+                    Loai = LoaiKhenThuongKyLuat.KyLuat
+                };
+                _ = _context.KhenThuongKyLuats.Add(entity);
+            }
+
+            entity.MaQuyetDinh = request.MaQuyetDinh;
+            entity.NgayQuyetDinh = request.NgayQuyetDinh;
+            entity.HinhThuc = request.HinhThuc;
+            entity.SoTien = request.SoTien;
+            entity.LyDo = request.LyDo;
+            entity.GhiChu = request.GhiChu;
+            entity.TrangThai = TrangThaiKhenThuongKyLuat.DaDuyet;
+            entity.Status = Models.Enums.Status.Approved;
+
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Lưu kỷ luật thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    // ViewModel for KhenThuongKyLuat request
+    public class SaveKhenThuongKyLuatRequest
+    {
+        public Guid Id { get; set; }
+        public string NguoiDungId { get; set; } = string.Empty;
+        public string MaQuyetDinh { get; set; } = string.Empty;
+        public DateTime NgayQuyetDinh { get; set; }
+        public string HinhThuc { get; set; } = string.Empty;
+        public decimal? SoTien { get; set; }
+        public string LyDo { get; set; } = string.Empty;
+        public string? GhiChu { get; set; }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachKhenThuong(string nguoiDungId)
+    {
+        try
+        {
+            NhanSu? nhanSu = await _context.NhanSus
+                .FirstOrDefaultAsync(n => n.MaNhanVien == nguoiDungId);
+
+            if (nhanSu == null)
+            {
+                return Json(new { success = true, data = new List<object>() });
+            }
+
+            var data = await _context.KhenThuongKyLuats
+                .Where(k => k.NhanSuId == nhanSu.Id && k.Loai == LoaiKhenThuongKyLuat.KhenThuong)
+                .OrderByDescending(k => k.NgayQuyetDinh)
+                .Select(k => new
+                {
+                    k.Id,
+                    k.MaQuyetDinh,
+                    SoQuyetDinh = k.MaQuyetDinh,
+                    k.NgayQuyetDinh,
+                    NgayKy = k.NgayQuyetDinh,
+                    k.HinhThuc,
+                    HinhThucStxt = k.HinhThuc,
+                    k.SoTien,
+                    GiaTri = k.SoTien,
+                    k.LyDo,
+                    NoiDung = k.LyDo
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDanhSachKyLuat(string nguoiDungId)
+    {
+        try
+        {
+            NhanSu? nhanSu = await _context.NhanSus
+                .FirstOrDefaultAsync(n => n.MaNhanVien == nguoiDungId);
+
+            if (nhanSu == null)
+            {
+                return Json(new { success = true, data = new List<object>() });
+            }
+
+            var data = await _context.KhenThuongKyLuats
+                .Where(k => k.NhanSuId == nhanSu.Id && k.Loai == LoaiKhenThuongKyLuat.KyLuat)
+                .OrderByDescending(k => k.NgayQuyetDinh)
+                .Select(k => new
+                {
+                    k.Id,
+                    k.MaQuyetDinh,
+                    k.NgayQuyetDinh,
+                    k.HinhThuc,
+                    HinhThucStxt = k.HinhThuc,
+                    k.LyDo,
+                    NoiDung = k.LyDo
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteKhenThuong(Guid id)
+    {
+        try
+        {
+            KhenThuongKyLuat? entity = await _context.KhenThuongKyLuats.FindAsync(id);
+            if (entity == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy thông tin" });
+            }
+
+            _ = _context.KhenThuongKyLuats.Remove(entity);
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Xóa khen thưởng thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteKyLuat(Guid id)
+    {
+        try
+        {
+            KhenThuongKyLuat? entity = await _context.KhenThuongKyLuats.FindAsync(id);
+            if (entity == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy thông tin" });
+            }
+
+            _ = _context.KhenThuongKyLuats.Remove(entity);
+            _ = await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Xóa kỷ luật thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetKhenThuongKyLuat(Guid id)
+    {
+        try
+        {
+            KhenThuongKyLuat? entity = await _context.KhenThuongKyLuats.FindAsync(id);
+            if (entity == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy thông tin" });
+            }
+
+            return Json(new
+            {
+                success = true,
+                data = new
+                {
+                    entity.Id,
+                    loai = (int)entity.Loai,
+                    maQuyetDinh = entity.MaQuyetDinh,
+                    ngayQuyetDinh = entity.NgayQuyetDinh.ToString("yyyy-MM-dd"),
+                    hinhThuc = entity.HinhThuc,
+                    soTien = entity.SoTien,
+                    lyDo = entity.LyDo,
+                    ghiChu = entity.GhiChu
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+    #endregion
+}

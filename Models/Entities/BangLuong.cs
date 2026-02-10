@@ -1,0 +1,61 @@
+﻿using QuanLyNhanLuc.Models.Enums;
+
+namespace QuanLyNhanLuc.Models.Entities;
+
+public class BangLuong : EntityBase
+{
+    public Guid NhanSuId { get; set; }
+
+    public int Thang { get; set; }
+
+    public int Nam { get; set; }
+
+    public decimal LuongCoBan { get; set; }
+
+    public decimal HeSoLuong { get; set; } = 1;
+
+    public int SoNgayCong { get; set; }
+
+    public decimal? PhuCapAnTrua { get; set; }
+
+    public decimal? PhuCapXangXe { get; set; }
+
+    public decimal? PhuCapDienThoai { get; set; }
+
+    public decimal? PhuCapKhac { get; set; }
+
+    public decimal? TienThuong { get; set; }
+
+    public decimal? TienPhat { get; set; }
+
+    public decimal? TienLamThem { get; set; }
+
+    public decimal? KhauTruBHXH { get; set; }
+
+    public decimal? KhauTruBHYT { get; set; }
+
+    public decimal? KhauTruBHTN { get; set; }
+
+    public decimal? KhauTruThueNCCT { get; set; }
+
+    public decimal? KhauTruKhac { get; set; }
+
+    public decimal TongThuNhap { get; set; }
+
+    public decimal TongKhauTru { get; set; }
+
+    public decimal LuongThucNhan { get; set; }
+
+    public TrangThaiBangLuong TrangThai { get; set; } = TrangThaiBangLuong.ChuaDuyet;
+
+    public string? NguoiDuyet { get; set; }
+
+    public DateTime? NgayDuyet { get; set; }
+
+    public DateTime? NgayThanhToan { get; set; }
+
+    public string? GhiChu { get; set; }
+
+    // Navigation properties
+    public virtual NhanSu NhanSu { get; set; } = null!;
+}

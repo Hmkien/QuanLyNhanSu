@@ -1,0 +1,206 @@
+﻿@using QuanLyNhanLuc.Extensions
+@using QuanLyNhanLuc.Models.Enums
+@model QuanLyNhanLuc.Models.ViewModels.ThemNhanVienVM
+
+<div class="modal fade" id="themNhanVienModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">Thêm mới nhân viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="themNhanVienForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Cột bên trái: Upload ảnh -->
+                        <div class="col-md-3 text-center">
+                            <div class="mb-3">
+                                <h6 class="text-primary mb-3">Ảnh đại diện</h6>
+                                <div class="position-relative d-inline-block">
+                                    <img id="avatarPreviewAdd" src="/Image/AvatarMIG.png" 
+                                         alt="Ảnh đại diện" 
+                                         class="rounded-circle border shadow-sm" 
+                                         style="width: 150px; height: 150px; object-fit: cover;">
+                                    <label for="avatarUploadAdd" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2" style="cursor: pointer;" title="Chọn ảnh đại diện">
+                                        <i class="bi bi-camera-fill"></i>
+                                    </label>
+                                    <input type="file" id="avatarUploadAdd" name="AnhDaiDien" accept="image/*" class="d-none">
+                                </div>
+                                <p class="text-muted mt-2 small">Tối đa 5MB (jpg, png, gif, webp)</p>
+                            </div>
+                        </div>
+                        <!-- Cột bên phải: Thông tin -->
+                        <div class="col-md-9">
+                            <!-- Thông tin nhân viên -->
+                            <h6 class="mb-3 text-primary">Thông tin nhân viên</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                    <input name="HoVaTen" class="form-control" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+                                    <select name="GioiTinh" class="form-select" required>
+                                        <option value="">---Chọn---</option>
+                                        @foreach (GioiTinh gioiTinh in Enum.GetValues(typeof(GioiTinh)))
+                                        {
+                                            <option value="@((int)gioiTinh)">@gioiTinh.GetDescription()</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Ngày sinh</label>
+                                    <input name="NgaySinh" type="date" class="form-control" value="@DateTime.Now.AddYears(-20).ToString("yyyy-MM-dd")" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">CCCD / CMND</label>
+                                    <input name="CCCD" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phòng ban</label>
+                                    <select name="PhongBanId" class="form-select" asp-items="Model.Departments">
+                                        <option value="">---Chọn---</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Chức vụ</label>
+                                    <select name="ChucVuId" class="form-select" asp-items="Model.ChucVus">
+                                        <option value="">---Chọn---</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Loại nhân sự <span class="text-danger">*</span></label>
+                                <select name="LoaiNhanSu" class="form-select" required>
+                                    <option value="">---Chọn---</option>
+                                    @foreach (NhanSuType nhanSuType in Enum.GetValues(typeof(NhanSuType)))
+                                    {
+                                        <option value="@((int)nhanSuType)">@nhanSuType.GetDescription()</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Thông tin tài khoản -->
+                            <h6 class="mb-3 text-primary mt-4">Thông tin tài khoản</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input name="Email" type="email" class="form-control" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input name="SoDienThoai" type="tel" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Mã nhân viên</label>
+                                    <input name="MaNhanVien" class="form-control" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                                    <input name="MatKhau" type="password" class="form-control" required minlength="6" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                                    <input name="XacNhanMatKhau" type="password" class="form-control" required minlength="6" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="btnSaveNhanVien" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Preview avatar when select file
+        $('#avatarUploadAdd').on('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                Notification.error('Chỉ cho phép upload file ảnh (JPG, PNG, GIF, WEBP)');
+                $(this).val('');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                Notification.error('Kích thước file không được vượt quá 5MB');
+                $(this).val('');
+                return;
+            }
+
+            // Preview image
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#avatarPreviewAdd').attr('src', e.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        $('#btnSaveNhanVien').on('click', function(e) {
+            e.preventDefault();
+            
+            var form = $('#themNhanVienForm')[0];
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Validate password match
+            var password = $('input[name="MatKhau"]').val();
+            var confirmPassword = $('input[name="XacNhanMatKhau"]').val();
+            if (password !== confirmPassword) {
+                Notification.error('Mật khẩu và xác nhận mật khẩu không khớp');
+                return;
+            }
+
+            var formData = new FormData(form);
+            var btn = $(this);
+            
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Đang lưu...');
+            
+            $.ajax({
+                url: '/NhanSu/Create',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    if (res.success) {
+                        Notification.success('Đã thêm nhân viên thành công');
+                        $('#themNhanVienModal').modal('hide');
+                        setTimeout(function() {
+                            window.location.href = res.redirectUrl;
+                        }, 500);
+                    } else {
+                        Notification.error(res.message || 'Có lỗi xảy ra');
+                        btn.prop('disabled', false).text('Lưu');
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Có lỗi xảy ra khi thêm nhân viên';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    Notification.error(errorMsg);
+                    btn.prop('disabled', false).text('Lưu');
+                }
+            });
+        });
+    });
+</script>

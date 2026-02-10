@@ -1,0 +1,249 @@
+﻿// ==================== CHI TIẾT NHÂN VIÊN - TAB MANAGER ====================
+console.log('✅ chi-tiet-nhan-vien.js LOADED');
+
+// Global state
+window.NhanVienDetailState = {
+    nguoiDungId: null,
+    loadedSections: new Set()
+};
+
+// ==================== INIT ====================
+$(document).ready(function() {
+    console.log('🚀 Initializing Chi Tiet Nhan Vien...');
+    
+    // Get nguoiDungId from hidden input
+    const hiddenUserId = $('#hiddenNguoiDungId').val();
+    if (hiddenUserId) {
+        window.NhanVienDetailState.nguoiDungId = hiddenUserId;
+        console.log('✅ UserId:', window.NhanVienDetailState.nguoiDungId);
+    } else {
+        console.error('❌ Không tìm thấy nguoiDungId');
+    }
+    
+    // Bind tab events
+    bindTopTabs();
+    bindSubTabs();
+    
+    // Init other components
+    initYearMonthSelects();
+    setupEventHandlers();
+    
+    // Restore last tab
+    restoreLastTab();
+    
+    console.log('✅ Chi Tiet Nhan Vien initialized');
+});
+
+// ==================== TAB BINDING ====================
+function bindTopTabs() {
+    $('.menu-link-top').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const target = $(this).attr('data-target-top');
+        console.log('🔵 Top tab clicked:', target);
+        
+        if (!target) {
+            console.error('❌ No data-target-top');
+            return false;
+        }
+        
+        switchTopTab(target);
+        return false;
+    });
+    
+    console.log('✅ Top tabs bound:', $('.menu-link-top').length);
+}
+
+function bindSubTabs() {
+    $('.menu-link').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const target = $(this).attr('data-target');
+        console.log('🟢 Sub tab clicked:', target);
+        
+        if (!target) {
+            console.error('❌ No data-target');
+            return false;
+        }
+        
+        switchSubTab(target);
+        return false;
+    });
+    
+    console.log('✅ Sub tabs bound:', $('.menu-link').length);
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTopTab(targetSection) {
+    console.log('🔄 Switching to top tab:', targetSection);
+    
+    // Hide all
+    $('.content-section-top').addClass('d-none');
+    
+    // Show target
+    $(targetSection).removeClass('d-none');
+    
+    // Update styling
+    $('.menu-link-top')
+        .removeClass('active')
+        .removeClass('text-primary')
+        .addClass('text-dark');
+    
+    $(`.menu-link-top[data-target-top="${targetSection}"]`)
+        .addClass('active')
+        .addClass('text-primary')
+        .removeClass('text-dark');
+    
+    // Save to session
+    sessionStorage.setItem('lastTopTab', targetSection);
+    
+    // Load data
+    loadTopTabData(targetSection);
+    
+    console.log('✅ Switched to:', targetSection);
+}
+
+function switchSubTab(targetSection) {
+    console.log('🔄 Switching to sub tab:', targetSection);
+    
+    // Hide all
+    $('.content-section').addClass('d-none');
+    
+    // Show target
+    $('#' + targetSection).removeClass('d-none');
+    
+    // Update styling
+    $('.menu-link')
+        .removeClass('active')
+        .removeClass('text-primary')
+        .addClass('text-dark');
+    
+    $(`.menu-link[data-target="${targetSection}"]`)
+        .addClass('active')
+        .addClass('text-primary')
+        .removeClass('text-dark');
+    
+    // Save to session
+    sessionStorage.setItem('lastSubTab', targetSection);
+    
+    // Load data
+    loadSubTabData(targetSection);
+    
+    console.log('✅ Switched to:', targetSection);
+}
+
+function restoreLastTab() {
+    const lastTop = sessionStorage.getItem('lastTopTab');
+    const lastSub = sessionStorage.getItem('lastSubTab');
+    
+    if (lastTop && lastTop !== '#thong-tin-chung') {
+        console.log('🔄 Restoring top tab:', lastTop);
+        switchTopTab(lastTop);
+    }
+    
+    if (lastSub && lastSub !== 'ThongTinChung') {
+        setTimeout(() => {
+            console.log('🔄 Restoring sub tab:', lastSub);
+            switchSubTab(lastSub);
+        }, 100);
+    }
+}
+
+// ==================== DATA LOADING ====================
+function loadTopTabData(section) {
+    const userId = window.NhanVienDetailState.nguoiDungId;
+    if (!userId) return;
+    
+    switch(section) {
+        case '#hop-dong-bao-hiem':
+            if (!window.NhanVienDetailState.loadedSections.has('hopDong')) {
+                loadHopDongList(userId);
+                loadBaoHiemData(userId);
+            }
+            break;
+        case '#khen-thuong-ky-luat':
+            if (!window.NhanVienDetailState.loadedSections.has('khenThuong')) {
+                loadKhenThuongList(userId);
+                loadKyLuatList(userId);
+            }
+            break;
+        case '#luong':
+            if (!window.NhanVienDetailState.loadedSections.has('luong')) {
+                loadLuongList(userId);
+            }
+            break;
+    }
+}
+
+function loadSubTabData(section) {
+    const userId = window.NhanVienDetailState.nguoiDungId;
+    if (!userId) return;
+    
+    switch(section) {
+        case 'TaiKhoanNganHang':
+            if (!window.NhanVienDetailState.loadedSections.has('bank')) {
+                loadBankInfoDisplay(userId);
+            }
+            break;
+        case 'TrinhDo':
+            if (!window.NhanVienDetailState.loadedSections.has('trinhDo')) {
+                loadTrinhDoDisplay(userId);
+                loadDaoTaoList(userId);
+            }
+            break;
+        case 'HoKhau':
+            if (!window.NhanVienDetailState.loadedSections.has('family')) {
+                loadFamilyList(userId);
+            }
+            break;
+    }
+}
+
+// ==================== LOAD FUNCTIONS ====================
+// (Giữ nguyên các function load data từ code cũ)
+
+function loadBankInfoDisplay(userId) {
+    $('#bankInfoContent').html('<p class="text-muted">Đang tải...</p>');
+    $.get('/NhanSu/GetTaiKhoanNganHang', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#bankInfoContent').html(`
+                <div class="col-md-6"><p class="mb-1 text-secondary">Ngân hàng</p><p class="text-primary">${d.tenNganHang || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="mb-1 text-secondary">Chi nhánh</p><p class="text-primary">${d.chiNhanh || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Số tài khoản</p><p class="text-primary">${d.soTaiKhoan || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Tên chủ TK</p><p class="text-primary">${d.tenChuTaiKhoan || 'Chưa cập nhật'}</p></div>
+            `);
+        } else {
+            $('#bankInfoContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+        window.NhanVienDetailState.loadedSections.add('bank');
+    }).fail(function() {
+        $('#bankInfoContent').html('<p class="text-danger">Lỗi tải dữ liệu</p>');
+    });
+}
+
+function loadBankInfo(userId) {
+    $.get('/NhanSu/GetTaiKhoanNganHang', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#bankId').val(d.id);
+            $('#bankNguoiDungId').val(userId);
+            $('#tenNganHang').val(d.tenNganHang);
+            $('#chiNhanh').val(d.chiNhanh);
+            $('#soTaiKhoan').val(d.soTaiKhoan);
+            $('#tenChuTaiKhoan').val(d.tenChuTaiKhoan);
+        } else {
+            $('#bankNguoiDungId').val(userId);
+        }
+        $('#ModalSuaThongTinNganHang').modal('show');
+    });
+}
+
+// Export functions for global access
+window.loadBankInfo = loadBankInfo;
+window.switchTopTab = switchTopTab;
+window.switchSubTab = switchSubTab;
+
+console.log('✅ chi-tiet-nhan-vien.js READY');

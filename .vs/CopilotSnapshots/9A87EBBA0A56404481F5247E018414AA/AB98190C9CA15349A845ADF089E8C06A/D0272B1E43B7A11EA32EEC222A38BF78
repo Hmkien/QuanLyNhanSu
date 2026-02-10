@@ -1,0 +1,90 @@
+﻿<div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb custom-breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a class="text-decoration-none text-secondary">
+                    <i class="bi bi-house-door"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a class="text-decoration-none text-secondary">Tính lương</a>
+            </li>
+            <li class="breadcrumb-item active text-primary" aria-current="page">Bảng lương</li>
+        </ol>
+    </nav>
+    <h3 class="text-primary">Bảng lương</h3>
+    <div class="d-flex justify-content-start gap-3 align-items-center mb-3">
+        <select class="form-select w-auto">
+            <option>--Chọn ngày làm--</option>
+        </select>
+        <select class="form-select w-auto">
+            <option>--Chọn loại ngày công--</option>
+        </select>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tiêu đề</th>
+                <th>Nhân viên</th>
+                <th>Lương cơ bản</th>
+                <th>Các khoản khác</th>
+                <th></th>
+                <th>Tổng</th>
+                <th>Số công</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td class="text-orange">Phòng giải pháp</td>
+                <td>Nguyễn Văn A (annv)</td>
+                <td>19/5/2023</td>
+                <td>18:00 - 19:30</td>
+                <td class="text-orange">Tăng ca hưởng 1.5 NC</td>
+                <td>1.5</td>
+                <td>1</td>
+                <td class="text-center"><i class="bi bi-trash text-primary"></i></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td class="text-orange">Phòng đảm bảo chất lượng</td>
+                <td>Nguyễn Văn A (annv)</td>
+                <td>19/5/2023</td>
+                <td>18:00 - 19:30</td>
+                <td class="text-orange">Tăng ca hưởng 1.5 NC</td>
+                <td>1.5</td>
+                <td>1</td>
+                <td class="text-center"><i class="bi bi-trash text-primary"></i></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <select class="form-select d-inline-block text-primary" style="width: auto;">
+                <option>20</option>
+                <option>50</option>
+                <option>100</option>
+            </select>
+            <span class="ms-2 text-primary">Tổng số bản ghi: 915</span>
+        </div>
+        <nav>
+            <ul class="pagination custom-pagination mb-0">
+                <li class="page-item">
+                    <a class="page-link rounded-circle" href="#"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                <li class="page-item"><a class="page-link" href="#">1</a></li>
+                <li class="page-item active"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                <li class="page-item"><a class="page-link" href="#">8</a></li>
+                <li class="page-item"><a class="page-link" href="#">9</a></li>
+                <li class="page-item"><a class="page-link" href="#">10</a></li>
+                <li class="page-item">
+                    <a class="page-link rounded-circle" href="#"><i class="bi bi-chevron-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>

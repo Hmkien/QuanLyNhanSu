@@ -1,0 +1,113 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.Enums;
+
+namespace QuanLyNhanLuc.Controllers;
+
+public class PhanLoaiNhanSuController : Controller
+{
+    private readonly QLNLContext _context;
+
+    public PhanLoaiNhanSuController(QLNLContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+    {
+        var query = _context.PhanLoaiNhanSus.OrderBy(x => x.TenPhanLoai).AsNoTracking();
+        var total = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+        ViewBag.TotalItems = total;
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+
+        return View(items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPhanLoai(Guid id)
+    {
+        var item = await _context.PhanLoaiNhanSus.FindAsync(id);
+        if (item == null) return NotFound();
+        return Json(new { 
+            id = item.Id, 
+            tenPhanLoai = item.TenPhanLoai, 
+            moTa = item.MoTa,
+            status = (int)item.Status
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateAjax([FromForm] string tenPhanLoai, [FromForm] string? moTa)
+    {
+        if (string.IsNullOrWhiteSpace(tenPhanLoai))
+            return Json(new { success = false, message = "Tên phân loại không được để trống" });
+
+        var item = new PhanLoaiNhanSu
+        {
+            TenPhanLoai = tenPhanLoai,
+            MoTa = moTa ?? string.Empty,
+            Status = Status.Approved
+        };
+        _context.PhanLoaiNhanSus.Add(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditAjax([FromForm] Guid id, [FromForm] string tenPhanLoai, [FromForm] string? moTa)
+    {
+        var item = await _context.PhanLoaiNhanSus.FindAsync(id);
+        if (item == null) 
+            return Json(new { success = false, message = "Phân loại không tồn tại" });
+        
+        if (item.Status == Status.Approved)
+            return Json(new { success = false, message = "Không thể sửa bản ghi đã được duyệt" });
+
+        item.TenPhanLoai = tenPhanLoai;
+        item.MoTa = moTa ?? string.Empty;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
+    {
+        var item = await _context.PhanLoaiNhanSus.FindAsync(id);
+        if (item == null) 
+            return Json(new { success = false, message = "Phân loại không tồn tại" });
+
+        _context.PhanLoaiNhanSus.Remove(item);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ApproveAjax([FromForm] Guid id)
+    {
+        var item = await _context.PhanLoaiNhanSus.FindAsync(id);
+        if (item == null) 
+            return Json(new { success = false, message = "Phân loại không tồn tại" });
+
+        item.Status = Status.Approved;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RejectAjax([FromForm] Guid id)
+    {
+        var item = await _context.PhanLoaiNhanSus.FindAsync(id);
+        if (item == null) 
+            return Json(new { success = false, message = "Phân loại không tồn tại" });
+
+        item.Status = Status.Rejected;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+}

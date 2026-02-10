@@ -1,0 +1,60 @@
+﻿@* Modal Thêm/Sửa Khen thưởng *@
+<div class="modal fade" id="ModalKhenThuong" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="modalKhenThuongTitle">Thêm khen thưởng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formKhenThuong">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="khenThuongId" />
+                <input type="hidden" name="NguoiDungId" id="khenThuongNguoiDungId" />
+                <input type="hidden" name="Loai" value="0" /> @* 0 = KhenThuong *@
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Số quyết định <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="MaQuyetDinh" id="maQuyetDinhKT" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày quyết định <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayQuyetDinh" id="ngayQuyetDinhKT" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hình thức khen thưởng <span class="text-danger">*</span></label>
+                            <select class="form-select" name="HinhThuc" id="hinhThucKT" required>
+                                <option value="">--Chọn--</option>
+                                <option value="Tiền mặt">Tiền mặt</option>
+                                <option value="Bằng khen">Bằng khen</option>
+                                <option value="Giấy khen">Giấy khen</option>
+                                <option value="Quà tặng">Quà tặng</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Giá trị khen thưởng (VNĐ)</label>
+                            <input type="number" class="form-control" name="SoTien" id="soTienKT" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nội dung/Lý do khen thưởng <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="LyDo" id="lyDoKT" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" name="GhiChu" id="ghiChuKT" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+

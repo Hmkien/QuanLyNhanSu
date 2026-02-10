@@ -1,0 +1,558 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung
+@using QuanLyNhanLuc.Constants
+
+@{
+    ViewData["Title"] = "Chi ti?t nhân viên - " + Model.FullName;
+    bool canManage = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HR);
+}
+
+<style>
+    .hover-bg:hover { background-color: #f0f0f0; }
+    .menu-link { transition: all 0.2s; }
+    .menu-link.active { background-color: #e3f2fd !important; }
+</style>
+
+<!-- Breadcrumb -->
+<div class="row mb-3">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/"><i class="bi bi-house-door"></i></a></li>
+                <li class="breadcrumb-item"><a href="/NhanSu/DanhSachNhanVien">Danh sách nhân viên</a></li>
+                <li class="breadcrumb-item active text-primary">@Model.FullName</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container-fluid">
+<div class="row">
+    <!-- Left Column: Avatar and Basic Info -->
+    <div class="col-md-3">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body text-center">
+                <div class="position-relative d-inline-block mb-3">
+                    <img id="avatarPreview" 
+                         src="@(string.IsNullOrEmpty(Model.ImageLink) ? "/Image/AvatarMIG.png" : "/Image/" + Model.ImageLink)" 
+                         alt="Avatar" 
+                         class="rounded-circle border shadow-sm" 
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    @if (canManage && Model.Status != QuanLyNhanLuc.Models.Enums.Status.Approved)
+                    {
+                        <label for="avatarUpload" class="position-absolute bottom-0 end-0 btn btn-sm btn-primary rounded-circle" 
+                               style="width: 35px; height: 35px; cursor: pointer;" title="??i ?nh ??i di?n">
+                            <i class="bi bi-camera"></i>
+                        </label>
+                        <input type="file" id="avatarUpload" data-id="@Model.Id" accept="image/*" style="display: none;">
+                    }
+                </div>
+                <h5 class="text-primary mb-1">@Model.FullName</h5>
+                <p class="text-muted mb-2">@(Model.User?.MaNhanVien ?? "Ch?a có mã")</p>
+                @if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
+                {
+                    <span class="badge bg-success">Đã duyệt</span>
+                }
+                else if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                {
+                    <span class="badge bg-warning">Chưa duyệt</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Vô hiệu</span>
+                }
+
+                @if (canManage)
+                {
+                    <hr>
+                    <div class="d-grid gap-2">
+                        @if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                        {
+                            <button class="btn btn-success btn-sm" id="btnDuyet" data-id="@Model.Id">
+                                <i class="bi bi-check-circle me-1"></i>Duy?t
+                            </button>
+                        }
+                        <button class="btn btn-danger btn-sm" id="btnXoa" data-id="@Model.Id">
+                            <i class="bi bi-trash me-1"></i>Xóa
+                        </button>
+                    }
+                    <a asp-action="DanhSachNhanVien" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Quay l?i
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden field for JavaScript -->
+    <input type="hidden" id="hiddenNguoiDungId" value="@Model.UserId" />
+    
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link active text-primary menu-link-top" data-target-top="#thong-tin-chung" href="#">Thông tin chung</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#hop-dong-bao-hiem" href="#">H?p ??ng và b?o hi?m</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#khen-thuong-ky-luat" href="#">Khen th??ng k? lu?t</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#luong" href="#">L??ng</a>
+        </li>
+    </ul>
+
+    <!-- Các section t??ng ?ng -->
+    <section id="thong-tin-chung" class="content-section-top">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="bg-white rounded p-3 shadow-sm">
+                    <ul class="list-unstyled">
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link active text-primary"
+                                data-target="ThongTinChung">Thông tin chung</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="ViTriCongTac">V? trí công tác</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="TaiKhoanNganHang">Tài kho?n ngân hàng</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="TrinhDo">Trình ??</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="HoKhau">H? kh?u</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="ThongTinKhac">Thông tin khác</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <!-- THÔNG TIN CHUNG -->
+                <div id="ThongTinChung" class="content-section">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-person-badge me-2"></i>Thông tin c? b?n</h6>
+                            @if (canManage && Model.Status != QuanLyNhanLuc.Models.Enums.Status.Approved)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadThongTinCoBan('@Model.Id')">
+                                    <i class="bi bi-pencil"></i> S?a
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">H? và tên</p>
+                                    <p class="text-primary fw-medium">@Model.FullName</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">CMND/CCCD</p>
+                                    <p class="text-primary fw-medium">@(Model.IdentityNumber ?? "Ch?a c?p nh?t")</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Ngày sinh</p>
+                                    <p class="text-primary fw-medium">@Model.BirthDay.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Gi?i tính</p>
+                                    <p class="text-primary fw-medium">@Model.GioiTinhStxt</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mt-3">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-envelope me-2"></i>Thông tin tài kho?n</h6>
+                            @if (canManage && Model.Status != QuanLyNhanLuc.Models.Enums.Status.Approved)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadThongTinTaiKhoan('@Model.UserId')">
+                                    <i class="bi bi-pencil"></i> S?a
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Mã nhân viên</p>
+                                    <p class="text-primary fw-medium">@(Model.User?.MaNhanVien ?? "Ch?a c?p nh?t")</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Email</p>
+                                    <p class="text-primary fw-medium">@(Model.User?.Email ?? "Ch?a c?p nh?t")</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">S? ?i?n tho?i</p>
+                                    <p class="text-primary fw-medium">@(Model.User?.PhoneNumber ?? "Ch?a c?p nh?t")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- V? TRÍ CÔNG TÁC -->
+                <div id="ViTriCongTac" class="content-section d-none">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-briefcase me-2"></i>V? trí công tác</h6>
+                            @if (canManage && Model.Status != QuanLyNhanLuc.Models.Enums.Status.Approved)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadViTriCongTac('@Model.Id')">
+                                    <i class="bi bi-pencil"></i> S?a
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Phòng ban</p>
+                                    <p class="text-primary fw-medium">@(Model.Department?.TenPhongBan ?? "Ch?a phân công")</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Ch?c v?</p>
+                                    <p class="text-primary fw-medium">@(Model.ChucVu?.TenChucVu ?? "Ch?a phân công")</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <p class="text-secondary mb-1">Lo?i nhân s?</p>
+                                    <p class="text-primary fw-medium">@(Model.NhanSuTypeStxt ?? "Ch?a c?p nh?t")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TÀI KHO?N NGÂN HÀNG -->
+                <div id="TaiKhoanNganHang" class="content-section d-none">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-bank me-2"></i>Tài kho?n ngân hàng</h6>
+                            @if (canManage)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadBankInfo('@Model.UserId')">
+                                    <i class="bi bi-pencil"></i> S?a
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="bankInfoContent">
+                                <p class="text-muted">?ang t?i...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRÌNH ?? -->
+                <div id="TrinhDo" class="content-section d-none">
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-mortarboard me-2"></i>Trình ??</h6>
+                            @if (canManage)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadTrinhDo('@Model.UserId')">
+                                    <i class="bi bi-pencil"></i> S?a
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="trinhDoContent">
+                                <p class="text-muted">?ang t?i...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-journal-bookmark me-2"></i>?ào t?o</h6>
+                            @if (canManage)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="openAddDaoTao('@Model.UserId')">
+                                    <i class="bi bi-plus"></i> Thêm
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Tr??ng/T? ch?c</th>
+                                        <th>Ngành h?c/Tên l?p</th>
+                                        <th>Th?i gian</th>
+                                        <th>Hình th?c</th>
+                                        <th>V?n b?ng/Ch?ng ch?</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daoTaoTableBody">
+                                    <tr><td colspan="7" class="text-center text-muted">?ang t?i...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- H? KH?U -->
+                <div id="HoKhau" class="content-section d-none">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-people me-2"></i>Quan h? gia ?ình</h6>
+                            @if (canManage)
+                            {
+                                <button class="btn btn-sm btn-outline-primary" onclick="openAddFamily('@Model.UserId')">
+                                    <i class="bi bi-plus"></i> Thêm
+                                </button>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>H? và tên</th>
+                                        <th>Gi?i tính</th>
+                                        <th>Ngày sinh</th>
+                                        <th>?i?n tho?i</th>
+                                        <th>Quan h?</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="familyTableBody">
+                                    <tr><td colspan="7" class="text-center text-muted">?ang t?i...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- THÔNG TIN KHÁC -->
+                <div id="ThongTinKhac" class="content-section d-none">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 text-primary"><i class="bi bi-info-circle me-2"></i>Thông tin khác</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">?ang phát tri?n...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- H?P ??NG VÀ B?O HI?M -->
+    <section id="hop-dong-bao-hiem" class="content-section-top d-none">
+        <div class="row">
+            <!-- H?p ??ng -->
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-file-earmark-text me-2"></i>H?p ??ng lao ??ng</h6>
+                        @if (canManage)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" onclick="openAddHopDong('@Model.UserId')">
+                                <i class="bi bi-plus"></i> Thêm
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>S? h?p ??ng</th>
+                                    <th>Lo?i h?p ??ng</th>
+                                    <th>Ngày ký</th>
+                                    <th>Ngày b?t ??u</th>
+                                    <th>Ngày k?t thúc</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="hopDongTableBody">
+                                <tr><td colspan="7" class="text-center text-muted">?ang t?i...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B?o hi?m -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-shield-check me-2"></i>BHXH</h6>
+                        @if (canManage)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditBaoHiem('BHXH', '@Model.UserId')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body" id="bhxhContent">
+                        <p class="text-muted">?ang t?i...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-shield-check me-2"></i>BHTN</h6>
+                        @if (canManage)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditBaoHiem('BHTN', '@Model.UserId')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body" id="bhtnContent">
+                        <p class="text-muted">?ang t?i...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-shield-check me-2"></i>BHYT</h6>
+                        @if (canManage)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditBaoHiem('BHYT', '@Model.UserId')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body" id="bhytContent">
+                        <p class="text-muted">?ang t?i...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- KHEN TH??NG K? LU?T -->
+    <section id="khen-thuong-ky-luat" class="content-section-top d-none">
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-trophy me-2"></i>Khen th??ng</h6>
+                        @if (canManage)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" onclick="openAddKhenThuong('@Model.UserId')">
+                                <i class="bi bi-plus"></i> Thêm
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>N?i dung</th>
+                                    <th>Hình th?c</th>
+                                    <th>Ngày ký</th>
+                                    <th>S? quy?t ??nh</th>
+                                    <th>Giá tr?</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="khenThuongTableBody">
+                                <tr><td colspan="7" class="text-center text-muted">?ang t?i...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="bi bi-exclamation-triangle me-2"></i>K? lu?t</h6>
+                        @if (canManage)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" onclick="openAddKyLuat('@Model.UserId')">
+                                <i class="bi bi-plus"></i> Thêm
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>N?i dung</th>
+                                    <th>Ngày quy?t ??nh</th>
+                                    <th>Hình th?c</th>
+                                    <th>Lý do</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="kyLuatTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">?ang t?i...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- L??NG -->
+    <section id="luong" class="content-section-top d-none">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-primary"><i class="bi bi-cash-coin me-2"></i>L?ch s? l??ng</h6>
+                <div>
+                    <select id="yearSelect" class="form-select form-select-sm d-inline-block me-2" style="width: auto;"></select>
+                    <select id="monthSelect" class="form-select form-select-sm d-inline-block me-2" style="width: auto;"></select>
+                    <button class="btn btn-sm btn-primary" onclick="searchLuong()">
+                        <i class="bi bi-search"></i> Tìm
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tháng/N?m</th>
+                            <th>L??ng c? b?n</th>
+                            <th>Ph? c?p</th>
+                            <th>Kh?u tr?</th>
+                            <th>Th?c l?nh</th>
+                            <th>Tr?ng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="luongTableBody">
+                        <tr><td colspan="7" class="text-center text-muted">?ang t?i...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+
+</div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<partial name="~/Views/Modals/_ModalSuaThongTinCoBan.cshtml" model="Model" />
+<partial name="~/Views/Modals/_ModalSuaThongTinTaiKhoan.cshtml" model="Model" />
+<partial name="~/Views/Modals/_ModalSuaThongTinKhac.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaViTriCongTac.cshtml" model="Model" />
+<partial name="~/Views/Modals/_ModalSuaThongTinNganHang.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaTrinhDo.cshtml" />
+<partial name="~/Views/Modals/_ModalDaoTao.cshtml" />
+<partial name="~/Views/Modals/_ModalChiTietQuanHeGiaDinh.cshtml" />
+<partial name="~/Views/Modals/_ModalThemQuanHeGiaDinh.cshtml" />
+<partial name="~/Views/Modals/_ModalXacNhan.cshtml" />
+<partial name="~/Views/Modals/_ModalHopDong.cshtml" />
+<partial name="~/Views/Modals/_ModalKhenThuong.cshtml" />
+<partial name="~/Views/Modals/_ModalKyLuat.cshtml" />
+
+@section Scripts {
+    <script src="~/js/chi-tiet-nhan-vien.js" asp-append-version="true"></script>
+}

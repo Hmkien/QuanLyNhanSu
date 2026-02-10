@@ -1,45 +1,92 @@
 
-    <div class="modal fade" id="ModalSuaViTriCongTac" tabindex="-1" aria-labelledby="ModalSuaViTriCongTacLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title text-primary fw-bold">Chỉnh sửa vị trí công tác</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+
+@model QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung
+@inject QuanLyNhanLuc.Data.QLNLContext _context
+@{
+    var phongBans = _context.PhongBans.Where(d => d.Status == QuanLyNhanLuc.Models.Enums.Status.Approved).ToList();
+    var chucVus = _context.ChucVus.Where(c => c.Status == QuanLyNhanLuc.Models.Enums.Status.Approved).ToList();
+}
+<div class="modal fade" id="ModalSuaViTriCongTac" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary fw-bold">Chỉnh sửa vị trí công tác</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formSuaViTriCongTac">
+                <input type="hidden" name="Id" value="@Model.Id" />
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col">
-                            <label class="form-label text-primary">Phòng ban</label>
-                            <select class="form-select">
-                                <option>--Chọn--</option>
+                        <div class="col-md-6">
+                            <label class="form-label">Phòng ban</label>
+                            <select class="form-select" name="PhongBanId">
+                                <option value="">--Chọn--</option>
+                                @foreach (var phongBan in phongBans)
+                                {
+                                    if(Model.PhongBanId == phongBan.Id) {
+                                        <option value="@phongBan.Id" selected>@phongBan.TenPhongBan</option>
+                                    } else {
+                                        <option value="@phongBan.Id">@phongBan.TenPhongBan</option>
+                                    }
+                                }
                             </select>
                         </div>
-                        <div class="col">
-                            <label class="form-label text-primary">Chức vụ</label>
-                            <select class="form-select">
-                                <option>--Chọn--</option>
+                        <div class="col-md-6">
+                            <label class="form-label">Chức vụ</label>
+                            <select class="form-select" name="ChucVuId">
+                                <option value="">--Chọn--</option>
+                                @foreach (var cv in chucVus)
+                                {
+                                    if(Model.ChucVuId == cv.Id) {
+                                        <option value="@cv.Id" selected>@cv.TenChucVu</option>
+                                    } else {
+                                        <option value="@cv.Id">@cv.TenChucVu</option>
+                                    }
+                                }
                             </select>
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col">
-                            <label class="form-label text-primary">Loại nhân viên</label>
-                            <select class="form-select">
-                                <option>--Chọn--</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label class="form-label text-primary">Trạng thái làm việc</label>
-                            <select class="form-select">
-                                <option>--Chọn--</option>
+                        <div class="col-md-6">
+                            <label class="form-label">Loại nhân viên</label>
+                            <select class="form-select" name="NhanSuType">
+                                <option value="">--Chọn--</option>
+                                @if(Model.NhanSuType == NhanSuType.NhanVien) {
+                                    <option value="1" selected>Nhân viên</option>
+                                    <option value="2">Thực tập sinh</option>
+                                    <option value="3">Nhân viên chính thức</option>
+                                    <option value="4">Nhân viên thời vụ</option>
+                                } else if(Model.NhanSuType == NhanSuType.ThucTapSinh) {
+                                    <option value="1">Nhân viên</option>
+                                    <option value="2" selected>Thực tập sinh</option>
+                                    <option value="3">Nhân viên chính thức</option>
+                                    <option value="4">Nhân viên thời vụ</option>
+                                } else if(Model.NhanSuType == NhanSuType.NhanVienChinhThuc) {
+                                    <option value="1">Nhân viên</option>
+                                    <option value="2">Thực tập sinh</option>
+                                    <option value="3" selected>Nhân viên chính thức</option>
+                                    <option value="4">Nhân viên thời vụ</option>
+                                } else if(Model.NhanSuType == NhanSuType.NhanVienThoiVu) {
+                                    <option value="1">Nhân viên</option>
+                                    <option value="2">Thực tập sinh</option>
+                                    <option value="3">Nhân viên chính thức</option>
+                                    <option value="4" selected>Nhân viên thời vụ</option>
+                                } else {
+                                    <option value="1">Nhân viên</option>
+                                    <option value="2">Thực tập sinh</option>
+                                    <option value="3">Nhân viên chính thức</option>
+                                    <option value="4">Nhân viên thời vụ</option>
+                                }
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-primary text-primary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary">Lưu</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
+</div>
+

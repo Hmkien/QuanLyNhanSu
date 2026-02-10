@@ -1,0 +1,328 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.Department>
+@using QuanLyNhanLuc.Models.Enums
+
+@{
+    ViewData["Title"] = "Phòng ban";
+}
+
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+    .status-approved { background-color: #d4edda; color: #155724; }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Danh mục</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Phòng ban</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Danh sách phòng ban</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
+        <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm phòng ban..." value="@ViewBag.Search" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="0" selected="@(ViewBag.Status != null && ViewBag.Status == 0 ? "selected" : null)">Đã duyệt</option>
+                    <option value="1" selected="@(ViewBag.Status != null && ViewBag.Status == 1 ? "selected" : null)">Chờ duyệt</option>
+                    <option value="3" selected="@(ViewBag.Status != null && ViewBag.Status == 3 ? "selected" : null)">Huỷ duyệt</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tên phòng ban</th>
+            <th>Mô tả</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var stt = 1; }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@stt</td>
+                <td>@item.TenPhongBan</td>
+                <td>@item.MoTa</td>
+                <td>
+                    @if (item.Status == Status.Approved)
+                    {
+                        <span class="status-badge status-approved">Đã duyệt</span>
+                    }
+                    else if (item.Status == Status.Pending)
+                    {
+                        <span class="status-badge status-pending">Chờ duyệt</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-rejected">Huỷ duyệt</span>
+                    }
+                </td>
+                <td class="text-center">
+                    @if (item.Status == Status.Approved)
+                    {
+                        <a href="javascript:void(0)" data-action="reject" data-id="@item.Id" title="Huỷ duyệt">
+                            <i class="bi bi-x-circle text-warning"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0)" data-action="approve" data-id="@item.Id" title="Duyệt" class="me-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="edit" data-id="@item.Id" title="Sửa" class="me-2">
+                            <i class="bi bi-pen text-primary"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="delete" data-id="@item.Id" title="Xóa">
+                            <i class="bi bi-trash text-danger"></i>
+                        </a>
+                    }
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-primary">Tổng số bản ghi: @(ViewBag.TotalItems ?? Model.Count())</span>
+    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{ 
+                    int current = ViewBag.CurrentPage; 
+                    int total = ViewBag.TotalPages; 
+                    string search = ViewBag.Search ?? "";
+                    int? status = ViewBag.Status;
+                }
+                <li class="page-item @(current == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current - 1, pageSize = ViewBag.PageSize, search = search, status = status })">«</a>
+                </li>
+                @for (int i = 1; i <= total; i++)
+                {
+                    <li class="page-item @(i == current ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = ViewBag.PageSize, search = search, status = status })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(current == total ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current + 1, pageSize = ViewBag.PageSize, search = search, status = status })">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="depModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="depModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="depForm">
+                    <input type="hidden" id="depId" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label">Tên phòng ban</label>
+                        <input id="depName" name="tenPhongBan" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="depMoTa" name="moTa" class="form-control"></textarea>
+                    </div>
+                    <div class="text-danger" id="depError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="depSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="depDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa phòng ban</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa phòng ban này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="depDeleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+
+            // Create
+            $("button[data-action='create']").on('click', function() {
+                $('#depModalTitle').text('Thêm phòng ban');
+                $('#depId').val('');
+                $('#depName').val('');
+                $('#depMoTa').val('');
+                $('#depError').hide();
+                new bootstrap.Modal(document.getElementById('depModal')).show();
+            });
+
+            // Edit
+            $(document).on('click', "a[data-action='edit']", function() {
+                var id = $(this).data('id');
+                $('#depModalTitle').text('Chỉnh sửa phòng ban');
+                $('#depError').hide();
+                $.get('/Department/GetDepartment', { id: id })
+                    .done(function(res) {
+                        $('#depId').val(res.id);
+                        $('#depName').val(res.ten);
+                        $('#depMoTa').val(res.mota);
+                        new bootstrap.Modal(document.getElementById('depModal')).show();
+                    })
+                    .fail(function() {
+                        Notification.error('Không thể tải thông tin phòng ban');
+                    });
+            });
+
+            // Save
+            $('#depSaveBtn').on('click', function() {
+                var id = $('#depId').val();
+                var name = $('#depName').val();
+                var mota = $('#depMoTa').val();
+                var url = id ? '/Department/EditAjax' : '/Department/CreateAjax';
+                var data = id ? { id: id, tenPhongBan: name, moTa: mota } : { tenPhongBan: name, moTa: mota };
+                var action = id ? 'cập nhật' : 'thêm mới';
+                
+                $.post(url, data)
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.success('Đã ' + action + ' phòng ban thành công');
+                            location.reload();
+                        } else {
+                            $('#depError').text(res.message).show();
+                            Notification.error(res.message || 'Có lỗi xảy ra khi ' + action);
+                        }
+                    })
+                    .fail(function() {
+                        Notification.error('Có lỗi xảy ra khi ' + action);
+                    });
+            });
+
+            // Delete - cần modal xác nhận
+            $(document).on('click', "a[data-action='delete']", function() {
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('depDeleteModal')).show();
+            });
+            
+            $('#depDeleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                
+                // Disable button to prevent double click
+                $(this).prop('disabled', true).text('Đang xóa...');
+                
+                $.post('/Department/DeleteAjax', { id: deleteId })
+                    .done(function(res) {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('depDeleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        
+                        if (res.success) {
+                            Notification.success('Đã xóa phòng ban thành công');
+                            location.reload();
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi xóa');
+                            $('#depDeleteConfirmBtn').prop('disabled', false).text('Xóa');
+                        }
+                    })
+                    .fail(function() {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('depDeleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        Notification.error('Có lỗi xảy ra khi xóa');
+                        $('#depDeleteConfirmBtn').prop('disabled', false).text('Xóa');
+                    });
+            });
+
+            // Approve - không cần confirm
+            $(document).on('click', "a[data-action='approve']", function() {
+                var id = $(this).data('id');
+                $.post('/Department/ApproveAjax', { id: id })
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.success('Đã duyệt phòng ban thành công');
+                            location.reload();
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi duyệt');
+                        }
+                    })
+                    .fail(function() {
+                        Notification.error('Có lỗi xảy ra khi duyệt');
+                    });
+            });
+
+            // Reject - không cần confirm
+            $(document).on('click', "a[data-action='reject']", function() {
+                var id = $(this).data('id');
+                $.post('/Department/RejectAjax', { id: id })
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.warning('Đã huỷ duyệt phòng ban');
+                            location.reload();
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi huỷ duyệt');
+                        }
+                    })
+                    .fail(function() {
+                        Notification.error('Có lỗi xảy ra khi huỷ duyệt');
+                    });
+            });
+        });
+    </script>
+}
+            });
+        });
+    </script>
+}

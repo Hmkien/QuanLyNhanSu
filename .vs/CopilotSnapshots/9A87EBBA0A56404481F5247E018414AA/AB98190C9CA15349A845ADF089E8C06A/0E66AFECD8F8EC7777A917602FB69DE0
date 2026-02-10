@@ -1,0 +1,462 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.ViewModels.BangLuongVM>
+
+<style>
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 14px;
+    }
+    .status-ChuaDuyet { background-color: #fcf8e3; color: #8a6d3b; }
+    .status-DaDuyet { background-color: #d9edf7; color: #31708f; }
+    .status-DaThanhToan { background-color: #dff0d8; color: #3c763d; }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Tính lương</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Bảng lương</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Bảng lương tháng @ViewBag.Thang/@ViewBag.Nam</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
+        <button class="btn btn-outline-success" data-action="generate"><i class="bi bi-lightning me-2"></i>Tạo bảng lương</button>
+        <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-auto">
+        <select class="form-select" id="filterThang">
+            @for (int i = 1; i <= 12; i++)
+            {
+                if (ViewBag.Thang == i)
+                {
+                    <option value="@i" selected>Tháng @i</option>
+                }
+                else
+                {
+                    <option value="@i">Tháng @i</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select class="form-select" id="filterNam">
+            @for (int i = DateTime.Now.Year; i >= DateTime.Now.Year - 5; i--)
+            {
+                if (ViewBag.Nam == i)
+                {
+                    <option value="@i" selected>@i</option>
+                }
+                else
+                {
+                    <option value="@i">@i</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select class="form-select" id="filterTrangThai">
+            <option value="">--Trạng thái--</option>
+            <option value="ChuaDuyet">Chưa duyệt</option>
+            <option value="DaDuyet">Đã duyệt</option>
+            <option value="DaThanhToan">Đã thanh toán</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <input type="text" class="form-control" id="filterKeyword" placeholder="Tìm kiếm..." style="width: 180px;">
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary" id="btnSearch"><i class="fas fa-search me-2"></i>Tìm kiếm</button>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th><input type="checkbox"></th>
+                <th>STT</th>
+                <th>Mã NV</th>
+                <th>Họ tên</th>
+                <th>Phòng ban</th>
+                <th class="text-end">Lương CB</th>
+                <th class="text-center">Ngày công</th>
+                <th class="text-end">Phụ cấp</th>
+                <th class="text-end">Thưởng</th>
+                <th class="text-end">Khấu trừ</th>
+                <th class="text-end">Thực nhận</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ var stt = 1; }
+            @foreach (var item in Model)
+            {
+                var tongPhuCap = (item.PhuCapAnTrua ?? 0) + (item.PhuCapXangXe ?? 0) + (item.PhuCapDienThoai ?? 0) + (item.PhuCapKhac ?? 0);
+                <tr>
+                    <td class="text-center"><input type="checkbox"></td>
+                    <td>@stt</td>
+                    <td>@item.MaNhanVien</td>
+                    <td>@item.HoTen</td>
+                    <td>@item.PhongBan</td>
+                    <td class="text-end">@item.LuongCoBan.ToString("N0")</td>
+                    <td class="text-center">@item.SoNgayCong</td>
+                    <td class="text-end">@tongPhuCap.ToString("N0")</td>
+                    <td class="text-end">@((item.TienThuong ?? 0).ToString("N0"))</td>
+                    <td class="text-end text-danger">@item.TongKhauTru.ToString("N0")</td>
+                    <td class="text-end fw-bold text-success">@item.LuongThucNhan.ToString("N0")</td>
+                    <td><span class="status-badge status-@item.TrangThai">@item.TrangThaiText</span></td>
+                    <td class="text-center">
+                        <button class="btn btn-sm" data-action="view" data-id="@item.Id" title="Xem chi tiết">
+                            <i class="fas fa-eye text-dark"></i>
+                        </button>
+                        @if (item.TrangThai != "DaThanhToan")
+                        {
+                            <button class="btn btn-sm" data-action="edit" data-id="@item.Id" title="Sửa">
+                                <i class="bi bi-pen text-primary"></i>
+                            </button>
+                        }
+                        @if (item.TrangThai == "ChuaDuyet")
+                        {
+                            <button class="btn btn-sm" data-action="duyet" data-id="@item.Id" data-trangthai="DaDuyet" title="Duyệt">
+                                <i class="bi bi-check2-circle text-success"></i>
+                            </button>
+                            <button class="btn btn-sm" data-action="delete" data-id="@item.Id" title="Xóa">
+                                <i class="bi bi-trash text-danger"></i>
+                            </button>
+                        }
+                        @if (item.TrangThai == "DaDuyet")
+                        {
+                            <button class="btn btn-sm" data-action="duyet" data-id="@item.Id" data-trangthai="DaThanhToan" title="Thanh toán">
+                                <i class="bi bi-cash-coin text-warning"></i>
+                            </button>
+                        }
+                    </td>
+                </tr>
+                stt++;
+            }
+        </tbody>
+        <tfoot>
+            <tr class="fw-bold bg-light">
+                <td colspan="5" class="text-end">Tổng cộng:</td>
+                <td class="text-end">@Model.Sum(x => x.LuongCoBan).ToString("N0")</td>
+                <td></td>
+                <td class="text-end">@Model.Sum(x => (x.PhuCapAnTrua ?? 0) + (x.PhuCapXangXe ?? 0) + (x.PhuCapDienThoai ?? 0) + (x.PhuCapKhac ?? 0)).ToString("N0")</td>
+                <td class="text-end">@Model.Sum(x => x.TienThuong ?? 0).ToString("N0")</td>
+                <td class="text-end text-danger">@Model.Sum(x => x.TongKhauTru).ToString("N0")</td>
+                <td class="text-end text-success">@Model.Sum(x => x.LuongThucNhan).ToString("N0")</td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center">
+    <span class="text-primary">Tổng số bản ghi: @Model.Count()</span>
+</div>
+
+<!-- Modal Thêm/Sửa -->
+<div class="modal fade" id="luongModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="luongModalTitle">Thêm bảng lương</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="luongForm">
+                    <input type="hidden" id="luongId" name="id" />
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Nhân viên <span class="text-danger">*</span></label>
+                            <select id="nhanSuId" name="nhanSuId" class="form-select" required>
+                                <option value="">-- Chọn nhân viên --</option>
+                                @foreach (var ns in ViewBag.NhanSuList as SelectList ?? new SelectList(new List<object>()))
+                                {
+                                    <option value="@ns.Value">@ns.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tháng <span class="text-danger">*</span></label>
+                            <select id="thang" name="thang" class="form-select" required>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    if (ViewBag.Thang == i)
+                                    {
+                                        <option value="@i" selected>Tháng @i</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@i">Tháng @i</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Năm <span class="text-danger">*</span></label>
+                            <input type="number" id="nam" name="nam" class="form-control" value="@ViewBag.Nam" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Lương cơ bản <span class="text-danger">*</span></label>
+                            <input type="number" id="luongCoBan" name="luongCoBan" class="form-control" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Hệ số lương</label>
+                            <input type="number" id="heSoLuong" name="heSoLuong" class="form-control" value="1" step="0.1" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Số ngày công</label>
+                            <input type="number" id="soNgayCong" name="soNgayCong" class="form-control" value="22" />
+                        </div>
+                    </div>
+                    <h6 class="text-primary mt-3">Phụ cấp</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Ăn trưa</label>
+                            <input type="number" id="phuCapAnTrua" name="phuCapAnTrua" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Xăng xe</label>
+                            <input type="number" id="phuCapXangXe" name="phuCapXangXe" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Điện thoại</label>
+                            <input type="number" id="phuCapDienThoai" name="phuCapDienThoai" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Khác</label>
+                            <input type="number" id="phuCapKhac" name="phuCapKhac" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tiền thưởng</label>
+                            <input type="number" id="tienThuong" name="tienThuong" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tiền phạt</label>
+                            <input type="number" id="tienPhat" name="tienPhat" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tiền làm thêm</label>
+                            <input type="number" id="tienLamThem" name="tienLamThem" class="form-control" />
+                        </div>
+                    </div>
+                    <h6 class="text-danger mt-3">Khấu trừ</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">BHXH</label>
+                            <input type="number" id="khauTruBHXH" name="khauTruBHXH" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">BHYT</label>
+                            <input type="number" id="khauTruBHYT" name="khauTruBHYT" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">BHTN</label>
+                            <input type="number" id="khauTruBHTN" name="khauTruBHTN" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Thuế TNCN</label>
+                            <input type="number" id="khauTruThueNCCT" name="khauTruThueNCCT" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea id="ghiChu" name="ghiChu" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="text-danger" id="luongError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="luongSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tạo bảng lương -->
+<div class="modal fade" id="generateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Tạo bảng lương cho tháng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Tháng</label>
+                        <select id="genThang" class="form-select">
+                            @for (int i = 1; i <= 12; i++)
+                            {
+                                <option value="@i" @(ViewBag.Thang == i ? "selected" : "")>Tháng @i</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Năm</label>
+                        <input type="number" id="genNam" class="form-control" value="@ViewBag.Nam" />
+                    </div>
+                </div>
+                <p class="text-muted">Hệ thống sẽ tự động tạo bảng lương cho tất cả nhân viên chưa có bảng lương trong tháng được chọn.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="generateConfirmBtn" class="btn btn-success">Tạo bảng lương</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa bảng lương này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+
+            // Create
+            $("button[data-action='create']").on('click', function() {
+                $('#luongModalTitle').text('Thêm bảng lương');
+                $('#luongForm')[0].reset();
+                $('#luongId').val('');
+                $('#heSoLuong').val(1);
+                $('#soNgayCong').val(22);
+                $('#thang').val(@ViewBag.Thang);
+                $('#nam').val(@ViewBag.Nam);
+                $('#luongError').hide();
+                new bootstrap.Modal(document.getElementById('luongModal')).show();
+            });
+
+            // Edit
+            $(document).on('click', "button[data-action='edit']", function() {
+                var id = $(this).data('id');
+                $('#luongModalTitle').text('Chỉnh sửa bảng lương');
+                $('#luongError').hide();
+                $.get('/Luong/GetBangLuong', { id: id }).done(function(res) {
+                    $('#luongId').val(res.id);
+                    $('#nhanSuId').val(res.nhanSuId);
+                    $('#thang').val(res.thang);
+                    $('#nam').val(res.nam);
+                    $('#luongCoBan').val(res.luongCoBan);
+                    $('#heSoLuong').val(res.heSoLuong);
+                    $('#soNgayCong').val(res.soNgayCong);
+                    $('#phuCapAnTrua').val(res.phuCapAnTrua);
+                    $('#phuCapXangXe').val(res.phuCapXangXe);
+                    $('#phuCapDienThoai').val(res.phuCapDienThoai);
+                    $('#phuCapKhac').val(res.phuCapKhac);
+                    $('#tienThuong').val(res.tienThuong);
+                    $('#tienPhat').val(res.tienPhat);
+                    $('#tienLamThem').val(res.tienLamThem);
+                    $('#khauTruBHXH').val(res.khauTruBHXH);
+                    $('#khauTruBHYT').val(res.khauTruBHYT);
+                    $('#khauTruBHTN').val(res.khauTruBHTN);
+                    $('#khauTruThueNCCT').val(res.khauTruThueNCCT);
+                    $('#ghiChu').val(res.ghiChu);
+                    new bootstrap.Modal(document.getElementById('luongModal')).show();
+                });
+            });
+
+            // Save
+            $('#luongSaveBtn').on('click', function() {
+                var id = $('#luongId').val();
+                var url = id ? '/Luong/EditAjax' : '/Luong/CreateAjax';
+                $.post(url, $('#luongForm').serialize()).done(function(res) {
+                    if (res.success) location.reload();
+                    else { $('#luongError').text(res.message).show(); }
+                }).fail(function() { alert('Có lỗi xảy ra'); });
+            });
+
+            // Delete
+            $(document).on('click', "button[data-action='delete']", function() {
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $.post('/Luong/DeleteAjax', { id: deleteId }).done(function(res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                });
+            });
+
+            // Duyet/Thanh toan
+            $(document).on('click', "button[data-action='duyet']", function() {
+                var id = $(this).data('id');
+                var trangThai = $(this).data('trangthai');
+                $.post('/Luong/DuyetAjax', { id: id, trangThai: trangThai }).done(function(res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                });
+            });
+
+            // Generate
+            $("button[data-action='generate']").on('click', function() {
+                new bootstrap.Modal(document.getElementById('generateModal')).show();
+            });
+
+            $('#generateConfirmBtn').on('click', function() {
+                $.post('/Luong/TaoBangLuongThang', {
+                    thang: $('#genThang').val(),
+                    nam: $('#genNam').val()
+                }).done(function(res) {
+                    if (res.success) {
+                        alert('Đã tạo bảng lương cho ' + res.count + ' nhân viên');
+                        location.reload();
+                    } else {
+                        alert(res.message);
+                    }
+                });
+            });
+
+            // Search
+            $('#btnSearch').on('click', function() {
+                var thang = $('#filterThang').val();
+                var nam = $('#filterNam').val();
+                var trangThai = $('#filterTrangThai').val();
+                var keyword = $('#filterKeyword').val();
+                var url = '/Luong/BangLuong?thang=' + thang + '&nam=' + nam;
+                if (trangThai) url += '&trangThai=' + trangThai;
+                if (keyword) url += '&keyword=' + encodeURIComponent(keyword);
+                window.location.href = url;
+            });
+        });
+    </script>
+}

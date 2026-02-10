@@ -1,0 +1,96 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.MenuQuanTri>
+
+<ul class="menu-tree">
+    @foreach (var item in Model.OrderBy(m => m.ViTri))
+    {
+        <li class="menu-item">
+            <div class="menu-content d-flex justify-content-between align-items-center">
+                <div>
+                    @if (item.SubMenus?.Any() == true)
+                    {
+                        <a href="#" class="menu-toggle">
+                            <i class="@item.IconClass me-2"></i>
+                            <span>@item.TenMenu</span>
+                            <i class="fas fa-chevron-right toggle-icon ms-2"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span>
+                            <i class="@item.IconClass me-2"></i>
+                            <span>@item.TenMenu</span>
+                        </span>
+                    }
+                </div>
+
+                <div class="menu-actions">
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm ">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    <a asp-action="Create" asp-route-parentId="@item.Id" class="btn btn-sm ">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+            </div>
+
+            @if (item.SubMenus?.Any() == true)
+            {
+                <ul class="submenu">
+                    @await Html.PartialAsync("_MenuTreePartial", item.SubMenus)
+                </ul>
+            }
+        </li>
+    }
+</ul>
+<style>.menu-tree {
+    list-style: none;
+    padding-left: 20px;
+}
+.menu-item {
+    margin: 10px 0;
+}
+.menu-content {
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+.menu-toggle {
+    text-decoration: none;
+    color: #333;
+    cursor: pointer;
+}
+
+.submenu {
+    list-style: none;
+    padding-left: 20px;
+    margin-top: 5px;
+    display: none;
+}
+.toggle-icon {
+    transition: transform 0.2s;
+}
+.toggle-icon.fa-chevron-down {
+    transform: rotate(90deg);
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.menu-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            var menuItem = this.closest('.menu-item');
+            var submenu = menuItem.querySelector('.submenu');
+            var toggleIcon = this.querySelector('.toggle-icon');
+            
+            if (submenu) {
+                submenu.style.display = submenu.style.display === 'none' ? 'block' : 'none';
+                toggleIcon.classList.toggle('fa-chevron-right');
+                toggleIcon.classList.toggle('fa-chevron-down');
+            }
+        });
+    });
+});
+</script>

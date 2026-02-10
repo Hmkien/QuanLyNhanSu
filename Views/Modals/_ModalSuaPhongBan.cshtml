@@ -1,0 +1,64 @@
+﻿@model QuanLyNhanLuc.Models.Entities.PhongBan
+
+<div class="modal fade" id="ModalSuaPhongBan" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil me-2"></i>Chỉnh sửa phòng ban
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formSuaPhongBan">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Mã phòng ban <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="MaPhongBan" class="form-control" value="@Model.MaPhongBan" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Tên phòng ban <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="TenPhongBan" class="form-control" value="@Model.TenPhongBan" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="MoTa" class="form-control" rows="3">@Model.MoTa</textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Trạng thái hiện tại:</strong>
+                                @if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
+                                {
+                                    <span class="badge bg-success">Đã duyệt</span>
+                                }
+                                else if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                                {
+                                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Đã hủy</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

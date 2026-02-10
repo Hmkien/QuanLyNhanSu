@@ -1,14 +1,11 @@
-using System.ComponentModel.DataAnnotations;
+﻿namespace QuanLyNhanLuc.Models.Entities;
 
-namespace QuanLyNhanLuc.Models.Entities;
-
-public class NhanSu
+public class NhanSu : EntityBase
 {
-    public int Id { get; set; }
-    public string MaNhanVien { get; set; }
-    public string HoVaTen { get; set; }
-    public int PhongBanId { get; set; }
-    public virtual PhongBan PhongBan { get; set; }
-    public virtual ICollection<ChamCong> ChamCongs { get; set; }
-    public virtual ICollection<LichLamThem> LichLamThems { get; set; }
-} 
+    public string MaNhanVien { get; set; } = string.Empty;
+    public string HoVaTen { get; set; } = string.Empty;
+    public Guid PhongBanId { get; set; }
+    public virtual PhongBan PhongBan { get; set; } = null!;
+    public virtual ICollection<ChamCong>? ChamCongs { get; set; }
+    public virtual ICollection<LichLamThem>? LichLamThems { get; set; }
+}

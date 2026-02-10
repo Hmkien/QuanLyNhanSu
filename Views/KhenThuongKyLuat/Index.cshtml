@@ -1,0 +1,338 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.ViewModels.KhenThuongKyLuatVM>
+@using QuanLyNhanLuc.Models.Enums
+@using QuanLyNhanLuc.Helpers
+
+<style>
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 14px;
+    }
+    .status-ChoDuyet { background-color: #fcf8e3; color: #8a6d3b; }
+    .status-DaDuyet { background-color: #dff0d8; color: #3c763d; }
+    .status-TuChoi { background-color: #f2dede; color: #a94442; }
+    .type-KhenThuong { background-color: #d9edf7; color: #31708f; }
+    .type-KyLuat { background-color: #f2dede; color: #a94442; }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Quản lý</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Khen thưởng / Kỷ luật</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Khen thưởng / Kỷ luật</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
+        <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link active text-primary" href="@Url.Action("Index")">Tất cả</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" href="@Url.Action("Index", new { loai = "KhenThuong" })">Khen thưởng</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" href="@Url.Action("Index", new { loai = "KyLuat" })">Kỷ luật</a>
+    </li>
+</ul>
+
+<div class="row mb-3">
+    <div class="col-auto">
+        <select class="form-select" id="filterTrangThai">
+            <option value="">--Trạng thái--</option>
+            <option value="ChoDuyet">Chờ duyệt</option>
+            <option value="DaDuyet">Đã duyệt</option>
+            <option value="TuChoi">Từ chối</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <input type="text" class="form-control" id="filterKeyword" placeholder="Tìm kiếm..." style="width: 200px;">
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary" id="btnSearch"><i class="fas fa-search me-2"></i>Tìm kiếm</button>
+    </div>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th><input type="checkbox"></th>
+            <th>STT</th>
+            <th>Mã QĐ</th>
+            <th>Nhân viên</th>
+            <th>Phòng ban</th>
+            <th>Loại</th>
+            <th>Hình thức</th>
+            <th>Số tiền</th>
+            <th>Ngày QĐ</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var stt = 1; }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td class="text-center"><input type="checkbox"></td>
+                <td>@stt</td>
+                <td>@item.MaQuyetDinh</td>
+                <td>@item.HoTen</td>
+                <td>@item.PhongBan</td>
+                <td><span class="status-badge type-@item.Loai">@item.Loai.ToText()</span></td>
+                <td>@item.HinhThuc</td>
+                <td class="text-end">@(item.SoTien?.ToString("N0") ?? "-") đ</td>
+                <td>@item.NgayQuyetDinh.ToString("dd/MM/yyyy")</td>
+                <td><span class="status-badge status-@item.TrangThai">@item.TrangThai.ToText()</span></td>
+                <td class="text-center">
+                    @if (item.TrangThai == TrangThaiKhenThuongKyLuat.ChoDuyet)
+                    {
+                        <button class="btn btn-sm" data-action="duyet" data-id="@item.Id" title="Duyệt">
+                            <i class="bi bi-check2-circle text-success"></i>
+                        </button>
+                    }
+                    <button class="btn btn-sm" data-action="view" data-id="@item.Id" title="Xem">
+                        <i class="fas fa-eye text-dark"></i>
+                    </button>
+                    @if (item.TrangThai != TrangThaiKhenThuongKyLuat.DaDuyet)
+                    {
+                        <button class="btn btn-sm" data-action="edit" data-id="@item.Id" title="Sửa">
+                            <i class="bi bi-pen text-primary"></i>
+                        </button>
+                        <button class="btn btn-sm" data-action="delete" data-id="@item.Id" title="Xóa">
+                            <i class="bi bi-trash text-danger"></i>
+                        </button>
+                    }
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center">
+    <span class="text-primary">Tổng số bản ghi: @Model.Count()</span>
+</div>
+
+<!-- Modal Thêm/Sửa -->
+<div class="modal fade" id="ktkModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ktkModalTitle">Thêm khen thưởng/kỷ luật</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ktkForm">
+                    <input type="hidden" id="ktkId" name="id" />
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nhân viên <span class="text-danger">*</span></label>
+                            <select id="nhanSuId" name="nhanSuId" class="form-select" required>
+                                <option value="">-- Chọn nhân viên --</option>
+                                @foreach (var ns in ViewBag.NhanSuList as SelectList ?? new SelectList(new List<object>()))
+                                {
+                                    <option value="@ns.Value">@ns.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Loại <span class="text-danger">*</span></label>
+                            <select id="loai" name="loai" class="form-select" required>
+                                <option value="">-- Chọn loại --</option>
+                                <option value="KhenThuong">Khen thưởng</option>
+                                <option value="KyLuat">Kỷ luật</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hình thức <span class="text-danger">*</span></label>
+                            <input type="text" id="hinhThuc" name="hinhThuc" class="form-control" required placeholder="VD: Thưởng tiền, Kỷ luật cảnh cáo..." />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Số tiền</label>
+                            <input type="number" id="soTien" name="soTien" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày quyết định <span class="text-danger">*</span></label>
+                            <input type="date" id="ngayQuyetDinh" name="ngayQuyetDinh" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày hiệu lực</label>
+                            <input type="date" id="ngayHieuLuc" name="ngayHieuLuc" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lý do <span class="text-danger">*</span></label>
+                        <textarea id="lyDo" name="lyDo" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea id="ghiChu" name="ghiChu" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="text-danger" id="ktkError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="ktkSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Duyệt -->
+<div class="modal fade" id="duyetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Xét duyệt quyết định</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="duyetId" />
+                <div class="mb-3">
+                    <label class="form-label">Quyết định</label>
+                    <select id="duyetTrangThai" class="form-select">
+                        <option value="DaDuyet">Duyệt</option>
+                        <option value="TuChoi">Từ chối</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea id="duyetGhiChu" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="duyetConfirmBtn" class="btn btn-success">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa quyết định này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+            var duyetId = null;
+
+            // Create
+            $("button[data-action='create']").on('click', function() {
+                $('#ktkModalTitle').text('Thêm khen thưởng/kỷ luật');
+                $('#ktkForm')[0].reset();
+                $('#ktkId').val('');
+                $('#ktkError').hide();
+                new bootstrap.Modal(document.getElementById('ktkModal')).show();
+            });
+
+            // Edit
+            $(document).on('click', "button[data-action='edit']", function() {
+                var id = $(this).data('id');
+                $('#ktkModalTitle').text('Chỉnh sửa quyết định');
+                $('#ktkError').hide();
+                $.get('/KhenThuongKyLuat/GetKhenThuongKyLuat', { id: id }).done(function(res) {
+                    $('#ktkId').val(res.id);
+                    $('#nhanSuId').val(res.nhanSuId);
+                    $('#loai').val(res.loai);
+                    $('#hinhThuc').val(res.hinhThuc);
+                    $('#soTien').val(res.soTien);
+                    $('#ngayQuyetDinh').val(res.ngayQuyetDinh);
+                    $('#ngayHieuLuc').val(res.ngayHieuLuc);
+                    $('#lyDo').val(res.lyDo);
+                    $('#ghiChu').val(res.ghiChu);
+                    new bootstrap.Modal(document.getElementById('ktkModal')).show();
+                });
+            });
+
+            // Save
+            $('#ktkSaveBtn').on('click', function() {
+                var id = $('#ktkId').val();
+                var url = id ? '/KhenThuongKyLuat/EditAjax' : '/KhenThuongKyLuat/CreateAjax';
+                $.post(url, $('#ktkForm').serialize()).done(function(res) {
+                    if (res.success) location.reload();
+                    else { $('#ktkError').text(res.message).show(); }
+                }).fail(function() { alert('Có lỗi xảy ra'); });
+            });
+
+            // Duyet
+            $(document).on('click', "button[data-action='duyet']", function() {
+                duyetId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('duyetModal')).show();
+            });
+
+            $('#duyetConfirmBtn').on('click', function() {
+                if (!duyetId) return;
+                $.post('/KhenThuongKyLuat/DuyetAjax', {
+                    id: duyetId,
+                    trangThai: $('#duyetTrangThai').val(),
+                    ghiChu: $('#duyetGhiChu').val()
+                }).done(function(res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                });
+            });
+
+            // Delete
+            $(document).on('click', "button[data-action='delete']", function() {
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $.post('/KhenThuongKyLuat/DeleteAjax', { id: deleteId }).done(function(res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                });
+            });
+
+            // Search
+            $('#btnSearch').on('click', function() {
+                var trangThai = $('#filterTrangThai').val();
+                var keyword = $('#filterKeyword').val();
+                var url = '/KhenThuongKyLuat?';
+                if (trangThai) url += 'trangThai=' + trangThai + '&';
+                if (keyword) url += 'keyword=' + encodeURIComponent(keyword);
+                window.location.href = url;
+            });
+        });
+    </script>
+}

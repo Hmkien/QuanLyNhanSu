@@ -1,0 +1,145 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.Department>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+    <h3>Phòng ban</h3>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary" data-action="create">Thêm mới</a>
+</p>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.TenPhongBan)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MoTa)
+            </th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.TenPhongBan)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MoTa)
+            </td>
+            <td class="text-center">
+                <a asp-action="Edit" class="btn text-primary" asp-route-id="@item.Id" data-action="edit" data-id="@item.Id"><i class="fa-solid fa-pen-to-square"></i></a>
+                <a asp-action="Delete" class="btn text-danger" asp-route-id="@item.Id" data-action="delete" data-id="@item.Id"><i class="fa-solid fa-trash"></i></a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+<!-- Modals -->
+<div class="modal fade" id="depModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="depModalTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="depForm">
+                    <input type="hidden" id="depId" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label">Tên phòng ban</label>
+                        <input id="depName" name="tenPhongBan" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="depMoTa" name="moTa" class="form-control"></textarea>
+                    </div>
+                    <div class="text-danger" id="depError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="depSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="depDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Xóa phòng ban</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa phòng ban này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="depDeleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            // Create
+            $("a[data-action='create']").on('click', function(e) {
+                e.preventDefault();
+                $('#depModalTitle').text('Thêm phòng ban');
+                $('#depId').val('');
+                $('#depName').val('');
+                $('#depMoTa').val('');
+                $('#depError').hide();
+                new bootstrap.Modal(document.getElementById('depModal')).show();
+            });
+
+            // Edit
+            $("a[data-action='edit']").on('click', function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $('#depModalTitle').text('Chỉnh sửa phòng ban');
+                $('#depError').hide();
+                $.get('/Department/GetDepartment', { id: id }).done(function(res) {
+                    $('#depId').val(res.id);
+                    $('#depName').val(res.ten);
+                    $('#depMoTa').val(res.mota);
+                    new bootstrap.Modal(document.getElementById('depModal')).show();
+                });
+            });
+
+            // Save
+            $('#depSaveBtn').on('click', function() {
+                var id = $('#depId').val();
+                var name = $('#depName').val();
+                var mota = $('#depMoTa').val();
+                var url = id ? '/Department/EditAjax' : '/Department/CreateAjax';
+                var data = id ? { id: id, tenPhongBan: name, moTa: mota } : { tenPhongBan: name, moTa: mota };
+                $.post(url, data).done(function(res) {
+                    if (res.success) location.reload(); else { $('#depError').text(res.message).show(); }
+                }).fail(function() { alert('Có lỗi xảy ra'); });
+            });
+
+            // Delete
+            var deleteId = null;
+            $("a[data-action='delete']").on('click', function(e) {
+                e.preventDefault();
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('depDeleteModal')).show();
+            });
+            $('#depDeleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $.post('/Department/DeleteAjax', { id: deleteId }).done(function(res) {
+                    if (res.success) location.reload(); else alert(res.message);
+                });
+            });
+        });
+    </script>
+}

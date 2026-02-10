@@ -1,0 +1,117 @@
+﻿@using QuanLyNhanLuc.Extensions
+@using QuanLyNhanLuc.Models.Enums
+@model QuanLyNhanLuc.Models.ViewModels.SuaNhanVienVM
+
+<div class="modal fade" id="suaNhanVienModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">Sửa thông tin nhân viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="suaNhanVienForm" enctype="multipart/form-data">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Cột bên trái: Upload ảnh -->
+                        <div class="col-md-3 text-center">
+                            <div class="mb-3">
+                                <h6 class="text-primary mb-3">Ảnh đại diện</h6>
+                                <div class="position-relative d-inline-block">
+                                    <img id="avatarPreviewEdit" src="@(string.IsNullOrEmpty(Model.ImageLink) ? "/Image/AvatarMIG.png" : "/Image/" + Model.ImageLink)" 
+                                         alt="Ảnh đại diện" 
+                                         class="rounded-circle border shadow-sm" 
+                                         style="width: 150px; height: 150px; object-fit: cover;">
+                                    <label for="avatarUploadEdit" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2" style="cursor: pointer;" title="Thay đổi ảnh đại diện">
+                                        <i class="bi bi-camera-fill"></i>
+                                    </label>
+                                    <input type="file" id="avatarUploadEdit" name="AnhDaiDien" accept="image/*" class="d-none">
+                                </div>
+                                <p class="text-muted mt-2 small">Tối đa 5MB (jpg, png, gif, webp)</p>
+                            </div>
+                        </div>
+                        <!-- Cột bên phải: Thông tin -->
+                        <div class="col-md-9">
+                            <!-- Thông tin nhân viên -->
+                            <h6 class="mb-3 text-primary">Thông tin nhân viên</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                    <input name="HoVaTen" class="form-control" value="@Model.HoVaTen" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+                                    <select name="GioiTinh" class="form-select" required>
+                                        <option value="">---Chọn---</option>
+                                        @foreach (GioiTinh gioiTinh in Enum.GetValues(typeof(GioiTinh)))
+                                        {
+                                            <option value="@((int)gioiTinh)" selected="@(Model.GioiTinh == gioiTinh)">@gioiTinh.GetDescription()</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Ngày sinh</label>
+                                    <input name="NgaySinh" type="date" class="form-control" value="@Model.NgaySinh.ToString("yyyy-MM-dd")" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">CCCD / CMND</label>
+                                    <input name="CCCD" class="form-control" value="@Model.CCCD" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phòng ban</label>
+                                    <select name="PhongBanId" class="form-select" asp-items="Model.Departments">
+                                        <option value="">---Chọn---</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Chức vụ</label>
+                                    <select name="ChucVuId" class="form-select" asp-items="Model.ChucVus">
+                                        <option value="">---Chọn---</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Loại nhân sự <span class="text-danger">*</span></label>
+                                <select name="LoaiNhanSu" class="form-select" required>
+                                    <option value="">---Chọn---</option>
+                                    @foreach (NhanSuType nhanSuType in Enum.GetValues(typeof(NhanSuType)))
+                                    {
+                                        <option value="@((int)nhanSuType)" selected="@(Model.LoaiNhanSu == nhanSuType)">@nhanSuType.GetDescription()</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Thông tin tài khoản -->
+                            <h6 class="mb-3 text-primary mt-4">Thông tin tài khoản</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input name="Email" type="email" class="form-control" value="@Model.Email" readonly />
+                                    <small class="text-muted">Email không thể thay đổi</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input name="SoDienThoai" type="tel" class="form-control" value="@Model.SoDienThoai" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Mã nhân viên</label>
+                                    <input name="MaNhanVien" class="form-control" value="@Model.MaNhanVien" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="btnUpdateNhanVien" class="btn btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,110 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung
+
+<div class="modal fade" id="chiTietNhanVienModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">Chi tiết nhân viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Cột bên trái: Ảnh và thông tin cơ bản -->
+                    <div class="col-md-3 text-center border-end">
+                        <img src="@(string.IsNullOrEmpty(Model.ImageLink) ? "/Image/AvatarMIG.png" : "/Image/" + Model.ImageLink)"
+                             alt="Ảnh đại diện"
+                             class="rounded-circle border shadow-sm mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                        <h5 class="text-primary mb-1">@Model.FullName</h5>
+                        <p class="text-muted mb-2">@(Model.User?.MaNhanVien ?? "Chưa có mã")</p>
+                        @if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
+                        {
+                            <span class="badge bg-success">Đã duyệt</span>
+                        }
+                        else if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                        {
+                            <span class="badge bg-warning">Chờ duyệt</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Hủy duyệt</span>
+                        }
+                    </div>
+                    <!-- Cột bên phải: Chi tiết thông tin -->
+                    <div class="col-md-9">
+                        <!-- Thông tin cá nhân -->
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0 text-primary"><i class="bi bi-person me-2"></i>Thông tin cá nhân</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Họ và tên:</span>
+                                        <p class="mb-0 fw-medium">@Model.FullName</p>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Giới tính:</span>
+                                        <p class="mb-0 fw-medium">@Model.GioiTinhStxt</p>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Ngày sinh:</span>
+                                        <p class="mb-0 fw-medium">@Model.BirthDay.ToString("dd/MM/yyyy")</p>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">CMND/CCCD:</span>
+                                        <p class="mb-0 fw-medium">@(Model.IdentityNumber ?? "Chưa cập nhật")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin công việc -->
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0 text-primary"><i class="bi bi-briefcase me-2"></i>Thông tin công việc</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Phòng ban:</span>
+                                        <p class="mb-0 fw-medium">@(Model.Department?.TenPhongBan ?? "Chưa phân công")</p>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Chức vụ:</span>
+                                        <p class="mb-0 fw-medium">@(Model.ChucVu?.TenChucVu ?? "Chưa phân công")</p>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Loại nhân sự:</span>
+                                        <p class="mb-0 fw-medium">@(Model.NhanSuTypeStxt ?? "Chưa cập nhật")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin liên hệ -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0 text-primary"><i class="bi bi-telephone me-2"></i>Thông tin liên hệ</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Email:</span>
+                                        <p class="mb-0 fw-medium">
+                                            <a href="mailto:@Model.User?.Email" class="text-decoration-none">@(Model.User?.Email ?? "Chưa cập nhật")</a>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <span class="text-muted">Số điện thoại:</span>
+                                        <p class="mb-0 fw-medium">@(Model.User?.PhoneNumber ?? "Chưa cập nhật")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

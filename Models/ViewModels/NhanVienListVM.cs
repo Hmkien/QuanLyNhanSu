@@ -1,3 +1,5 @@
+using QuanLyNhanLuc.Models.Enums;
+
 namespace QuanLyNhanLuc.Models.ViewModels;
 
 public class NhanVienListVM
@@ -10,4 +12,5 @@ public class NhanVienListVM
     public string? PositionName { get; set; }
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
+    public Status Status { get; set; }
 } 

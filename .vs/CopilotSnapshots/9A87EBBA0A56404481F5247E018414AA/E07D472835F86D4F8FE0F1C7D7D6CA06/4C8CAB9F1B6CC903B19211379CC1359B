@@ -1,0 +1,32 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhanLuc.Models.Entities;
+
+public class HopDong : EntityBase
+{
+    [MaxLength(50)]
+    public string MaHopDong { get; set; } = string.Empty;
+    
+    public Guid NhanSuId { get; set; }
+    
+    [MaxLength(100)]
+    public string LoaiHopDong { get; set; } = string.Empty; // Thử việc, Có thời hạn, Không thời hạn
+    
+    public DateTime NgayKy { get; set; }
+    
+    public DateTime NgayBatDau { get; set; }
+    
+    public DateTime? NgayKetThuc { get; set; }
+    
+    public decimal LuongCoBan { get; set; }
+    
+    public string? GhiChu { get; set; }
+    
+    [MaxLength(50)]
+    public string TrangThai { get; set; } = "HieuLuc"; // HieuLuc, HetHan, ChamDut
+    
+    public string? TepDinhKem { get; set; }
+
+    // Navigation properties
+    public virtual NhanSu NhanSu { get; set; } = null!;
+}

@@ -1,0 +1,226 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.PhanLoaiNhanSu>
+@using QuanLyNhanLuc.Models.Enums
+
+@{
+    ViewData["Title"] = "Phân loại nhân sự";
+}
+
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+    .status-approved { background-color: #d4edda; color: #155724; }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
+</style>
+
+<h3>Phân loại nhân sự</h3>
+
+<p>
+    <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-1"></i>Thêm mới</button>
+</p>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tên phân loại</th>
+            <th>Mô tả</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var stt = 1; }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@stt</td>
+                <td>@item.TenPhanLoai</td>
+                <td>@item.MoTa</td>
+                <td>
+                    @if (item.Status == Status.Approved)
+                    {
+                        <span class="status-badge status-approved">Đã duyệt</span>
+                    }
+                    else if (item.Status == Status.Pending)
+                    {
+                        <span class="status-badge status-pending">Chờ duyệt</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-rejected">Huỷ duyệt</span>
+                    }
+                </td>
+                <td class="text-center">
+                    @if (item.Status == Status.Approved)
+                    {
+                        <a href="javascript:void(0)" data-action="reject" data-id="@item.Id" title="Huỷ duyệt" class="me-2">
+                            <i class="bi bi-x-circle text-warning"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0)" data-action="approve" data-id="@item.Id" title="Duyệt" class="me-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                        </a>
+                    }
+                    <a href="javascript:void(0)" data-action="edit" data-id="@item.Id" title="Sửa" class="me-2">
+                        <i class="bi bi-pen text-primary"></i>
+                    </a>
+                    <a href="javascript:void(0)" data-action="delete" data-id="@item.Id" title="Xóa">
+                        <i class="bi bi-trash text-danger"></i>
+                    </a>
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-primary">Tổng số bản ghi: @(ViewBag.TotalItems ?? Model.Count())</span>
+    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{ int current = ViewBag.CurrentPage; int total = ViewBag.TotalPages; }
+                <li class="page-item @(current == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current - 1, pageSize = ViewBag.PageSize })">«</a>
+                </li>
+                @for (int i = 1; i <= total; i++)
+                {
+                    <li class="page-item @(i == current ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = ViewBag.PageSize })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(current == total ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current + 1, pageSize = ViewBag.PageSize })">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<!-- Modal Thêm/Sửa -->
+<div class="modal fade" id="phanLoaiModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="phanLoaiModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="phanLoaiForm">
+                    <input type="hidden" id="phanLoaiId" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label">Tên phân loại <span class="text-danger">*</span></label>
+                        <input id="tenPhanLoai" name="tenPhanLoai" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="moTa" name="moTa" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="text-danger" id="phanLoaiError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="phanLoaiSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+
+            // Create
+            $("button[data-action='create']").on('click', function() {
+                $('#phanLoaiModalTitle').text('Thêm phân loại nhân sự');
+                $('#phanLoaiForm')[0].reset();
+                $('#phanLoaiId').val('');
+                $('#phanLoaiError').hide();
+                new bootstrap.Modal(document.getElementById('phanLoaiModal')).show();
+            });
+
+            // Edit
+            $(document).on('click', "button[data-action='edit']", function() {
+                var id = $(this).data('id');
+                $('#phanLoaiModalTitle').text('Chỉnh sửa phân loại');
+                $('#phanLoaiError').hide();
+                $.get('/PhanLoaiNhanSu/GetPhanLoai', { id: id }).done(function(res) {
+                    $('#phanLoaiId').val(res.id);
+                    $('#tenPhanLoai').val(res.tenPhanLoai);
+                    $('#moTa').val(res.moTa);
+                    new bootstrap.Modal(document.getElementById('phanLoaiModal')).show();
+                });
+            });
+
+            // Save
+            $('#phanLoaiSaveBtn').on('click', function() {
+                var id = $('#phanLoaiId').val();
+                var url = id ? '/PhanLoaiNhanSu/EditAjax' : '/PhanLoaiNhanSu/CreateAjax';
+                $.post(url, $('#phanLoaiForm').serialize()).done(function(res) {
+                    if (res.success) location.reload();
+                    else { $('#phanLoaiError').text(res.message).show(); }
+                }).fail(function() { alert('Có lỗi xảy ra'); });
+            });
+
+            // Delete
+            $(document).on('click', "button[data-action='delete']", function() {
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $.post('/PhanLoaiNhanSu/DeleteAjax', { id: deleteId }).done(function(res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                });
+            });
+
+            // Approve
+            $(document).on('click', "button[data-action='approve']", function() {
+                var id = $(this).data('id');
+                if (confirm('Bạn có chắc chắn muốn duyệt bản ghi này?')) {
+                    $.post('/PhanLoaiNhanSu/ApproveAjax', { id: id }).done(function(res) {
+                        if (res.success) location.reload();
+                        else alert(res.message);
+                    });
+                }
+            });
+
+            // Reject
+            $(document).on('click', "button[data-action='reject']", function() {
+                var id = $(this).data('id');
+                if (confirm('Bạn có chắc chắn muốn huỷ duyệt bản ghi này?')) {
+                    $.post('/PhanLoaiNhanSu/RejectAjax', { id: id }).done(function(res) {
+                        if (res.success) location.reload();
+                        else alert(res.message);
+                    });
+                }
+            });
+        });
+    </script>
+}

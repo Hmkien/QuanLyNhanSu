@@ -1,0 +1,60 @@
+﻿@* Modal Thêm/Sửa Kỷ luật *@
+<div class="modal fade" id="ModalKyLuat" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="modalKyLuatTitle">Thêm kỷ luật</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formKyLuat">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="kyLuatId" />
+                <input type="hidden" name="NguoiDungId" id="kyLuatNguoiDungId" />
+                <input type="hidden" name="Loai" value="1" /> @* 1 = KyLuat *@
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Số quyết định <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="MaQuyetDinh" id="maQuyetDinhKL" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày quyết định <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayQuyetDinh" id="ngayQuyetDinhKL" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hình thức kỷ luật <span class="text-danger">*</span></label>
+                            <select class="form-select" name="HinhThuc" id="hinhThucKL" required>
+                                <option value="">--Chọn--</option>
+                                <option value="Khiển trách">Khiển trách</option>
+                                <option value="Cảnh cáo">Cảnh cáo</option>
+                                <option value="Hạ bậc lương">Hạ bậc lương</option>
+                                <option value="Cách chức">Cách chức</option>
+                                <option value="Sa thải">Sa thải</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mức phạt (VNĐ)</label>
+                            <input type="number" class="form-control" name="SoTien" id="soTienKL" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nội dung vi phạm <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="LyDo" id="lyDoKL" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" name="GhiChu" id="ghiChuKL" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,404 @@
+﻿@using QuanLyNhanLuc.Models.Enums
+@{
+    ViewData["Title"] = "Trang chủ";
+    var thongTinNhanVien = ViewBag.ThongTinNhanVien as QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung;
+    var danhSachNhiemVu = ViewBag.DanhSachNhiemVu as List<QuanLyNhanLuc.Models.Entities.NhiemVu>;
+    var lichSuDiemDanh = ViewBag.LichSuDiemDanh as List<QuanLyNhanLuc.Models.Entities.DiemDanh>;
+    var diemDanhVM = ViewBag.DiemDanhVM as QuanLyNhanLuc.Models.ViewModels.DiemDanhVM;
+    var isSuperAdmin = ViewBag.IsSuperAdmin as bool? ?? (ViewBag.IsSuperAdmin is bool && (bool)ViewBag.IsSuperAdmin);
+
+    // Prevent NullReference in view if controller didn't provide these objects
+    if (thongTinNhanVien == null)
+    {
+        thongTinNhanVien = new QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung();
+    }
+    if (danhSachNhiemVu == null)
+    {
+        danhSachNhiemVu = new List<QuanLyNhanLuc.Models.Entities.NhiemVu>();
+    }
+    if (lichSuDiemDanh == null)
+    {
+        lichSuDiemDanh = new List<QuanLyNhanLuc.Models.Entities.DiemDanh>();
+    }
+    if (diemDanhVM == null)
+    {
+        diemDanhVM = new QuanLyNhanLuc.Models.ViewModels.DiemDanhVM
+        {
+            CoTheDiemDanh = false,
+            ThongBao = string.Empty,
+            TrangThai = QuanLyNhanLuc.Models.Enums.TrangThaiDiemDanh.DungGio,
+            TrangThaiClass = "secondary",
+            TrangThaiText = string.Empty
+        };
+    }
+}
+
+<div class="container-fluid">
+    @if (isSuperAdmin)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Bảng điều khiển SuperAdmin</h5>
+                        <p>Bạn đang đăng nhập với quyền <strong>SuperAdmin</strong>. Bạn có thể truy cập tất cả chức năng hệ thống mà không cần thông tin nhân viên.</p>
+                        <a class="btn btn-primary" href="/Admin">Đi tới quản trị</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+    <!--    Main Content -->
+    <div class="row">
+        <!-- Thông tin cá nhân -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">Thông tin nhân viên</h5>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#suaThongTinModal">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="text-center mb-3">
+                        <img src="@(string.IsNullOrEmpty(thongTinNhanVien?.ImageLink) ? Url.Content("~/Image/AvatarMIG.png") : Url.Content("~/" + thongTinNhanVien.ImageLink))" 
+                             class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;" />
+                    </div>
+                    <div class="mb-2">
+                        <strong>Họ tên:</strong> @(thongTinNhanVien?.FullName ?? "-")
+                    </div>
+                    <div class="mb-2">
+                        <strong>Phòng ban:</strong> @(thongTinNhanVien?.Department?.TenPhongBan ?? "-")
+                    </div>
+                    <div class="mb-2">
+                        <strong>Chức vụ:</strong> @(thongTinNhanVien?.ChucVu?.TenChucVu ?? "-")
+                    </div>
+                    <div class="mb-2">
+                        <strong>Email:</strong> @(thongTinNhanVien?.User?.Email ?? "-")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Điểm danh -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Điểm danh</h5>
+                    <div class="alert alert-@diemDanhVM.TrangThaiClass">
+                        <h6 class="alert-heading">@diemDanhVM.ThongBao</h6>
+                        @if (diemDanhVM.DaDiemDanhDen)
+                        {
+                            <p class="mb-0">Giờ đến: @diemDanhVM.GioDen?.ToString("HH:mm")</p>
+                        }
+                        @if (diemDanhVM.DaDiemDanhVe)
+                        {
+                            <p class="mb-0">Giờ về: @diemDanhVM.GioVe?.ToString("HH:mm")</p>
+                            <p class="mb-0">Thời gian làm việc: @diemDanhVM.ThoiGianLamViecText</p>
+                        }
+                    </div>
+                    <div class="text-center">
+                        @if (!diemDanhVM.DaDiemDanhDen)
+                        {
+                            <button class="btn btn-primary me-2" onclick="diemDanhDen()">
+                                <i class="fas fa-sign-in-alt"></i> Điểm danh đến
+                            </button>
+                        }
+                        @if (diemDanhVM.DaDiemDanhDen && !diemDanhVM.DaDiemDanhVe)
+                        {
+                            <button class="btn btn-success" onclick="diemDanhVe()">
+                                <i class="fas fa-sign-out-alt"></i> Điểm danh về
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lịch sử điểm danh -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Lịch sử điểm danh</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Giờ đến</th>
+                                    <th>Giờ về</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var diemDanh in lichSuDiemDanh)
+                                {
+                                    <tr>
+                                        <td>@diemDanh.NgayDiemDanh.ToString("dd/MM/yyyy")</td>
+                                        <td>@(diemDanh.GioDen?.ToString("HH:mm") ?? "-")</td>
+                                        <td>@(diemDanh.GioVe?.ToString("HH:mm") ?? "-")</td>
+                                        <td>
+                                            @switch (diemDanh.TrangThai)
+                                            {
+                                                case QuanLyNhanLuc.Models.Enums.TrangThaiDiemDanh.DungGio:
+                                                    <span class="badge bg-success">Đúng giờ</span>
+                                                    break;
+                                                case QuanLyNhanLuc.Models.Enums.TrangThaiDiemDanh.Muon:
+                                                    <span class="badge bg-warning">Đi muộn</span>
+                                                    break;
+                                                case QuanLyNhanLuc.Models.Enums.TrangThaiDiemDanh.Som:
+                                                    <span class="badge bg-info">Về sớm</span>
+                                                    break;
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Danh sách nhiệm vụ -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title">Danh sách nhiệm vụ</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#themNhiemVuModal">
+                            <i class="fas fa-plus"></i> Thêm nhiệm vụ
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tên nhiệm vụ</th>
+                                    <th>Mô tả</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var nhiemVu in danhSachNhiemVu)
+                                {
+                                    <tr>
+                                        <td>@nhiemVu.TenNhiemVu</td>
+                                        <td>@nhiemVu.MoTa</td>
+                                        <td>
+                                            @switch (nhiemVu.TrangThai)
+                                            {
+                                                case QuanLyNhanLuc.Models.Enums.TrangThaiNhiemVu.ChuaBatDau:
+                                                    <span class="badge bg-secondary">Chưa bắt đầu</span>
+                                                    break;
+                                                case QuanLyNhanLuc.Models.Enums.TrangThaiNhiemVu.DangThucHien:
+                                                    <span class="badge bg-primary">Đang thực hiện</span>
+                                                    break;
+                                                case QuanLyNhanLuc.Models.Enums.TrangThaiNhiemVu.HoanThanh:
+                                                    <span class="badge bg-success">Hoàn thành</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>@nhiemVu.Created.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            @if (nhiemVu.TrangThai != QuanLyNhanLuc.Models.Enums.TrangThaiNhiemVu.HoanThanh)
+                                            {
+                                                <button class="btn btn-sm btn-primary me-1" onclick="capNhatTrangThaiNhiemVu('@nhiemVu.Id')">
+                                                    <i class="fas fa-arrow-right"></i>
+                                                </button>
+                                            }
+                                            <button class="btn btn-sm btn-danger" onclick="xoaNhiemVu('@nhiemVu.Id')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+<!-- Modal thêm nhiệm vụ -->
+<div class="modal fade" id="themNhiemVuModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm nhiệm vụ mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formThemNhiemVu">
+                    <div class="mb-3">
+                        <label class="form-label">Tên nhiệm vụ</label>
+                        <input type="text" class="form-control" name="TenNhiemVu" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" name="MoTa" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="themNhiemVu()">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!isSuperAdmin)
+{
+    <!-- Modal sửa thông tin cá nhân -->
+    <div class="modal fade" id="suaThongTinModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sửa thông tin cá nhân</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formSuaThongTin">
+                    <div class="mb-3">
+                        <label class="form-label">Họ tên</label>
+                        <input type="text" class="form-control" name="FullName" value="@thongTinNhanVien.FullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngày sinh</label>
+                        <input type="date" class="form-control" name="BirthDay" value="@(thongTinNhanVien.BirthDay > DateTime.MinValue ? thongTinNhanVien.BirthDay.ToString("yyyy-MM-dd") : string.Empty)" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Giới tính</label>
+                        <select class="form-select" name="GioiTinh" required>
+                            @if (thongTinNhanVien.GioiTinh == 0)
+                            {
+                                <option value="0" selected>Nam</option>
+                                <option value="1">Nữ</option>
+                            }
+                            else
+                            {
+                                <option value="0">Nam</option>
+                                <option value="1" selected>Nữ</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số CCCD/CMND</label>
+                        <input type="text" class="form-control" name="IdentityNumber" value="@thongTinNhanVien.IdentityNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh đại diện</label>
+                        <input type="file" class="form-control" name="AnhDaiDien" accept="image/*">
+                        <small class="text-muted">Để trống nếu không muốn thay đổi ảnh</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="capNhatThongTin()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function diemDanhDen() {
+            $.post('/Home/DiemDanhDen', function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(response.message);
+                }
+            });
+        }
+
+        function diemDanhVe() {
+            $.post('/Home/DiemDanhVe', function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(response.message);
+                }
+            });
+        }
+
+        function themNhiemVu() {
+            var formData = new FormData($('#formThemNhiemVu')[0]);
+            $.ajax({
+                url: '/Home/ThemNhiemVu',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Thêm nhiệm vụ thành công');
+                        $('#themNhiemVuModal').modal('hide');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error('Có lỗi xảy ra');
+                    }
+                }
+            });
+        }
+
+        function capNhatTrangThaiNhiemVu(id) {
+            $.post('/Home/CapNhatTrangThaiNhiemVu', { id: id }, function(response) {
+                if (response.success) {
+                    toastr.success('Cập nhật trạng thái thành công');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(response.message);
+                }
+            });
+        }
+
+        function xoaNhiemVu(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?')) {
+                $.post('/Home/XoaNhiemVu', { id: id }, function(response) {
+                    if (response.success) {
+                        toastr.success('Xóa nhiệm vụ thành công');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                });
+            }
+        }
+
+        function capNhatThongTin() {
+            var formData = new FormData($('#formSuaThongTin')[0]);
+            $.ajax({
+                url: '/Home/CapNhatThongTin',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Cập nhật thông tin thành công');
+                        $('#suaThongTinModal').modal('hide');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error('Có lỗi xảy ra: ' + error);
+                }
+            });
+        }
+    </script>
+} 

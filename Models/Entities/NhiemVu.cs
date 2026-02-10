@@ -10,4 +10,4 @@ public class NhiemVu : EntityBase
     public TrangThaiNhiemVu TrangThai { get; set; }
     public Guid NhanVienId { get; set; }
     public virtual ThongTinNguoiDung? NhanVien { get; set; }
-} 
+}

@@ -1,0 +1,69 @@
+﻿@* Modal S?a Trình ?? *@
+<div class="modal fade" id="ModalSuaTrinhDo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">C?p nh?t trình ??</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formSuaTrinhDo">
+                <input type="hidden" name="Id" id="trinhDoId" />
+                <input type="hidden" name="NguoiDungId" id="trinhDoNguoiDungId" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Trình ?? h?c v?n (Giáo d?c ph? thông)</label>
+                            <input type="text" class="form-control" name="TrinhDoHocVan" id="trinhDoHocVan" placeholder="VD: 12/12" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">H?c hàm, h?c v? cao nh?t</label>
+                            <input type="text" class="form-control" name="HocHamHocVi" id="hocHamHocVi" placeholder="VD: C? nhân" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Lý lu?n chính tr?</label>
+                            <input type="text" class="form-control" name="LyLuanChinhTri" id="lyLuanChinhTri" placeholder="VD: Cao c?p" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngo?i ng?</label>
+                            <input type="text" class="form-control" name="NgoaiNgu" id="ngoaiNgu" placeholder="VD: B2" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">H?y</button>
+                    <button type="submit" class="btn btn-primary">L?u</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#formSuaTrinhDo').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = $(this).serialize();
+        
+        $.ajax({
+            url: '/NhanSu/SaveTrinhDo',
+            type: 'POST',
+            data: formData,
+            success: function(res) {
+                if (res.success) {
+                    Notification.success(res.message || 'C?p nh?t trình ?? thành công');
+                    $('#ModalSuaTrinhDo').modal('hide');
+                    loadTrinhDo($('#trinhDoNguoiDungId').val());
+                } else {
+                    Notification.error(res.message || 'Có l?i x?y ra');
+                }
+            },
+            error: function() {
+                Notification.error('Có l?i x?y ra khi l?u thông tin');
+            }
+        });
+    });
+});
+</script>

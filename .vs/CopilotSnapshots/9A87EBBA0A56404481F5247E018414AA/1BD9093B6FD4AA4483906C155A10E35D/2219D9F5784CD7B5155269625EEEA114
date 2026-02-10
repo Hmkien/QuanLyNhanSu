@@ -1,0 +1,123 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhanLuc.Models.ViewModels;
+
+public class BangLuongVM
+{
+    public Guid Id { get; set; }
+    
+    public Guid NhanSuId { get; set; }
+    
+    [Display(Name = "Mã nhân viên")]
+    public string MaNhanVien { get; set; } = string.Empty;
+    
+    [Display(Name = "Họ tên")]
+    public string HoTen { get; set; } = string.Empty;
+    
+    [Display(Name = "Phòng ban")]
+    public string PhongBan { get; set; } = string.Empty;
+    
+    [Display(Name = "Tháng")]
+    [Required(ErrorMessage = "Vui lòng chọn tháng")]
+    public int Thang { get; set; }
+    
+    [Display(Name = "Năm")]
+    [Required(ErrorMessage = "Vui lòng nhập năm")]
+    public int Nam { get; set; }
+    
+    [Display(Name = "Lương cơ bản")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal LuongCoBan { get; set; }
+    
+    [Display(Name = "Hệ số lương")]
+    public decimal HeSoLuong { get; set; } = 1;
+    
+    [Display(Name = "Số ngày công")]
+    public int SoNgayCong { get; set; }
+    
+    [Display(Name = "Phụ cấp ăn trưa")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? PhuCapAnTrua { get; set; }
+    
+    [Display(Name = "Phụ cấp xăng xe")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? PhuCapXangXe { get; set; }
+    
+    [Display(Name = "Phụ cấp điện thoại")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? PhuCapDienThoai { get; set; }
+    
+    [Display(Name = "Phụ cấp khác")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? PhuCapKhac { get; set; }
+    
+    [Display(Name = "Tiền thưởng")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? TienThuong { get; set; }
+    
+    [Display(Name = "Tiền phạt")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? TienPhat { get; set; }
+    
+    [Display(Name = "Tiền làm thêm")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? TienLamThem { get; set; }
+    
+    [Display(Name = "Khấu trừ BHXH")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? KhauTruBHXH { get; set; }
+    
+    [Display(Name = "Khấu trừ BHYT")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? KhauTruBHYT { get; set; }
+    
+    [Display(Name = "Khấu trừ BHTN")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? KhauTruBHTN { get; set; }
+    
+    [Display(Name = "Khấu trừ thuế TNCN")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? KhauTruThueNCCT { get; set; }
+    
+    [Display(Name = "Khấu trừ khác")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal? KhauTruKhac { get; set; }
+    
+    [Display(Name = "Tổng thu nhập")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal TongThuNhap { get; set; }
+    
+    [Display(Name = "Tổng khấu trừ")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal TongKhauTru { get; set; }
+    
+    [Display(Name = "Lương thực nhận")]
+    [DisplayFormat(DataFormatString = "{0:N0}")]
+    public decimal LuongThucNhan { get; set; }
+    
+    [Display(Name = "Trạng thái")]
+    public string TrangThai { get; set; } = "ChuaDuyet";
+    
+    [Display(Name = "Trạng thái")]
+    public string TrangThaiText => TrangThai switch
+    {
+        "ChuaDuyet" => "Chưa duyệt",
+        "DaDuyet" => "Đã duyệt",
+        "DaThanhToan" => "Đã thanh toán",
+        _ => TrangThai
+    };
+    
+    [Display(Name = "Người duyệt")]
+    public string? NguoiDuyet { get; set; }
+    
+    [Display(Name = "Ngày duyệt")]
+    [DataType(DataType.Date)]
+    public DateTime? NgayDuyet { get; set; }
+    
+    [Display(Name = "Ngày thanh toán")]
+    [DataType(DataType.Date)]
+    public DateTime? NgayThanhToan { get; set; }
+    
+    [Display(Name = "Ghi chú")]
+    public string? GhiChu { get; set; }
+}

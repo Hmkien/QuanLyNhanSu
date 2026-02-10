@@ -1,0 +1,52 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace QuanLyNhanLuc.Migrations
+{
+    /// <inheritdoc />
+    public partial class ConvertDepartmentToPhongBanv2 : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            // Bước 1: Set NULL cho tất cả PhongBanId không tồn tại trong bảng PhongBans
+            migrationBuilder.Sql(@"
+                UPDATE ThongTinNguoiDungs 
+                SET PhongBanId = NULL 
+                WHERE PhongBanId IS NOT NULL 
+                AND PhongBanId NOT IN (SELECT Id FROM PhongBans)
+            ");
+
+            // Bước 2: Tạo lại foreign key constraint
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.foreign_keys 
+                    WHERE name = 'FK_ThongTinNguoiDungs_PhongBans_PhongBanId'
+                )
+                BEGIN
+                    ALTER TABLE [ThongTinNguoiDungs] 
+                    ADD CONSTRAINT [FK_ThongTinNguoiDungs_PhongBans_PhongBanId] 
+                    FOREIGN KEY ([PhongBanId]) REFERENCES [PhongBans] ([Id]) 
+                    ON DELETE SET NULL;
+                END
+            ");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            // Xóa foreign key nếu tồn tại
+            migrationBuilder.Sql(@"
+                IF EXISTS (
+                    SELECT 1 FROM sys.foreign_keys 
+                    WHERE name = 'FK_ThongTinNguoiDungs_PhongBans_PhongBanId'
+                )
+                BEGIN
+                    ALTER TABLE [ThongTinNguoiDungs] 
+                    DROP CONSTRAINT [FK_ThongTinNguoiDungs_PhongBans_PhongBanId];
+                END
+            ");
+        }
+    }
+}

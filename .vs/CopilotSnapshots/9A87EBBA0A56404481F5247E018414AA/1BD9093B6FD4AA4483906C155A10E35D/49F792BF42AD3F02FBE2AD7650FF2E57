@@ -1,0 +1,357 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.ViewModels;
+
+namespace QuanLyNhanLuc.Controllers;
+
+public class BaoHiemController : Controller
+{
+    private readonly QLNLContext _context;
+
+    public BaoHiemController(QLNLContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var baoHiems = await _context.BaoHiems
+            .Include(b => b.NhanSu)
+            .Select(b => new BaoHiemVM
+            {
+                Id = b.Id,
+                MaNhanVien = b.NhanSu.MaNhanVien,
+                HoTen = b.NhanSu.HoVaTen,
+                PhongBan = b.NhanSu.PhongBan.TenPhongBan,
+                SoBHXH = b.SoBHXH,
+                SoBHXHCu = b.SoBHXHCu,
+                SoBHYT = b.SoBHYT,
+                NgayThamGia = b.NgayThamGia,
+                NgayCapThe = b.NgayCapThe,
+                NgayHetHan = b.NgayHetHan,
+                NoiDangKyBHXH = b.NoiDangKyBHXH,
+                NoiDangKyKCB = b.NoiDangKyKCB,
+                MaKCB = b.MaKCB,
+                MaTinhBenhVien = b.MaTinhBenhVien,
+                DaTraTheBHYT = b.DaTraTheBHYT,
+                NgayThamGiaBHTN = b.NgayThamGiaBHTN,
+                ThoiGianDongBHTN = b.ThoiGianDongBHTN
+            })
+            .ToListAsync();
+
+        ViewBag.NhanSuList = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
+            await _context.NhanSus.Select(n => new { n.Id, Display = n.MaNhanVien + " - " + n.HoVaTen }).ToListAsync(),
+            "Id", "Display");
+
+        return View(baoHiems);
+    }
+
+    public async Task<IActionResult> Details(Guid? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var baoHiem = await _context.BaoHiems 
+            .Include(b => b.NhanSu)
+            .ThenInclude(n => n.PhongBan)
+            .Where(b => b.Id == id)
+            .Select(b => new BaoHiemVM
+            {
+                Id = b.Id,
+                MaNhanVien = b.NhanSu.MaNhanVien,
+                HoTen = b.NhanSu.HoVaTen,
+                PhongBan = b.NhanSu.PhongBan.TenPhongBan,
+                SoBHXH = b.SoBHXH,
+                SoBHXHCu = b.SoBHXHCu,
+                SoBHYT = b.SoBHYT,
+                NgayThamGia = b.NgayThamGia,
+                NgayCapThe = b.NgayCapThe,
+                NgayHetHan = b.NgayHetHan,
+                NoiDangKyBHXH = b.NoiDangKyBHXH,
+                NoiDangKyKCB = b.NoiDangKyKCB,
+                MaKCB = b.MaKCB,
+                MaTinhBenhVien = b.MaTinhBenhVien,
+                DaTraTheBHYT = b.DaTraTheBHYT,
+                NgayThamGiaBHTN = b.NgayThamGiaBHTN,
+                ThoiGianDongBHTN = b.ThoiGianDongBHTN
+            })
+            .FirstOrDefaultAsync();
+
+        if (baoHiem == null)
+        {
+            return NotFound();
+        }
+
+        return View(baoHiem);
+    }
+
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(BaoHiemVM model)
+    {
+        if (ModelState.IsValid)
+        {
+            var baoHiem = new BaoHiem
+            {
+                SoBHXH = model.SoBHXH ?? string.Empty,
+                SoBHXHCu = model.SoBHXHCu,
+                SoBHYT = model.SoBHYT ?? string.Empty,
+                NgayThamGia = model.NgayThamGia,
+                NgayCapThe = model.NgayCapThe,
+                NgayHetHan = model.NgayHetHan,
+                NoiDangKyBHXH = model.NoiDangKyBHXH ?? string.Empty,
+                NoiDangKyKCB = model.NoiDangKyKCB ?? string.Empty,
+                MaKCB = model.MaKCB ?? string.Empty,
+                MaTinhBenhVien = model.MaTinhBenhVien ?? string.Empty,
+                DaTraTheBHYT = model.DaTraTheBHYT,
+                NgayThamGiaBHTN = model.NgayThamGiaBHTN,
+                ThoiGianDongBHTN = model.ThoiGianDongBHTN
+            };
+
+            _context.Add(baoHiem);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        return View(model);
+    }
+
+    public async Task<IActionResult> Edit(Guid? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var baoHiem = await _context.BaoHiems
+            .Include(b => b.NhanSu)
+            .ThenInclude(n => n.PhongBan)
+            .Where(b => b.Id == id)
+            .Select(b => new BaoHiemVM
+            {
+                Id = b.Id,
+                MaNhanVien = b.NhanSu.MaNhanVien,
+                HoTen = b.NhanSu.HoVaTen,
+                PhongBan = b.NhanSu.PhongBan.TenPhongBan,
+                SoBHXH = b.SoBHXH,
+                SoBHXHCu = b.SoBHXHCu,
+                SoBHYT = b.SoBHYT,
+                NgayThamGia = b.NgayThamGia,
+                NgayCapThe = b.NgayCapThe,
+                NgayHetHan = b.NgayHetHan,
+                NoiDangKyBHXH = b.NoiDangKyBHXH,
+                NoiDangKyKCB = b.NoiDangKyKCB,
+                MaKCB = b.MaKCB,
+                MaTinhBenhVien = b.MaTinhBenhVien,
+                DaTraTheBHYT = b.DaTraTheBHYT,
+                NgayThamGiaBHTN = b.NgayThamGiaBHTN,
+                ThoiGianDongBHTN = b.ThoiGianDongBHTN
+            })
+            .FirstOrDefaultAsync();
+
+        if (baoHiem == null)
+        {
+            return NotFound();
+        }
+
+        return View(baoHiem);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(Guid id, BaoHiemVM model)
+    {
+        if (id != model.Id)
+        {
+            return NotFound();
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var baoHiem = await _context.BaoHiems.FindAsync(id);
+                if (baoHiem == null)
+                {
+                    return NotFound();
+                }
+
+                baoHiem.SoBHXH = model.SoBHXH;
+                baoHiem.SoBHXHCu = model.SoBHXHCu;
+                baoHiem.SoBHYT = model.SoBHYT;
+                baoHiem.NgayThamGia = model.NgayThamGia;
+                baoHiem.NgayCapThe = model.NgayCapThe;
+                baoHiem.NgayHetHan = model.NgayHetHan;
+                baoHiem.NoiDangKyBHXH = model.NoiDangKyBHXH;
+                baoHiem.NoiDangKyKCB = model.NoiDangKyKCB;
+                baoHiem.MaKCB = model.MaKCB;
+                baoHiem.MaTinhBenhVien = model.MaTinhBenhVien;
+                baoHiem.DaTraTheBHYT = model.DaTraTheBHYT;
+                baoHiem.NgayThamGiaBHTN = model.NgayThamGiaBHTN;
+                baoHiem.ThoiGianDongBHTN = model.ThoiGianDongBHTN;
+
+                _context.Update(baoHiem);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!BaoHiemExists(model.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        }
+        return View(model);
+    }
+
+    public async Task<IActionResult> Delete(Guid? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var baoHiem = await _context.BaoHiems
+            .Include(b => b.NhanSu)
+            .ThenInclude(n => n.PhongBan)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (baoHiem == null)
+        {
+            return NotFound();
+        }
+
+        return View(baoHiem);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    {
+        var baoHiem = await _context.BaoHiems.FindAsync(id);
+        if (baoHiem != null)
+        {
+            _context.BaoHiems.Remove(baoHiem);
+            await _context.SaveChangesAsync();
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    private bool BaoHiemExists(Guid id)
+    {
+        return _context.BaoHiems.Any(e => e.Id == id);
+    }
+
+    // AJAX endpoints for modal
+    [HttpGet]
+    public async Task<IActionResult> GetBaoHiem(Guid id)
+    {
+        var baoHiem = await _context.BaoHiems
+            .Include(b => b.NhanSu)
+            .FirstOrDefaultAsync(b => b.Id == id);
+        
+        if (baoHiem == null) return NotFound();
+        
+        return Json(new
+        {
+            id = baoHiem.Id,
+            nhanSuId = baoHiem.NhanSuId,
+            soBHXH = baoHiem.SoBHXH,
+            soBHXHCu = baoHiem.SoBHXHCu,
+            soBHYT = baoHiem.SoBHYT,
+            ngayThamGia = baoHiem.NgayThamGia.ToString("yyyy-MM-dd"),
+            ngayCapThe = baoHiem.NgayCapThe.ToString("yyyy-MM-dd"),
+            ngayHetHan = baoHiem.NgayHetHan.ToString("yyyy-MM-dd"),
+            noiDangKyBHXH = baoHiem.NoiDangKyBHXH,
+            noiDangKyKCB = baoHiem.NoiDangKyKCB,
+            maKCB = baoHiem.MaKCB,
+            maTinhBenhVien = baoHiem.MaTinhBenhVien,
+            daTraTheBHYT = baoHiem.DaTraTheBHYT,
+            ngayThamGiaBHTN = baoHiem.NgayThamGiaBHTN.ToString("yyyy-MM-dd"),
+            thoiGianDongBHTN = baoHiem.ThoiGianDongBHTN
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateAjax([FromForm] BaoHiemVM model)
+    {
+        if (model.NhanSuId == Guid.Empty)
+            return Json(new { success = false, message = "Vui lòng chọn nhân viên" });
+
+        var baoHiem = new BaoHiem
+        {
+            Id = Guid.NewGuid(),
+            NhanSuId = model.NhanSuId,
+            SoBHXH = model.SoBHXH ?? string.Empty,
+            SoBHXHCu = model.SoBHXHCu,
+            SoBHYT = model.SoBHYT ?? string.Empty,
+            NgayThamGia = model.NgayThamGia,
+            NgayCapThe = model.NgayCapThe,
+            NgayHetHan = model.NgayHetHan,
+            NoiDangKyBHXH = model.NoiDangKyBHXH ?? string.Empty,
+            NoiDangKyKCB = model.NoiDangKyKCB ?? string.Empty,
+            MaKCB = model.MaKCB ?? string.Empty,
+            MaTinhBenhVien = model.MaTinhBenhVien ?? string.Empty,
+            DaTraTheBHYT = model.DaTraTheBHYT,
+            NgayThamGiaBHTN = model.NgayThamGiaBHTN,
+            ThoiGianDongBHTN = model.ThoiGianDongBHTN,
+            Created = DateTime.Now
+        };
+
+        _context.BaoHiems.Add(baoHiem);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditAjax([FromForm] BaoHiemVM model)
+    {
+        var baoHiem = await _context.BaoHiems.FindAsync(model.Id);
+        if (baoHiem == null)
+            return Json(new { success = false, message = "Không tìm thấy thông tin bảo hiểm" });
+
+        baoHiem.SoBHXH = model.SoBHXH ?? string.Empty;
+        baoHiem.SoBHXHCu = model.SoBHXHCu;
+        baoHiem.SoBHYT = model.SoBHYT ?? string.Empty;
+        baoHiem.NgayThamGia = model.NgayThamGia;
+        baoHiem.NgayCapThe = model.NgayCapThe;
+        baoHiem.NgayHetHan = model.NgayHetHan;
+        baoHiem.NoiDangKyBHXH = model.NoiDangKyBHXH ?? string.Empty;
+        baoHiem.NoiDangKyKCB = model.NoiDangKyKCB ?? string.Empty;
+        baoHiem.MaKCB = model.MaKCB ?? string.Empty;
+        baoHiem.MaTinhBenhVien = model.MaTinhBenhVien ?? string.Empty;
+        baoHiem.DaTraTheBHYT = model.DaTraTheBHYT;
+        baoHiem.NgayThamGiaBHTN = model.NgayThamGiaBHTN;
+        baoHiem.ThoiGianDongBHTN = model.ThoiGianDongBHTN;
+
+        _context.BaoHiems.Update(baoHiem);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
+    {
+        var baoHiem = await _context.BaoHiems.FindAsync(id);
+        if (baoHiem == null)
+            return Json(new { success = false, message = "Không tìm thấy thông tin bảo hiểm" });
+
+        _context.BaoHiems.Remove(baoHiem);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+}

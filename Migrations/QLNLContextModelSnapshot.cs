@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuanLyNhanLuc.Data;
 
@@ -15,23 +16,29 @@ namespace QuanLyNhanLuc.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -44,17 +51,19 @@ namespace QuanLyNhanLuc.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -66,17 +75,17 @@ namespace QuanLyNhanLuc.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -88,10 +97,10 @@ namespace QuanLyNhanLuc.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("RoleId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -103,87 +112,197 @@ namespace QuanLyNhanLuc.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Value")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.BangLuong", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GhiChu")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("HeSoLuong")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("KhauTruBHTN")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("KhauTruBHXH")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("KhauTruBHYT")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("KhauTruKhac")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("KhauTruThueNCCT")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LuongCoBan")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LuongThucNhan")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Nam")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("NgayDuyet")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayThanhToan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiDuyet")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("PhuCapAnTrua")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("PhuCapDienThoai")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("PhuCapKhac")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("PhuCapXangXe")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SoNgayCong")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Thang")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("TienLamThem")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TienPhat")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TienThuong")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TongKhauTru")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TongThuNhap")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanSuId", "Thang", "Nam")
+                        .IsUnique();
+
+                    b.ToTable("BangLuongs");
+                });
+
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.BaoHiem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("DaTraTheBHYT")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LoaiBaoHiem")
+                        .HasColumnType("int");
 
                     b.Property<string>("MaKCB")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MaTinhBenhVien")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("NgayCap")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayCapThe")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayHetHan")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayNhanSoBHXH")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayThamGia")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayThamGiaBHTN")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayTraSoBHXH")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("NhanSuId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("NoiDangKyBHXH")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NoiDangKyKCB")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SoBHXH")
                         .IsRequired()
                         .HasMaxLength(13)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(13)");
 
                     b.Property<string>("SoBHXHCu")
                         .HasMaxLength(13)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(13)");
 
                     b.Property<string>("SoBHYT")
                         .IsRequired()
                         .HasMaxLength(15)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("ThoiGianDongBHTN")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrangThaiBaoHiem")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -194,27 +313,33 @@ namespace QuanLyNhanLuc.Migrations
 
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.ChamCong", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("GhiChu")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<TimeSpan>("GioRa")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("time");
 
                     b.Property<TimeSpan>("GioVao")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("time");
 
                     b.Property<DateTime>("NgayChamCong")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("NhanSuId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("TrangThai")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -227,80 +352,100 @@ namespace QuanLyNhanLuc.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChucVuCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("MoTa")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("TenChucVu")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("ChucVus");
                 });
 
-            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.Department", b =>
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.DaoTao", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("MoTa")
-                        .HasColumnType("TEXT");
+                    b.Property<string>("HinhThucHoc")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NganhHocTenLop")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NguoiDungId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<string>("TenPhongBan")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<string>("TenTruongToChuc")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ThoiGianBatDau")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianKetThuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VanBangChungChi")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Departments");
+                    b.HasIndex("NguoiDungId");
+
+                    b.ToTable("DaoTaos");
                 });
 
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.DiemDanh", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("GhiChu")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("GioDen")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("GioVe")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayDiemDanh")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("NhanVienId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("TrangThai")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -309,34 +454,161 @@ namespace QuanLyNhanLuc.Migrations
                     b.ToTable("DiemDanhs");
                 });
 
-            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.LichLamThem", b =>
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.HopDong", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<TimeSpan>("GioBatDau")
-                        .HasColumnType("TEXT");
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
 
-                    b.Property<TimeSpan>("GioKetThuc")
-                        .HasColumnType("TEXT");
+                    b.Property<string>("GhiChu")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LoaiHopDong")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("LuongCoBan")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("MaHopDong")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("NgayBatDau")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayKetThuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayKy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TepDinhKem")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaHopDong")
+                        .IsUnique();
+
+                    b.HasIndex("NhanSuId");
+
+                    b.ToTable("HopDongs");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.KhenThuongKyLuat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GhiChu")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HinhThuc")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Loai")
+                        .HasColumnType("int");
 
                     b.Property<string>("LyDo")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("MaQuyetDinh")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("NgayDuyet")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayHieuLuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayQuyetDinh")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiDuyet")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("SoTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TepDinhKem")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaQuyetDinh")
+                        .IsUnique();
+
+                    b.HasIndex("NhanSuId");
+
+                    b.ToTable("KhenThuongKyLuats");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.LichLamThem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan>("GioBatDau")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan>("GioKetThuc")
+                        .HasColumnType("time");
+
+                    b.Property<string>("LyDo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("NgayLamThem")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("NguoiDuyet")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("NhanSuId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("TrangThai")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -349,41 +621,41 @@ namespace QuanLyNhanLuc.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ActionName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Area")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ControllerName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("DuongDan")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IconClass")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("ParentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ParentMenuId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("TenMenu")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ViTri")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -395,61 +667,64 @@ namespace QuanLyNhanLuc.Migrations
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.NguoiDung", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("AccessFailedCount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("MaNhanVien")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("isSuperAdmin")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -458,27 +733,34 @@ namespace QuanLyNhanLuc.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.NhanSu", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("HoVaTen")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MaNhanVien")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("PhongBanId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("PhongBanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -494,29 +776,29 @@ namespace QuanLyNhanLuc.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("HanHoanThanh")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("MoTa")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("NhanVienId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("TenNhiemVu")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TrangThai")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -525,23 +807,57 @@ namespace QuanLyNhanLuc.Migrations
                     b.ToTable("NhiemVus");
                 });
 
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.PhanLoaiNhanSu", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MoTa")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhanLoaiCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenPhanLoai")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PhanLoaiNhanSus");
+                });
+
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.PhongBan", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("MaPhongBan")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("MoTa")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("TenPhongBan")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -551,89 +867,273 @@ namespace QuanLyNhanLuc.Migrations
                     b.ToTable("PhongBans");
                 });
 
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.QuanHeGiaDinh", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DiaChi")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DienThoai")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("GioiTinh")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("NgaySinh")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NgheNghiep")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NguoiDungId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("QuanHeVoiChuHo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenNguoiThan")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NguoiDungId");
+
+                    b.ToTable("QuanHeGiaDinhs");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.TaiKhoanNganHang", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChiNhanh")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiDungId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SoTaiKhoan")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenChuTaiKhoan")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TenNganHang")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NguoiDungId");
+
+                    b.ToTable("TaiKhoanNganHangs");
+                });
+
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("BirthDay")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid?>("ChucVuId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("DepartmentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("GioiTinh")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("GioiTinhStxt")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("IdentityNumber")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImageLink")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("NhanSuType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("NhanSuTypeStxt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PhongBanId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ChucVuId");
 
-                    b.HasIndex("DepartmentId");
+                    b.HasIndex("PhongBanId");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("ThongTinNguoiDungs");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.ThuTucHanhChinh", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GhiChu")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LoaiThuTuc")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LyDo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("MaThuTuc")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("NgayBatDau")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayDuyet")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayKetThuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayNop")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiDuyet")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("NhanSuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("SoNgay")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TepDinhKem")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TrangThai")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaThuTuc")
+                        .IsUnique();
+
+                    b.HasIndex("NhanSuId");
+
+                    b.ToTable("ThuTucHanhChinhs");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.TrinhDo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HocHamHocVi")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LyLuanChinhTri")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NgoaiNgu")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NguoiDungId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TrinhDoHocVan")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NguoiDungId");
+
+                    b.ToTable("TrinhDos");
                 });
 
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.VaiTro", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("RoleCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
                 });
@@ -641,10 +1141,10 @@ namespace QuanLyNhanLuc.Migrations
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.VaiTroMenu", b =>
                 {
                     b.Property<string>("VaiTroId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid>("MenuId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("VaiTroId", "MenuId");
 
@@ -704,6 +1204,17 @@ namespace QuanLyNhanLuc.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.BangLuong", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NhanSu", "NhanSu")
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("NhanSu");
+                });
+
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.BaoHiem", b =>
                 {
                     b.HasOne("QuanLyNhanLuc.Models.Entities.NhanSu", "NhanSu")
@@ -726,6 +1237,15 @@ namespace QuanLyNhanLuc.Migrations
                     b.Navigation("NhanSu");
                 });
 
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.DaoTao", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NguoiDung", "NguoiDung")
+                        .WithMany()
+                        .HasForeignKey("NguoiDungId");
+
+                    b.Navigation("NguoiDung");
+                });
+
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.DiemDanh", b =>
                 {
                     b.HasOne("QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung", "NhanVien")
@@ -735,6 +1255,28 @@ namespace QuanLyNhanLuc.Migrations
                         .IsRequired();
 
                     b.Navigation("NhanVien");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.HopDong", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NhanSu", "NhanSu")
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("NhanSu");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.KhenThuongKyLuat", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NhanSu", "NhanSu")
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("NhanSu");
                 });
 
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.LichLamThem", b =>
@@ -779,6 +1321,24 @@ namespace QuanLyNhanLuc.Migrations
                     b.Navigation("NhanVien");
                 });
 
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.QuanHeGiaDinh", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NguoiDung", "NguoiDung")
+                        .WithMany()
+                        .HasForeignKey("NguoiDungId");
+
+                    b.Navigation("NguoiDung");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.TaiKhoanNganHang", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NguoiDung", "NguoiDung")
+                        .WithMany()
+                        .HasForeignKey("NguoiDungId");
+
+                    b.Navigation("NguoiDung");
+                });
+
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung", b =>
                 {
                     b.HasOne("QuanLyNhanLuc.Models.Entities.ChucVu", "ChucVu")
@@ -786,9 +1346,9 @@ namespace QuanLyNhanLuc.Migrations
                         .HasForeignKey("ChucVuId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("QuanLyNhanLuc.Models.Entities.Department", "Department")
-                        .WithMany("NhanSus")
-                        .HasForeignKey("DepartmentId")
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.PhongBan", "PhongBan")
+                        .WithMany("ThongTinNguoiDungs")
+                        .HasForeignKey("PhongBanId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("QuanLyNhanLuc.Models.Entities.NguoiDung", "User")
@@ -797,9 +1357,29 @@ namespace QuanLyNhanLuc.Migrations
 
                     b.Navigation("ChucVu");
 
-                    b.Navigation("Department");
+                    b.Navigation("PhongBan");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.ThuTucHanhChinh", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NhanSu", "NhanSu")
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("NhanSu");
+                });
+
+            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.TrinhDo", b =>
+                {
+                    b.HasOne("QuanLyNhanLuc.Models.Entities.NguoiDung", "NguoiDung")
+                        .WithMany()
+                        .HasForeignKey("NguoiDungId");
+
+                    b.Navigation("NguoiDung");
                 });
 
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.VaiTroMenu", b =>
@@ -826,11 +1406,6 @@ namespace QuanLyNhanLuc.Migrations
                     b.Navigation("NhanSus");
                 });
 
-            modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.Department", b =>
-                {
-                    b.Navigation("NhanSus");
-                });
-
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.MenuQuanTri", b =>
                 {
                     b.Navigation("SubMenus");
@@ -851,6 +1426,8 @@ namespace QuanLyNhanLuc.Migrations
             modelBuilder.Entity("QuanLyNhanLuc.Models.Entities.PhongBan", b =>
                 {
                     b.Navigation("NhanSus");
+
+                    b.Navigation("ThongTinNguoiDungs");
                 });
 #pragma warning restore 612, 618
         }

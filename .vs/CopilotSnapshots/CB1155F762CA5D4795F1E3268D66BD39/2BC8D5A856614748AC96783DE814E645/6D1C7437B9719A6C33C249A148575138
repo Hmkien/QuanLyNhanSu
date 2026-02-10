@@ -1,0 +1,29 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ChucVu
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h3>Chỉnh sửa chức vụ</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="TenChucVu" class="control-label"></label>
+                <input asp-for="TenChucVu" class="form-control" />
+                <span asp-validation-for="TenChucVu" class="text-danger"></span>
+            </div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+            </div>  
+        </form>
+    </div>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

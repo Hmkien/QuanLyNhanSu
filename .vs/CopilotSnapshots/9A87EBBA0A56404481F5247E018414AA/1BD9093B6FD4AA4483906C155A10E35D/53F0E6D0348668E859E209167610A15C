@@ -1,0 +1,81 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.ViewModels.BaoHiemVM>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a class="text-decoration-none text-secondary" href="/">
+                            <i class="bi bi-house-door"></i>
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a class="text-decoration-none text-secondary" href="#">Nhân sự</a>
+                    </li>
+                    <li class="breadcrumb-item text-primary">Danh sách bảo hiểm</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="@Url.Action("Create")" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>Thêm mới
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã nhân viên</th>
+                            <th>Họ và tên</th>
+                            <th>Phòng ban</th>
+                            <th>Số BHXH</th>
+                            <th>Số BHYT</th>
+                            <th>Ngày tham gia</th>
+                            <th>Trạng thái</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.MaNhanVien</td>
+                                <td>@item.HoTen</td>
+                                <td>@item.PhongBan</td>
+                                <td>@item.SoBHXH</td>
+                                <td>@item.SoBHYT</td>
+                                <td>@item.NgayThamGia.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @if (item.DaTraTheBHYT)
+                                    {
+                                        <span class="badge bg-success">Đã trả thẻ</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Chưa trả thẻ</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-outline-secondary me-1">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="@Url.Action("Delete", new { id = item.Id })" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 

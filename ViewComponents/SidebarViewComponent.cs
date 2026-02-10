@@ -20,35 +20,69 @@ namespace QuanLyNhanLuc.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            List<MenuQuanTri> menus = new List<MenuQuanTri>();
+            string? userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            List<MenuQuanTri> menus = [];
 
-            if (userId is not null)
+            if (string.IsNullOrEmpty(userId))
             {
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user != null)
-                {
-                    var userRoles = await _userManager.GetRolesAsync(user);
-                    var roleEntity = await _context.VaiTros.FirstOrDefaultAsync(r => r.Name == userRoles.FirstOrDefault());
-                    var menuIds = await _context.VaiTroMenus
-                         .Where(e => e.VaiTroId == roleEntity.Id)
-                         .Select(r => r.MenuId)
-                         .ToListAsync();
-                    var rootMenus = await _context.MenuQuanTris
-                        .Where(m => m.ParentId == null && menuIds.Contains(m.Id))
-                        .OrderBy(m => m.ViTri)
-                        .ToListAsync();
-                    var allMenus = await _context.MenuQuanTris.Where(e => menuIds.Contains(e.Id)).ToListAsync();
-                    BuildMenuTree(rootMenus, allMenus);
-                    menus = rootMenus;
-                }
+                return View("_NavPartial", menus);
             }
+
+            NguoiDung? user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return View("_NavPartial", menus);
+            }
+
+            // If super admin, return full menu tree
+            if (user.isSuperAdmin)
+            {
+                List<MenuQuanTri> rootMenus = await _context.MenuQuanTris
+                    .Where(m => m.ParentId == null)
+                    .OrderBy(m => m.ViTri)
+                    .ToListAsync();
+                List<MenuQuanTri> allMenus = await _context.MenuQuanTris.ToListAsync();
+                BuildMenuTree(rootMenus, allMenus);
+                menus = rootMenus;
+                return View("_NavPartial", menus);
+            }
+
+            IList<string> userRoles = await _userManager.GetRolesAsync(user);
+            string? roleName = userRoles.FirstOrDefault();
+            if (string.IsNullOrEmpty(roleName))
+            {
+                return View("_NavPartial", menus);
+            }
+
+            VaiTro? roleEntity = await _context.VaiTros.FirstOrDefaultAsync(r => r.Name == roleName);
+            if (roleEntity == null)
+            {
+                return View("_NavPartial", menus);
+            }
+
+            List<Guid> menuIds = await _context.VaiTroMenus
+                 .Where(e => e.VaiTroId == roleEntity.Id)
+                 .Select(r => r.MenuId)
+                 .ToListAsync();
+
+            if (!menuIds.Any())
+            {
+                return View("_NavPartial", menus);
+            }
+
+            List<MenuQuanTri> root = await _context.MenuQuanTris
+                .Where(m => m.ParentId == null && menuIds.Contains(m.Id))
+                .OrderBy(m => m.ViTri)
+                .ToListAsync();
+            List<MenuQuanTri> all = await _context.MenuQuanTris.Where(e => menuIds.Contains(e.Id)).ToListAsync();
+            BuildMenuTree(root, all);
+            menus = root;
 
             return View("_NavPartial", menus);
         }
         private void BuildMenuTree(List<MenuQuanTri> parentMenus, List<MenuQuanTri> allMenus)
         {
-            foreach (var menu in parentMenus)
+            foreach (MenuQuanTri menu in parentMenus)
             {
                 menu.SubMenus = allMenus
                     .Where(m => m.ParentId == menu.Id)

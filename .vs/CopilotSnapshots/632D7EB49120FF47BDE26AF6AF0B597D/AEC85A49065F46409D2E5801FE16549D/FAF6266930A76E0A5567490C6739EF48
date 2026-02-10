@@ -1,0 +1,119 @@
+﻿@using QuanLyNhanLuc.Models.Enums
+@* Modal Thêm/Sửa Quan hệ gia đình *@
+<div class="modal fade" id="familyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="familyModalTitle">Thêm quan hệ gia đình</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formThemQuanHeGiaDinh">
+                <input type="hidden" name="Id" id="familyId" />
+                <input type="hidden" name="NguoiDungId" id="familyNguoiDungId" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tên người thân <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="TenNguoiThan" id="tenNguoiThan" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+                            <select class="form-select" name="GioiTinh" id="familyGioiTinh" required>
+                                <option value="">--Chọn--</option>
+                                <option value="0">Nam</option>
+                                <option value="1">Nữ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày sinh</label>
+                            <input type="date" class="form-control" name="NgaySinh" id="familyNgaySinh" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quan hệ với chủ hộ <span class="text-danger">*</span></label>
+                            <select class="form-select" name="QuanHeVoiChuHo" id="quanHeVoiChuHo" required>
+                                <option value="">--Chọn--</option>
+                                <option value="Bố">Bố</option>
+                                <option value="Mẹ">Mẹ</option>
+                                <option value="Vợ">Vợ</option>
+                                <option value="Chồng">Chồng</option>
+                                <option value="Con">Con</option>
+                                <option value="Anh em">Anh em</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Điện thoại</label>
+                            <input type="tel" class="form-control" name="DienThoai" id="familyDienThoai" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nghề nghiệp</label>
+                            <input type="text" class="form-control" name="NgheNghiep" id="familyNgheNghiep" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ</label>
+                        <textarea class="form-control" name="DiaChi" id="familyDiaChi" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#formThemQuanHeGiaDinh').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!this.checkValidity()) {
+            this.reportValidity();
+            return;
+        }
+        
+        var formData = $(this).serialize();
+        
+        $.ajax({
+            url: '/NhanSu/SaveQuanHeGiaDinh',
+            type: 'POST',
+            data: formData,
+            success: function(res) {
+                if (res.success) {
+                    Notification.success(res.message || 'Lưu thông tin gia đình thành công');
+                    $('#familyModal').modal('hide');
+                    loadFamilyList($('#familyNguoiDungId').val());
+                } else {
+                    Notification.error(res.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function() {
+                Notification.error('Có lỗi xảy ra khi lưu thông tin');
+            }
+        });
+    });
+});
+</script>
+        uploadBox.style.backgroundColor = "#f0f0f0";
+    });
+
+    uploadBox.addEventListener('dragleave', function () {
+        uploadBox.style.backgroundColor = "#f9f9f9";
+    });
+
+    uploadBox.addEventListener('drop', function (e) {
+        e.preventDefault();
+        uploadBox.style.backgroundColor = "#f9f9f9";
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileName.textContent = "File đã chọn: " + files[0].name;
+        }
+    });
+</script>

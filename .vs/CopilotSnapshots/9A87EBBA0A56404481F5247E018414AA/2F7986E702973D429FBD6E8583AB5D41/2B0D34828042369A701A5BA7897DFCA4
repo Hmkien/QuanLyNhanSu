@@ -1,0 +1,204 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.VaiTro>
+
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary">Danh sách vai trò</h5>
+                <a asp-action="Create" class="btn btn-primary" data-action="create">
+                    <i class="fas fa-plus me-2"></i>Thêm mới
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên Vai trò</th>
+                            <th>Cấu hình</th>
+                            <th class="text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="align-middle">
+                                    <i class="fas fa-user-shield me-2 text-primary"></i>
+                                    @Html.DisplayFor(modelItem => item.Name)
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="AssignMenu" asp-route-id="@item.Id" class="btn  btn-sm" data-action="assign" data-id="@item.Id">
+                                        <i class="fas fa-cog me-1"></i>Cấu hình
+                                    </a>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn  btn-sm me-1" data-action="edit" data-id="@item.Id">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn text-danger btn-sm" data-action="delete" data-id="@item.Id">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Create / Edit Role Modal -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="roleModalTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <input type="hidden" id="roleId" name="id" />
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label">Tên vai trò</label>
+                        <input id="roleName" name="name" class="form-control" />
+                        <div class="text-danger" id="roleError" style="display:none"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="roleSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Xóa vai trò</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa vai trò này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Menu Modal -->
+<div class="modal fade" id="assignMenuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>Phân quyền menu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="assignMenuBody">
+                <!-- loaded via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="assignMenuSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            // Open Create Modal
+            $("a[asp-action='Create']").on('click', function(e) {
+                e.preventDefault();
+                $('#roleModalTitle').text('Thêm vai trò');
+                $('#roleId').val('');
+                $('#roleName').val('');
+                $('#roleError').hide();
+                var modal = new bootstrap.Modal(document.getElementById('roleModal'));
+                modal.show();
+            });
+
+            // Open Edit Modal
+            $("a[asp-action='Edit']").on('click', function(e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                var id = new URLSearchParams(url.split('?')[1]).get('id');
+                $('#roleModalTitle').text('Chỉnh sửa vai trò');
+                $('#roleError').hide();
+                $.get('/VaiTro/GetRole', { id: id }).done(function(res) {
+                    $('#roleId').val(res.id);
+                    $('#roleName').val(res.name);
+                    var modal = new bootstrap.Modal(document.getElementById('roleModal'));
+                    modal.show();
+                });
+            });
+
+            // Save (Create or Edit) via AJAX
+            $('#roleSaveBtn').on('click', function() {
+                var id = $('#roleId').val();
+                var name = $('#roleName').val();
+                var url = id ? '/VaiTro/EditAjax' : '/VaiTro/CreateAjax';
+                var data = id ? { id: id, name: name } : { name: name };
+                $.post(url, data).done(function(res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        $('#roleError').text(res.message).show();
+                    }
+                }).fail(function() { alert('Có lỗi xảy ra'); });
+            });
+
+            // Delete
+            var deleteId = null;
+            $("a[asp-action='Delete']").on('click', function(e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                deleteId = new URLSearchParams(url.split('?')[1]).get('id');
+                var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                modal.show();
+            });
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $.post('/VaiTro/DeleteAjax', { id: deleteId }).done(function(res) {
+                    if (res.success) location.reload(); else alert(res.message);
+                });
+            });
+
+            // Assign menu open
+            $("a[asp-action='AssignMenu']").on('click', function(e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
+                var id = new URLSearchParams(url.split('?')[1]).get('id');
+                $('#assignMenuBody').html('<div class="text-center">Đang tải...</div>');
+                $.get('/VaiTro/GetAssignMenu', { id: id }).done(function(html) {
+                    $('#assignMenuBody').html(html);
+                    var modal = new bootstrap.Modal(document.getElementById('assignMenuModal'));
+                    modal.show();
+                });
+            });
+
+            // Save assign menu
+            $('#assignMenuSaveBtn').on('click', function() {
+                var form = $('#assignMenuBody').find('form');
+                if (!form.length) return;
+                var roleId = form.find('input[name="VaiTro.Id"]').val() || form.find('input[name="VaiTro.Id"]').val();
+                var selected = [];
+                form.find('input[name="SelectedMenuIds"]:checked').each(function() { selected.push($(this).val()); });
+                $.post('/VaiTro/AssignMenuAjax', { roleId: roleId, selectedMenuIds: selected }).done(function(res) {
+                    if (res.success) location.reload(); else alert(res.message);
+                });
+            });
+        });
+    </script>
+}

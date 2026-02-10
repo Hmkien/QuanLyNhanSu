@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace QuanLyNhanLuc.Models.ViewModels;
 
 public class DashboardVM
 {
-    public ThongKeHomNayVM ThongKeHomNay { get; set; }
-    public ThongKeNhanSuVM ThongKeNhanSu { get; set; }
-    public ThongKeThuTucVM ThongKeThuTuc { get; set; }
-    public ThongKeChartVM ThongKeChart { get; set; }
+    public ThongKeHomNayVM ThongKeHomNay { get; set; } = new ThongKeHomNayVM();
+    public ThongKeNhanSuVM ThongKeNhanSu { get; set; } = new ThongKeNhanSuVM();
+    public ThongKeThuTucVM ThongKeThuTuc { get; set; } = new ThongKeThuTucVM();
+    public ThongKeChartVM ThongKeChart { get; set; } = new ThongKeChartVM();
 }
 
 public class ThongKeHomNayVM
@@ -35,14 +35,14 @@ public class ThongKeThuTucVM
 
 public class ThongKeChartVM
 {
-    public List<ChartDataVM> ThongKeNhanVien { get; set; }
-    public List<ChartDataVM> TyLeNhanVien { get; set; }
-    public List<ChartDataVM> ThongKeTuyenDung { get; set; }
-    public List<ChartDataVM> SoLuongNhanVienTheoThang { get; set; }
+    public List<ChartDataVM> ThongKeNhanVien { get; set; } = new List<ChartDataVM>();
+    public List<ChartDataVM> TyLeNhanVien { get; set; } = new List<ChartDataVM>();
+    public List<ChartDataVM> ThongKeTuyenDung { get; set; } = new List<ChartDataVM>();
+    public List<ChartDataVM> SoLuongNhanVienTheoThang { get; set; } = new List<ChartDataVM>();
 }
 
 public class ChartDataVM
 {
-    public string Label { get; set; }
+    public string Label { get; set; } = string.Empty;
     public int Value { get; set; }
 } 

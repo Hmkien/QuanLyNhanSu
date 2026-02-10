@@ -1,0 +1,80 @@
+﻿
+@* Modal Sửa thông tin ngân hàng *@
+<div class="modal fade" id="ModalSuaThongTinNganHang" tabindex="-1" aria-labelledby="ModalSuaThongTinNganHangLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary fw-bold">Chỉnh sửa tài khoản ngân hàng</h5>
+                <button type="button" class="btn-close text-primary" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formSuaThongTinNganHang">
+                <input type="hidden" name="Id" id="bankId" />
+                <input type="hidden" name="NguoiDungId" id="bankNguoiDungId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-primary">Ngân hàng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="TenNganHang" id="tenNganHang" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-primary">Chi nhánh</label>
+                        <input type="text" class="form-control" name="ChiNhanh" id="chiNhanh" />
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label text-primary">Số tài khoản <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="SoTaiKhoan" id="soTaiKhoan" required />
+                        </div>
+                        <div class="col">
+                            <label class="form-label text-primary">Tên chủ tài khoản <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="TenChuTaiKhoan" id="tenChuTaiKhoan" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary text-primary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#formSuaThongTinNganHang').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!this.checkValidity()) {
+            this.reportValidity();
+            return;
+        }
+        
+        var formData = $(this).serialize();
+        
+        $.ajax({
+            url: '/NhanSu/SaveTaiKhoanNganHang',
+            type: 'POST',
+            data: formData,
+            success: function(res) {
+                if (res.success) {
+                    Notification.success(res.message || 'Cập nhật thông tin ngân hàng thành công');
+                    $('#ModalSuaThongTinNganHang').modal('hide');
+                    
+                    // ✅ Refresh data without page reload
+                    if (typeof window.onModalSaveSuccess === 'function') {
+                        window.onModalSaveSuccess('bank');
+                    } else {
+                        location.reload();
+                    }
+                } else {
+                    Notification.error(res.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function() {
+                Notification.error('Có lỗi xảy ra khi lưu thông tin');
+            }
+        });
+    });
+});
+</script>
+

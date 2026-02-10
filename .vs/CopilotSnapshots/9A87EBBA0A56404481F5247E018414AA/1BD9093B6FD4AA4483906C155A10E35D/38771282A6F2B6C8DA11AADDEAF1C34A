@@ -1,0 +1,45 @@
+﻿@page
+@model ForgotPasswordModel
+@{
+    ViewData["Title"] = "Quên mật khẩu";
+    Layout = "~/Views/Shared/LayoutForSpace.cshtml";
+}
+
+<div class="container min-vh-100 d-flex justify-content-center align-items-center">
+    <div class="col-md-6 col-lg-6">
+        <div class="card shadow border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold text-primary">@ViewData["Title"]</h1>
+                    <p class="text-muted">Nhập email để đặt lại mật khẩu</p>
+                </div>
+
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                    <div class="form-floating mb-4">
+                        <input asp-for="Input.Email"
+                               class="form-control form-control-lg"
+                               autocomplete="username"
+                               aria-required="true"
+                               placeholder="name@example.com" />
+                        <label asp-for="Input.Email" class="form-label">Địa chỉ email</label>
+                        <span asp-validation-for="Input.Email" class="text-danger d-block mt-1"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        Đặt lại mật khẩu
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <a class="text-primary text-decoration-none" asp-page="/Account/Login">Quay lại đăng nhập</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

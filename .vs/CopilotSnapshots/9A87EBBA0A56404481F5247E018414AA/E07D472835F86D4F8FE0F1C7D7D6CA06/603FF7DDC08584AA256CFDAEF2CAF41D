@@ -1,0 +1,39 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhanLuc.Models.Entities;
+
+public class ThuTucHanhChinh : EntityBase
+{
+    [MaxLength(50)]
+    public string MaThuTuc { get; set; } = string.Empty;
+    
+    public Guid NhanSuId { get; set; }
+    
+    [MaxLength(100)]
+    public string LoaiThuTuc { get; set; } = string.Empty; // NghiPhep, LamThem, NghiViec, CongTac
+    
+    [MaxLength(500)]
+    public string LyDo { get; set; } = string.Empty;
+    
+    public DateTime NgayNop { get; set; }
+    
+    public DateTime NgayBatDau { get; set; }
+    
+    public DateTime? NgayKetThuc { get; set; }
+    
+    public decimal? SoNgay { get; set; }
+    
+    [MaxLength(50)]
+    public string TrangThai { get; set; } = "NopDon"; // NopDon, ChoDuyet, DaDuyet, TuChoi
+    
+    public string? NguoiDuyet { get; set; }
+    
+    public DateTime? NgayDuyet { get; set; }
+    
+    public string? GhiChu { get; set; }
+    
+    public string? TepDinhKem { get; set; }
+
+    // Navigation properties
+    public virtual NhanSu NhanSu { get; set; } = null!;
+}

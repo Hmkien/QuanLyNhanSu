@@ -1,0 +1,62 @@
+﻿@* Modal Thêm/S?a H?p ??ng *@
+<div class="modal fade" id="ModalHopDong" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="modalHopDongTitle">Thêm h?p ??ng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formHopDong">
+                <input type="hidden" name="Id" id="hopDongId" />
+                <input type="hidden" name="NguoiDungId" id="hopDongNguoiDungId" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">S? h?p ??ng <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="MaHopDong" id="maHopDong" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Lo?i h?p ??ng <span class="text-danger">*</span></label>
+                            <select class="form-select" name="LoaiHopDong" id="loaiHopDong" required>
+                                <option value="">--Ch?n--</option>
+                                <option value="0">Th? vi?c</option>
+                                <option value="1">Có th?i h?n</option>
+                                <option value="2">Không th?i h?n</option>
+                                <option value="3">Th?i v?</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày ký <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayKy" id="ngayKy" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">L??ng c? b?n</label>
+                            <input type="number" class="form-control" name="LuongCoBan" id="luongCoBan" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày b?t ??u <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayBatDau" id="ngayBatDau" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày k?t thúc</label>
+                            <input type="date" class="form-control" name="NgayKetThuc" id="ngayKetThuc" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" name="GhiChu" id="ghiChuHopDong" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

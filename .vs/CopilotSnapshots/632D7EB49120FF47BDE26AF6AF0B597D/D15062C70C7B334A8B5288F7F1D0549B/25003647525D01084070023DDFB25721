@@ -1,0 +1,73 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung
+<div class="modal fade" id="EditinfoModal" tabindex="-1" aria-labelledby="EditinfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="EditinfoModalLabel">Chỉnh sửa thông tin cơ bản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formSuaThongTinCoBan">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="FullName" value="@Model.FullName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">CMND/CCCD <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="IdentityNumber" value="@Model.IdentityNumber" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="BirthDay" value="@Model.BirthDay.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+                            <select class="form-select" name="GioiTinh" required>
+                                <option value="">--Chọn--</option>
+                                @if(Model.GioiTinh == QuanLyNhanLuc.Models.Enums.GioiTinh.Male) {
+                                    <option value="0" selected>Nam</option>
+                                    <option value="1">Nữ</option>
+                                } else {
+                                    <option value="0">Nam</option>
+                                    <option value="1" selected>Nữ</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#formSuaThongTinCoBan').on('submit', function(e) {
+        e.preventDefault();
+        var formData = $(this).serialize();
+        $.ajax({
+            url: '/NhanSu/UpdateThongTinCoBan',
+            type: 'POST',
+            data: formData,
+            success: function(res) {
+                if (res.success) {
+                    Notification.success(res.message);
+                    $('#EditinfoModal').modal('hide');
+                    location.reload();
+                } else {
+                    Notification.error(res.message);
+                }
+            },
+            error: function() {
+                Notification.error('Có lỗi xảy ra');
+            }
+        });
+    });
+});
+</script>

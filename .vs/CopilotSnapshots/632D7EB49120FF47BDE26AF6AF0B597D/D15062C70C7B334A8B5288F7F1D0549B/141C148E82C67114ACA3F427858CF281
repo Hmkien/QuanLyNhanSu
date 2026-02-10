@@ -1,0 +1,835 @@
+﻿// ==================== CHI TIẾT NHÂN VIÊN - TAB MANAGER ====================
+console.log('✅ chi-tiet-nhan-vien.js LOADED');
+
+// Global state
+window.NhanVienDetailState = {
+    nguoiDungId: null,
+    loadedSections: new Set(),
+    currentTopTab: '#thong-tin-chung',
+    currentSubTab: 'ThongTinChung'
+};
+
+// ==================== REFRESH DATA AFTER MODAL SAVE ====================
+window.refreshCurrentTab = function() {
+    console.log('🔄 Refreshing current tab...');
+    const currentTop = window.NhanVienDetailState.currentTopTab;
+    const currentSub = window.NhanVienDetailState.currentSubTab;
+    
+    // Clear loaded state to force reload
+    window.NhanVienDetailState.loadedSections.delete('bank');
+    window.NhanVienDetailState.loadedSections.delete('trinhDo');
+    window.NhanVienDetailState.loadedSections.delete('daoTao');
+    window.NhanVienDetailState.loadedSections.delete('family');
+    window.NhanVienDetailState.loadedSections.delete('hopDong');
+    window.NhanVienDetailState.loadedSections.delete('khenThuong');
+    window.NhanVienDetailState.loadedSections.delete('kyLuat');
+    window.NhanVienDetailState.loadedSections.delete('luong');
+    
+    // Reload current data
+    loadTopTabData(currentTop);
+    loadSubTabData(currentSub);
+    
+    console.log('✅ Tab refreshed:', currentTop, currentSub);
+};
+
+// ==================== INIT ====================
+$(document).ready(function() {
+    console.log('🚀 Initializing Chi Tiet Nhan Vien...');
+    
+    // Get nguoiDungId from hidden input
+    const hiddenUserId = $('#hiddenNguoiDungId').val();
+    if (hiddenUserId) {
+        window.NhanVienDetailState.nguoiDungId = hiddenUserId;
+        console.log('✅ UserId:', window.NhanVienDetailState.nguoiDungId);
+    } else {
+        console.error('❌ Không tìm thấy nguoiDungId');
+    }
+    
+    // Bind tab events
+    bindTopTabs();
+    bindSubTabs();
+    
+    // Init other components
+    initYearMonthSelects();
+    setupEventHandlers();
+    
+    // Restore last tab
+    restoreLastTab();
+    
+    console.log('✅ Chi Tiet Nhan Vien initialized');
+});
+
+// ==================== TAB BINDING ====================
+function bindTopTabs() {
+    $('.menu-link-top').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const target = $(this).attr('data-target-top');
+        console.log('🔵 Top tab clicked:', target);
+        
+        if (!target) {
+            console.error('❌ No data-target-top');
+            return false;
+        }
+        
+        switchTopTab(target);
+        return false;
+    });
+    
+    console.log('✅ Top tabs bound:', $('.menu-link-top').length);
+}
+
+function bindSubTabs() {
+    $('.menu-link').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const target = $(this).attr('data-target');
+        console.log('🟢 Sub tab clicked:', target);
+        
+        if (!target) {
+            console.error('❌ No data-target');
+            return false;
+        }
+        
+        switchSubTab(target);
+        return false;
+    });
+    
+    console.log('✅ Sub tabs bound:', $('.menu-link').length);
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTopTab(targetSection) {
+    console.log('🔄 Switching to top tab:', targetSection);
+    
+    // Save current state
+    window.NhanVienDetailState.currentTopTab = targetSection;
+    
+    // Hide all
+    $('.content-section-top').addClass('d-none');
+    
+    // Show target
+    $(targetSection).removeClass('d-none');
+    
+    // Update styling
+    $('.menu-link-top')
+        .removeClass('active')
+        .removeClass('text-primary')
+        .addClass('text-dark');
+    
+    $(`.menu-link-top[data-target-top="${targetSection}"]`)
+        .addClass('active')
+        .addClass('text-primary')
+        .removeClass('text-dark');
+    
+    // Save to session
+    sessionStorage.setItem('lastTopTab', targetSection);
+    
+    // Load data
+    loadTopTabData(targetSection);
+    
+    console.log('✅ Switched to:', targetSection);
+}
+
+function switchSubTab(targetSection) {
+    console.log('🔄 Switching to sub tab:', targetSection);
+    
+    // Save current state
+    window.NhanVienDetailState.currentSubTab = targetSection;
+    
+    // Hide all
+    $('.content-section').addClass('d-none');
+    
+    // Show target
+    $('#' + targetSection).removeClass('d-none');
+    
+    // Update styling
+    $('.menu-link')
+        .removeClass('active')
+        .removeClass('text-primary')
+        .addClass('text-dark');
+    
+    $(`.menu-link[data-target="${targetSection}"]`)
+        .addClass('active')
+        .addClass('text-primary')
+        .removeClass('text-dark');
+    
+    // Save to session
+    sessionStorage.setItem('lastSubTab', targetSection);
+    
+    // Load data
+    loadSubTabData(targetSection);
+    
+    console.log('✅ Switched to:', targetSection);
+}
+
+function restoreLastTab() {
+    const lastTop = sessionStorage.getItem('lastTopTab');
+    const lastSub = sessionStorage.getItem('lastSubTab');
+    
+    if (lastTop && lastTop !== '#thong-tin-chung') {
+        console.log('🔄 Restoring top tab:', lastTop);
+        switchTopTab(lastTop);
+    }
+    
+    if (lastSub && lastSub !== 'ThongTinChung') {
+        setTimeout(() => {
+            console.log('🔄 Restoring sub tab:', lastSub);
+            switchSubTab(lastSub);
+        }, 100);
+    }
+}
+
+// ==================== DATA LOADING ====================
+function loadTopTabData(section) {
+    const userId = window.NhanVienDetailState.nguoiDungId;
+    if (!userId) return;
+    
+    switch(section) {
+        case '#hop-dong-bao-hiem':
+            if (!window.NhanVienDetailState.loadedSections.has('hopDong')) {
+                loadHopDongList(userId);
+                loadBaoHiemData(userId);
+            }
+            break;
+        case '#khen-thuong-ky-luat':
+            if (!window.NhanVienDetailState.loadedSections.has('khenThuong')) {
+                loadKhenThuongList(userId);
+                loadKyLuatList(userId);
+            }
+            break;
+        case '#luong':
+            if (!window.NhanVienDetailState.loadedSections.has('luong')) {
+                loadLuongList(userId);
+            }
+            break;
+    }
+}
+
+function loadSubTabData(section) {
+    const userId = window.NhanVienDetailState.nguoiDungId;
+    if (!userId) return;
+    
+    switch(section) {
+        case 'TaiKhoanNganHang':
+            if (!window.NhanVienDetailState.loadedSections.has('bank')) {
+                loadBankInfoDisplay(userId);
+            }
+            break;
+        case 'TrinhDo':
+            if (!window.NhanVienDetailState.loadedSections.has('trinhDo')) {
+                loadTrinhDoDisplay(userId);
+                loadDaoTaoList(userId);
+            }
+            break;
+        case 'HoKhau':
+            if (!window.NhanVienDetailState.loadedSections.has('family')) {
+                loadFamilyList(userId);
+            }
+            break;
+    }
+}
+
+// ==================== LOAD FUNCTIONS ====================
+function loadBankInfoDisplay(userId) {
+    $('#bankInfoContent').html('<p class="text-muted">Đang tải...</p>');
+    $.get('/NhanSu/GetTaiKhoanNganHang', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#bankInfoContent').html(`
+                <div class="col-md-6"><p class="mb-1 text-secondary">Ngân hàng</p><p class="text-primary">${d.tenNganHang || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="mb-1 text-secondary">Chi nhánh</p><p class="text-primary">${d.chiNhanh || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Số tài khoản</p><p class="text-primary">${d.soTaiKhoan || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Tên chủ TK</p><p class="text-primary">${d.tenChuTaiKhoan || 'Chưa cập nhật'}</p></div>
+            `);
+        } else {
+            $('#bankInfoContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+        window.NhanVienDetailState.loadedSections.add('bank');
+    }).fail(function() {
+        $('#bankInfoContent').html('<p class="text-danger">Lỗi tải dữ liệu</p>');
+    });
+}
+
+function loadBankInfo(userId) {
+    $.get('/NhanSu/GetTaiKhoanNganHang', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#bankId').val(d.id);
+            $('#bankNguoiDungId').val(userId);
+            $('#tenNganHang').val(d.tenNganHang);
+            $('#chiNhanh').val(d.chiNhanh);
+            $('#soTaiKhoan').val(d.soTaiKhoan);
+            $('#tenChuTaiKhoan').val(d.tenChuTaiKhoan);
+        } else {
+            $('#bankNguoiDungId').val(userId);
+        }
+        $('#ModalSuaThongTinNganHang').modal('show');
+    });
+}
+
+function loadTrinhDoDisplay(userId) {
+    $('#trinhDoContent').html('<p class="text-muted">Đang tải...</p>');
+    $.get('/NhanSu/GetTrinhDo', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#trinhDoContent').html(`
+                <div class="col-md-6"><p class="mb-1 text-secondary">Trình độ học vấn</p><p class="text-primary">${d.trinhDoHocVan || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="mb-1 text-secondary">Học hàm, học vị</p><p class="text-primary">${d.hocHamHocVi || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Lý luận chính trị</p><p class="text-primary">${d.lyLuanChinhTri || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Ngoại ngữ</p><p class="text-primary">${d.ngoaiNgu || 'Chưa cập nhật'}</p></div>
+            `);
+        } else {
+            $('#trinhDoContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+        window.NhanVienDetailState.loadedSections.add('trinhDo');
+    });
+}
+
+function loadTrinhDo(userId) {
+    $.get('/NhanSu/GetTrinhDo', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#trinhDoId').val(d.id);
+            $('#trinhDoNguoiDungId').val(userId);
+            $('#trinhDoHocVan').val(d.trinhDoHocVan);
+            $('#hocHamHocVi').val(d.hocHamHocVi);
+            $('#lyLuanChinhTri').val(d.lyLuanChinhTri);
+            $('#ngoaiNgu').val(d.ngoaiNgu);
+        } else {
+            $('#trinhDoNguoiDungId').val(userId);
+        }
+        $('#ModalSuaTrinhDo').modal('show');
+    });
+}
+
+function loadDaoTaoList(userId) {
+    $.get('/NhanSu/GetDanhSachDaoTao', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const bd = item.thoiGianBatDau ? new Date(item.thoiGianBatDau).toLocaleDateString('vi-VN') : '';
+                const kt = item.thoiGianKetThuc ? new Date(item.thoiGianKetThuc).toLocaleDateString('vi-VN') : '';
+                const tg = bd && kt ? `${bd} - ${kt}` : (bd || kt || '');
+                return `<tr><td>${idx + 1}</td><td>${item.tenTruongToChuc || ''}</td><td>${item.nganhHocTenLop || ''}</td><td>${tg}</td><td>${item.hinhThucHoc || ''}</td><td>${item.vanBangChungChi || ''}</td><td><i class="bi bi-trash text-danger" style="cursor:pointer" onclick="deleteDaoTao('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#daoTaoTableBody').html(html);
+        } else {
+            $('#daoTaoTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        window.NhanVienDetailState.loadedSections.add('daoTao');
+    });
+}
+
+function loadFamilyList(userId) {
+    $.get('/NhanSu/GetDanhSachQuanHeGiaDinh', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const ns = item.ngaySinh ? new Date(item.ngaySinh).toLocaleDateString('vi-VN') : '';
+                return `<tr><td>${idx + 1}</td><td class="text-primary">${item.tenNguoiThan || ''}</td><td>${item.gioiTinh == 0 ? 'Nam' : 'Nữ'}</td><td>${ns}</td><td class="text-primary">${item.dienThoai || ''}</td><td class="text-primary">${item.quanHeVoiChuHo || ''}</td><td><i class="bi bi-trash text-danger" style="cursor:pointer" onclick="deleteFamily('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#familyTableBody').html(html);
+        } else {
+            $('#familyTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        window.NhanVienDetailState.loadedSections.add('family');
+    });
+}
+
+function loadHopDongList(userId) {
+    $.get('/NhanSu/GetDanhSachHopDong', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const nk = item.ngayKyHopDong ? new Date(item.ngayKyHopDong).toLocaleDateString('vi-VN') : '';
+                const nbd = item.ngayBatDau ? new Date(item.ngayBatDau).toLocaleDateString('vi-VN') : '';
+                const nkt = item.ngayKetThuc ? new Date(item.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+                return `<tr><td>${idx + 1}</td><td><a href="#" class="text-primary" onclick="viewHopDong('${item.id}');return false">${item.soHopDong || ''}</a></td><td>${item.loaiHopDongStxt || ''}</td><td>${nk}</td><td>${nbd}</td><td>${nkt}</td><td><i class="bi bi-pencil-square text-primary mx-1" style="cursor:pointer" onclick="editHopDong('${item.id}')"></i><i class="bi bi-trash text-danger mx-1" style="cursor:pointer" onclick="deleteHopDong('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#hopDongTableBody').html(html);
+        } else {
+            $('#hopDongTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        window.NhanVienDetailState.loadedSections.add('hopDong');
+    });
+}
+
+function loadKhenThuongList(userId) {
+    $.get('/NhanSu/GetDanhSachKhenThuong', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const nk = item.ngayKy ? new Date(item.ngayKy).toLocaleDateString('vi-VN') : '';
+                const gt = item.giaTri ? item.giaTri.toLocaleString('vi-VN') + ' VNĐ' : '';
+                return `<tr><td>${idx + 1}</td><td><a href="#" class="text-primary" onclick="viewKhenThuong('${item.id}');return false">${item.noiDung || ''}</a></td><td>${item.hinhThucStxt || ''}</td><td>${nk}</td><td>${item.soQuyetDinh || ''}</td><td class="text-primary">${gt}</td><td><i class="bi bi-pencil-square text-primary mx-1" style="cursor:pointer" onclick="editKhenThuong('${item.id}')"></i><i class="bi bi-trash text-danger mx-1" style="cursor:pointer" onclick="deleteKhenThuong('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#khenThuongTableBody').html(html);
+        } else {
+            $('#khenThuongTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        window.NhanVienDetailState.loadedSections.add('khenThuong');
+    });
+}
+
+function loadKyLuatList(userId) {
+    $.get('/NhanSu/GetDanhSachKyLuat', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const nqd = item.ngayQuyetDinh ? new Date(item.ngayQuyetDinh).toLocaleDateString('vi-VN') : '';
+                return `<tr><td>${idx + 1}</td><td><a href="#" class="text-primary" onclick="viewKyLuat('${item.id}');return false">${item.noiDung || ''}</a></td><td>${nqd}</td><td>${item.hinhThucStxt || ''}</td><td>${item.lyDo || ''}</td><td><i class="bi bi-pencil-square text-primary mx-1" style="cursor:pointer" onclick="editKyLuat('${item.id}')"></i><i class="bi bi-trash text-danger mx-1" style="cursor:pointer" onclick="deleteKyLuat('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#kyLuatTableBody').html(html);
+        } else {
+            $('#kyLuatTableBody').html('<tr><td colspan="6" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        window.NhanVienDetailState.loadedSections.add('kyLuat');
+    });
+}
+
+function loadLuongList(userId) {
+    const year = $('#yearSelect').val();
+    const month = $('#monthSelect').val();
+    $.get('/NhanSu/GetDanhSachLuong', { nguoiDungId: userId, nam: year, thang: month }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                return `<tr><td>${idx + 1}</td><td>${item.thang}/${item.nam}</td><td>${(item.luongCoBan || 0).toLocaleString('vi-VN')}</td><td>${(item.phuCap || 0).toLocaleString('vi-VN')}</td><td>${(item.khauTru || 0).toLocaleString('vi-VN')}</td><td class="text-primary fw-bold">${(item.thucLinh || 0).toLocaleString('vi-VN')}</td><td><span class="badge ${item.trangThai == 1 ? 'bg-success' : 'bg-warning'}">${item.trangThaiStxt || 'Chờ duyệt'}</span></td></tr>`;
+            }).join('');
+            $('#luongTableBody').html(html);
+        } else {
+            $('#luongTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        window.NhanVienDetailState.loadedSections.add('luong');
+    });
+}
+
+function loadBaoHiemData(userId) {
+    // Load BHXH
+    $.get('/NhanSu/GetBaoHiem', { nguoiDungId: userId, loai: 'BHXH' }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            const nbd = d.ngayBatDau ? new Date(d.ngayBatDau).toLocaleDateString('vi-VN') : '';
+            const nkt = d.ngayKetThuc ? new Date(d.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+            $('#bhxhContent').html(`
+                <div class="row"><div class="col-md-6"><p class="text-secondary mb-1">Số sổ BHXH</p><p class="text-primary">${d.soSo || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Nơi đăng ký</p><p class="text-primary">${d.noiDangKy || 'Chưa cập nhật'}</p></div></div>
+                <div class="row mt-2"><div class="col-md-6"><p class="text-secondary mb-1">Ngày bắt đầu</p><p class="text-primary">${nbd}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Ngày kết thúc</p><p class="text-primary">${nkt || 'Đang tham gia'}</p></div></div>
+            `);
+        } else {
+            $('#bhxhContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+    });
+    
+    // Load BHTN
+    $.get('/NhanSu/GetBaoHiem', { nguoiDungId: userId, loai: 'BHTN' }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            const nbd = d.ngayBatDau ? new Date(d.ngayBatDau).toLocaleDateString('vi-VN') : '';
+            const nkt = d.ngayKetThuc ? new Date(d.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+            $('#bhtnContent').html(`
+                <div class="row"><div class="col-md-6"><p class="text-secondary mb-1">Số sổ BHTN</p><p class="text-primary">${d.soSo || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Nơi đăng ký</p><p class="text-primary">${d.noiDangKy || 'Chưa cập nhật'}</p></div></div>
+                <div class="row mt-2"><div class="col-md-6"><p class="text-secondary mb-1">Ngày bắt đầu</p><p class="text-primary">${nbd}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Ngày kết thúc</p><p class="text-primary">${nkt || 'Đang tham gia'}</p></div></div>
+            `);
+        } else {
+            $('#bhtnContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+    });
+    
+    // Load BHYT
+    $.get('/NhanSu/GetBaoHiem', { nguoiDungId: userId, loai: 'BHYT' }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            const nbd = d.ngayBatDau ? new Date(d.ngayBatDau).toLocaleDateString('vi-VN') : '';
+            const nkt = d.ngayKetThuc ? new Date(d.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+            $('#bhytContent').html(`
+                <div class="row"><div class="col-md-6"><p class="text-secondary mb-1">Số thẻ BHYT</p><p class="text-primary">${d.soSo || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Nơi đăng ký KCB</p><p class="text-primary">${d.noiDangKy || 'Chưa cập nhật'}</p></div></div>
+                <div class="row mt-2"><div class="col-md-6"><p class="text-secondary mb-1">Ngày bắt đầu</p><p class="text-primary">${nbd}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Ngày kết thúc</p><p class="text-primary">${nkt || 'Đang tham gia'}</p></div></div>
+            `);
+        } else {
+            $('#bhytContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+    });
+}
+
+function searchLuong() {
+    window.NhanVienDetailState.loadedSections.delete('luong');
+    loadLuongList(window.NhanVienDetailState.nguoiDungId);
+}
+
+// ==================== MODAL FUNCTIONS ====================
+function openAddDaoTao(userId) {
+    $('#daoTaoId').val('');
+    $('#daoTaoNguoiDungId').val(userId);
+    $('#formDaoTao')[0].reset();
+    $('#ModalDaoTao').modal('show');
+}
+
+function openAddFamily(userId) {
+    $('#familyId').val('');
+    $('#familyNguoiDungId').val(userId);
+    $('#formThemQuanHeGiaDinh')[0].reset();
+    $('#familyModal').modal('show');
+}
+
+function openAddHopDong(userId) {
+    $('#hopDongId').val('');
+    $('#hopDongNguoiDungId').val(userId);
+    $('#formHopDong')[0].reset();
+    $('#modalHopDongTitle').text('Thêm hợp đồng');
+    $('#ModalHopDong').modal('show');
+}
+
+function openAddKhenThuong(userId) {
+    $('#khenThuongId').val('');
+    $('#khenThuongNguoiDungId').val(userId);
+    $('#formKhenThuong')[0].reset();
+    $('#modalKhenThuongTitle').text('Thêm khen thưởng');
+    $('#ModalKhenThuong').modal('show');
+}
+
+function openAddKyLuat(userId) {
+    $('#kyLuatId').val('');
+    $('#kyLuatNguoiDungId').val(userId);
+    $('#formKyLuat')[0].reset();
+    $('#modalKyLuatTitle').text('Thêm kỷ luật');
+    $('#ModalKyLuat').modal('show');
+}
+
+function editHopDong(id) {
+    $.get('/NhanSu/GetHopDong', { id: id }, function(res) {
+        if (res.success) {
+            const d = res.data;
+            $('#hopDongId').val(d.id);
+            $('#hopDongNguoiDungId').val(window.NhanVienDetailState.nguoiDungId);
+            $('#maHopDong').val(d.maHopDong);
+            $('#loaiHopDong').val(d.loaiHopDong);
+            $('#ngayKy').val(d.ngayKy);
+            $('#ngayBatDau').val(d.ngayBatDau);
+            $('#ngayKetThuc').val(d.ngayKetThuc);
+            $('#luongCoBan').val(d.luongCoBan);
+            $('#ghiChuHopDong').val(d.ghiChu);
+            $('#modalHopDongTitle').text('Sửa hợp đồng');
+            $('#ModalHopDong').modal('show');
+        } else {
+            Notification.error(res.message);
+        }
+    });
+}
+
+function viewHopDong(id) { editHopDong(id); }
+
+function editKhenThuong(id) {
+    $.get('/NhanSu/GetKhenThuongKyLuat', { id: id }, function(res) {
+        if (res.success) {
+            const d = res.data;
+            $('#khenThuongId').val(d.id);
+            $('#khenThuongNguoiDungId').val(window.NhanVienDetailState.nguoiDungId);
+            $('#maQuyetDinhKT').val(d.maQuyetDinh);
+            $('#ngayQuyetDinhKT').val(d.ngayQuyetDinh);
+            $('#hinhThucKT').val(d.hinhThuc);
+            $('#soTienKT').val(d.soTien);
+            $('#lyDoKT').val(d.lyDo);
+            $('#ghiChuKT').val(d.ghiChu);
+            $('#modalKhenThuongTitle').text('Sửa khen thưởng');
+            $('#ModalKhenThuong').modal('show');
+        } else {
+            Notification.error(res.message);
+        }
+    });
+}
+
+function viewKhenThuong(id) { editKhenThuong(id); }
+
+function editKyLuat(id) {
+    $.get('/NhanSu/GetKhenThuongKyLuat', { id: id }, function(res) {
+        if (res.success) {
+            const d = res.data;
+            $('#kyLuatId').val(d.id);
+            $('#kyLuatNguoiDungId').val(window.NhanVienDetailState.nguoiDungId);
+            $('#maQuyetDinhKL').val(d.maQuyetDinh);
+            $('#ngayQuyetDinhKL').val(d.ngayQuyetDinh);
+            $('#hinhThucKL').val(d.hinhThuc);
+            $('#soTienKL').val(d.soTien);
+            $('#lyDoKL').val(d.lyDo);
+            $('#ghiChuKL').val(d.ghiChu);
+            $('#modalKyLuatTitle').text('Sửa kỷ luật');
+            $('#ModalKyLuat').modal('show');
+        } else {
+            Notification.error(res.message);
+        }
+    });
+}
+
+function viewKyLuat(id) { editKyLuat(id); }
+
+function openEditBaoHiem(type, userId) {
+    Notification.info('Chức năng sửa thông tin bảo hiểm đang được phát triển');
+}
+
+function loadThongTinCoBan(id) {
+    $('#ModalSuaThongTinCoBan').modal('show');
+}
+
+function loadThongTinTaiKhoan(userId) {
+    $('#ModalSuaThongTinTaiKhoan').modal('show');
+}
+
+function loadViTriCongTac(id) {
+    $('#ModalSuaViTriCongTac').modal('show');
+}
+
+// ==================== DELETE FUNCTIONS ====================
+function deleteDaoTao(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa thông tin đào tạo này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteDaoTao', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                window.NhanVienDetailState.loadedSections.delete('daoTao');
+                loadDaoTaoList(window.NhanVienDetailState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteFamily(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa thông tin người thân này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteQuanHeGiaDinh', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                window.NhanVienDetailState.loadedSections.delete('family');
+                loadFamilyList(window.NhanVienDetailState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteHopDong(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa hợp đồng này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteHopDong', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                window.NhanVienDetailState.loadedSections.delete('hopDong');
+                loadHopDongList(window.NhanVienDetailState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteKhenThuong(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa khen thưởng này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteKhenThuong', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                window.NhanVienDetailState.loadedSections.delete('khenThuong');
+                loadKhenThuongList(window.NhanVienDetailState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteKyLuat(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa kỷ luật này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteKyLuat', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                window.NhanVienDetailState.loadedSections.delete('kyLuat');
+                loadKyLuatList(window.NhanVienDetailState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+// ==================== RELOAD PAGE DATA WITHOUT FULL RELOAD ====================
+window.reloadPageData = function() {
+    // Reload header info without full page reload
+    const userId = window.NhanVienDetailState.nguoiDungId;
+    if (userId) {
+        $.get('/NhanSu/GetNhanVienBasicInfo', { id: userId }, function(res) {
+            if (res.success && res.data) {
+                // Update header information dynamically if needed
+                console.log('✅ Page data reloaded');
+            }
+        });
+    }
+    
+    // Refresh current tab
+    window.refreshCurrentTab();
+};
+
+// ==================== INIT ====================
+function initYearMonthSelects() {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    for (let year = 2020; year <= 2030; year++) {
+        $('#yearSelect').append(`<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`);
+    }
+    for (let month = 1; month <= 12; month++) {
+        $('#monthSelect').append(`<option value="${month}" ${month === currentMonth ? 'selected' : ''}>Tháng ${month}</option>`);
+    }
+}
+
+function setupEventHandlers() {
+    $("#btnDuyet").click(function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        showConfirmModal('Xác nhận duyệt', 'Bạn có chắc muốn duyệt nhân viên này?', 'btn-success', function() {
+            $.post('/NhanSu/ActivateNhanVien', { id: id })
+                .done(function(res) {
+                    if (res.success) {
+                        Notification.success(res.message);
+                        location.reload();
+                    } else {
+                        Notification.error(res.message);
+                    }
+                })
+                .fail(function() { Notification.error('Có lỗi xảy ra'); });
+        });
+    });
+
+    $("#btnXoa").click(function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        showConfirmModal('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa nhân viên này?', 'btn-danger', function() {
+            $.post('/NhanSu/XoaNhanVien', { id: id })
+                .done(function(res) {
+                    if (res.success) {
+                        Notification.success(res.message);
+                        window.location.href = '/NhanSu/DanhSachNhanVien';
+                    } else {
+                        Notification.error(res.message);
+                    }
+                })
+                .fail(function() { Notification.error('Có lỗi xảy ra'); });
+        });
+    });
+
+    document.getElementById('avatarUpload')?.addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+
+        var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            Notification.error('Chỉ cho phép upload file ảnh (JPG, PNG, GIF, WEBP)');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            Notification.error('Kích thước file không được vượt quá 5MB');
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('id', $('#avatarUpload').data('id'));
+        formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+        $.ajax({
+            url: '/NhanSu/UploadAvatar',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res.success) {
+                    Notification.success(res.message || 'Cập nhật ảnh đại diện thành công');
+                } else {
+                    Notification.error(res.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function() { Notification.error('Có lỗi xảy ra khi upload ảnh'); }
+        });
+    });
+}
+
+// Global access
+window.loadBankInfo = loadBankInfo;
+window.loadTrinhDo = loadTrinhDo;
+window.loadThongTinCoBan = loadThongTinCoBan;
+window.loadThongTinTaiKhoan = loadThongTinTaiKhoan;
+window.loadViTriCongTac = loadViTriCongTac;
+window.openAddDaoTao = openAddDaoTao;
+window.openAddFamily = openAddFamily;
+window.openAddHopDong = openAddHopDong;
+window.openAddKhenThuong = openAddKhenThuong;
+window.openAddKyLuat = openAddKyLuat;
+window.deleteDaoTao = deleteDaoTao;
+window.deleteFamily = deleteFamily;
+window.deleteHopDong = deleteHopDong;
+window.deleteKhenThuong = deleteKhenThuong;
+window.deleteKyLuat = deleteKyLuat;
+window.editHopDong = editHopDong;
+window.viewHopDong = viewHopDong;
+window.editKhenThuong = editKhenThuong;
+window.viewKhenThuong = viewKhenThuong;
+window.editKyLuat = editKyLuat;
+window.viewKyLuat = viewKyLuat;
+window.openEditBaoHiem = openEditBaoHiem;
+window.searchLuong = searchLuong;
+window.switchTopTab = switchTopTab;
+window.switchSubTab = switchSubTab;
+
+// ==================== MODAL SUCCESS HANDLER ====================
+// Các modal có thể gọi function này sau khi save thành công
+window.onModalSaveSuccess = function(modalType) {
+    console.log('✅ Modal saved successfully:', modalType);
+    
+    // Refresh data tương ứng
+    switch(modalType) {
+        case 'bank':
+            window.NhanVienDetailState.loadedSections.delete('bank');
+            loadBankInfoDisplay(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'trinhDo':
+            window.NhanVienDetailState.loadedSections.delete('trinhDo');
+            loadTrinhDoDisplay(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'daoTao':
+            window.NhanVienDetailState.loadedSections.delete('daoTao');
+            loadDaoTaoList(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'family':
+            window.NhanVienDetailState.loadedSections.delete('family');
+            loadFamilyList(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'hopDong':
+            window.NhanVienDetailState.loadedSections.delete('hopDong');
+            loadHopDongList(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'khenThuong':
+            window.NhanVienDetailState.loadedSections.delete('khenThuong');
+            loadKhenThuongList(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'kyLuat':
+            window.NhanVienDetailState.loadedSections.delete('kyLuat');
+            loadKyLuatList(window.NhanVienDetailState.nguoiDungId);
+            break;
+        case 'luong':
+            window.NhanVienDetailState.loadedSections.delete('luong');
+            loadLuongList(window.NhanVienDetailState.nguoiDungId);
+            break;
+        default:
+            // Refresh all if not specific
+            window.refreshCurrentTab();
+    }
+};
+
+console.log('✅ chi-tiet-nhan-vien.js READY');
+

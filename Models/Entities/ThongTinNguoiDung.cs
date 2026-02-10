@@ -8,8 +8,8 @@ public class ThongTinNguoiDung : EntityBase
     public GioiTinh GioiTinh { get; set; }
     public string GioiTinhStxt { get; set; } = string.Empty;
     public DateTime BirthDay { get; set; }
-    public Guid? DepartmentId { get; set; }
-    public virtual Department? Department { get; set; }
+    public Guid? PhongBanId { get; set; }
+    public virtual PhongBan? PhongBan { get; set; }
     public Guid? ChucVuId { get; set; }
     public virtual ChucVu? ChucVu { get; set; }
     public NhanSuType? NhanSuType { get; set; }

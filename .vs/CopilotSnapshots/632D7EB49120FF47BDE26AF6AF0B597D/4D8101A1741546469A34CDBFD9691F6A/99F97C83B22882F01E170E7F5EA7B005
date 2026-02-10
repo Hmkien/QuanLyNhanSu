@@ -1,0 +1,63 @@
+﻿@* Modal Thêm/Sửa Hợp đồng *@
+<div class="modal fade" id="ModalHopDong" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="modalHopDongTitle">Thêm hợp đồng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formHopDong">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="hopDongId" />
+                <input type="hidden" name="NguoiDungId" id="hopDongNguoiDungId" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Số hợp đồng <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="MaHopDong" id="maHopDong" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Loại hợp đồng <span class="text-danger">*</span></label>
+                            <select class="form-select" name="LoaiHopDong" id="loaiHopDong" required>
+                                <option value="">--Chọn--</option>
+                                <option value="0">Thử việc</option>
+                                <option value="1">Có thời hạn</option>
+                                <option value="2">Không thời hạn</option>
+                                <option value="3">Thời vụ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày ký <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayKy" id="ngayKy" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Lương cơ bản</label>
+                            <input type="number" class="form-control" name="LuongCoBan" id="luongCoBan" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayBatDau" id="ngayBatDau" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày kết thúc</label>
+                            <input type="date" class="form-control" name="NgayKetThuc" id="ngayKetThuc" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" name="GhiChu" id="ghiChuHopDong" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

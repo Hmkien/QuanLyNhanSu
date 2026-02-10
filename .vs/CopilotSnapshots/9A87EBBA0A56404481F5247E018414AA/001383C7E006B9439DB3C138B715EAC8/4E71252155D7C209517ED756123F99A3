@@ -1,0 +1,180 @@
+﻿
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+
+namespace QuanLyNhanLuc.Controllers
+{
+    public class DepartmentController : Controller
+    {
+        private readonly QLNLContext _context;
+
+        public DepartmentController(QLNLContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+        {
+            var query = _context.Departments.OrderBy(x => x.TenPhongBan).AsNoTracking();
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+            ViewBag.TotalItems = total;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+
+            return View(items);
+        }
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("TenPhongBan,MoTa,Id,Status,Created")] Department department)
+        {
+            if (ModelState.IsValid)
+            {
+                department.Id = Guid.NewGuid();
+                _context.Add(department);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(department);
+        }
+
+        public async Task<IActionResult> Edit(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var department = await _context.Departments.FindAsync(id);
+            if (department == null)
+            {
+                return NotFound();
+            }
+            return View(department);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, [Bind("TenPhongBan,MoTa,Id,Status,Created")] Department department)
+        {
+            if (id != department.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(department);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!DepartmentExists(department.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(department);
+        }
+
+        public async Task<IActionResult> Delete(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var department = await _context.Departments
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (department == null)
+            {
+                return NotFound();
+            }
+
+            return View(department);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        {
+            var department = await _context.Departments.FindAsync(id);
+            if (department != null)
+            {
+                _context.Departments.Remove(department);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool DepartmentExists(Guid id)
+        {
+            return _context.Departments.Any(e => e.Id == id);
+        }
+
+        // AJAX endpoints for modal operations
+        [HttpGet]
+        public async Task<IActionResult> GetDepartment(Guid id)
+        {
+            var dep = await _context.Departments.FindAsync(id);
+            if (dep == null) return NotFound();
+            return Json(new { id = dep.Id, ten = dep.TenPhongBan, mota = dep.MoTa });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAjax([FromForm] string tenPhongBan, [FromForm] string? moTa)
+        {
+            if (string.IsNullOrWhiteSpace(tenPhongBan)) return Json(new { success = false, message = "Tên phòng ban không được để trống" });
+            var department = new Department
+            {
+                Id = Guid.NewGuid(),
+                TenPhongBan = tenPhongBan,
+                MoTa = moTa ?? string.Empty,
+                Created = DateTime.Now
+            };
+            _context.Departments.Add(department);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditAjax([FromForm] Guid id, [FromForm] string tenPhongBan, [FromForm] string? moTa)
+        {
+            var dep = await _context.Departments.FindAsync(id);
+            if (dep == null) return Json(new { success = false, message = "Phòng ban không tồn tại" });
+            dep.TenPhongBan = tenPhongBan;
+            dep.MoTa = moTa ?? string.Empty;
+            _context.Departments.Update(dep);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
+        {
+            var dep = await _context.Departments.FindAsync(id);
+            if (dep == null) return Json(new { success = false, message = "Phòng ban không tồn tại" });
+            _context.Departments.Remove(dep);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+    }
+}

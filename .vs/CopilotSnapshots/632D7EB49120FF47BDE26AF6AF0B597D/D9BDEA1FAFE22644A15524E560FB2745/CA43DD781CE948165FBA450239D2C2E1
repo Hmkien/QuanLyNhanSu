@@ -1,0 +1,406 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.ViewModels.NhanVienListVM>
+
+@{
+    ViewData["Title"] = "Danh sách thực tập sinh";
+}
+
+<style>
+    .employee-name-link {
+        color: #ff6600;
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .employee-name-link:hover {
+        text-decoration: underline;
+        color: #ff8833;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary" href="/">
+                        <i class="bi bi-house-door"></i>
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary" href="#">Hồ sơ nhân sự</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Danh sách thực tập sinh</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Danh sách thực tập sinh</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-box-arrow-right me-2"></i>Nhập excel</button>
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất excel</button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#themNhanVienModal">
+            <i class="fas fa-plus me-2"></i>Thêm mới
+        </button>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="mb-3">
+    <div class="card-body py-2">
+        <form method="get" asp-action="DanhSachThucTap" class="row g-2 align-items-center">
+            <div class="col-md-2">
+                <select name="gioiTinh" class="form-select form-select-sm">
+                    <option value="">-- Chọn giới tính --</option>
+                    <option value="Nam" selected="@(ViewBag.GioiTinh == "Nam")">Nam</option>
+                    <option value="Nữ" selected="@(ViewBag.GioiTinh == "Nữ")">Nữ</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="phongBanId" class="form-select form-select-sm">
+                    <option value="">-- Chọn phòng ban --</option>
+                    @if (ViewBag.Departments != null)
+                    {
+                        foreach (var dept in ViewBag.Departments)
+                        {
+                            var isSelected = ViewBag.PhongBanId != null && ViewBag.PhongBanId.ToString() == dept.Id.ToString();
+                            <option value="@dept.Id" selected="@isSelected">@dept.TenPhongBan</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="sortBy" class="form-select form-select-sm">
+                    <option value="">-- Sắp xếp theo --</option>
+                    <option value="name" selected="@(ViewBag.SortBy == "name")">Tên thực tập sinh</option>
+                    <option value="department" selected="@(ViewBag.SortBy == "department")">Phòng ban</option>
+                    <option value="position" selected="@(ViewBag.SortBy == "position")">Chức vụ</option>
+                    <option value="status" selected="@(ViewBag.SortBy == "status")">Trạng thái</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm tên, CCCD, email, SĐT..." value="@ViewBag.Search" />
+                </div>
+            </div>
+            <input type="hidden" name="sortOrder" value="@(ViewBag.SortOrder ?? "asc")" />
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+                <a asp-action="DanhSachThucTap" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
+                <h5>Không có thực tập sinh nào</h5>
+                <p class="text-muted mb-3">Hiện tại chưa có thực tập sinh nào trong hệ thống hoặc không tìm thấy kết quả phù hợp với tiêu chí tìm kiếm.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#themNhanVienModal">
+                    <i class="fas fa-plus me-2"></i>Thêm thực tập sinh mới
+                </button>
+            </div>
+        }
+        else
+        {
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th>STT</th>
+                        <th>
+                            <a href="@Url.Action("DanhSachThucTap", new { page = ViewBag.CurrentPage, pageSize = ViewBag.PageSize, search = ViewBag.Search, gioiTinh = ViewBag.GioiTinh, phongBanId = ViewBag.PhongBanId, sortBy = "name", sortOrder = ViewBag.SortBy == "name" && ViewBag.SortOrder == "asc" ? "desc" : "asc" })" class="text-decoration-none text-dark">
+                                Tên thực tập sinh
+                                @if (ViewBag.SortBy == "name")
+                                {
+                                    <i class="bi bi-arrow-@(ViewBag.SortOrder == "asc" ? "up" : "down")"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>CMND/CCCD</th>
+                        <th>Giới tính</th>
+                        <th>
+                            <a href="@Url.Action("DanhSachThucTap", new { page = ViewBag.CurrentPage, pageSize = ViewBag.PageSize, search = ViewBag.Search, gioiTinh = ViewBag.GioiTinh, phongBanId = ViewBag.PhongBanId, sortBy = "department", sortOrder = ViewBag.SortBy == "department" && ViewBag.SortOrder == "asc" ? "desc" : "asc" })" class="text-decoration-none text-dark">
+                                Phòng ban
+                                @if (ViewBag.SortBy == "department")
+                                {
+                                    <i class="bi bi-arrow-@(ViewBag.SortOrder == "asc" ? "up" : "down")"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("DanhSachThucTap", new { page = ViewBag.CurrentPage, pageSize = ViewBag.PageSize, search = ViewBag.Search, gioiTinh = ViewBag.GioiTinh, phongBanId = ViewBag.PhongBanId, sortBy = "position", sortOrder = ViewBag.SortBy == "position" && ViewBag.SortOrder == "asc" ? "desc" : "asc" })" class="text-decoration-none text-dark">
+                                Chức vụ
+                                @if (ViewBag.SortBy == "position")
+                                {
+                                    <i class="bi bi-arrow-@(ViewBag.SortOrder == "asc" ? "up" : "down")"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Email / SĐT</th>
+                        <th>
+                            <a href="@Url.Action("DanhSachThucTap", new { page = ViewBag.CurrentPage, pageSize = ViewBag.PageSize, search = ViewBag.Search, gioiTinh = ViewBag.GioiTinh, phongBanId = ViewBag.PhongBanId, sortBy = "status", sortOrder = ViewBag.SortBy == "status" && ViewBag.SortOrder == "asc" ? "desc" : "asc" })" class="text-decoration-none text-dark">
+                                Trạng thái
+                                @if (ViewBag.SortBy == "status")
+                                {
+                                    <i class="bi bi-arrow-@(ViewBag.SortOrder == "asc" ? "up" : "down")"></i>
+                                }
+                            </a>
+                        </th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @{
+                    int currentPage = ViewBag.CurrentPage ?? 1;
+                    int pageSize = ViewBag.PageSize ?? 10;
+                    var stt = (currentPage - 1) * pageSize + 1;
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-center"><input type="checkbox"></td>
+                        <td class="text-dark">@stt</td>
+                        <td>
+                            <a href="javascript:void(0)" class="employee-name-link" data-action="view-detail" data-id="@item.Id">
+                                @item.FullName
+                            </a>
+                        </td>
+                        <td class="text-dark">@item.IdentityNumber</td>
+                        <td class="text-dark">@item.GioiTinhStxt</td>
+                        <td class="text-dark">@item.DepartmentName</td>
+                        <td class="text-dark">@item.PositionName</td>
+                        <td class="text-dark">@item.Email / @item.PhoneNumber</td>
+                        <td>
+                            @if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
+                            {
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                            else if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                            {
+                                <span class="badge bg-warning">Chờ duyệt</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Vô hiệu</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
+                            {
+                                <a href="javascript:void(0)" data-action="deactivate" data-id="@item.Id" title="Hủy duyệt" class="me-2">
+                                    <i class="bi bi-x-circle text-warning"></i>
+                                </a>
+                                <span class="me-2" title="Không thể sửa thực tập sinh đã duyệt">
+                                    <i class="bi bi-pen text-muted"></i>
+                                </span>
+                                <span title="Không thể xóa thực tập sinh đã duyệt">
+                                    <i class="bi bi-trash text-muted"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <a href="javascript:void(0)" data-action="activate" data-id="@item.Id" title="Duyệt" class="me-2">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </a>
+                                <a href="javascript:void(0)" data-action="edit" data-id="@item.Id" title="Sửa" class="me-2">
+                                    <i class="bi bi-pen text-primary"></i>
+                                </a>
+                                <a href="javascript:void(0)" data-action="delete" data-id="@item.Id" title="Xóa">
+                                    <i class="bi bi-trash text-danger"></i>
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                    stt++;
+                }
+            </tbody>
+        </table>
+        }
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-primary">Tổng số bản ghi: @(ViewBag.TotalItems ?? Model.Count())</span>
+    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{
+                    int current = ViewBag.CurrentPage;
+                    int total = ViewBag.TotalPages;
+                    string search = ViewBag.Search ?? "";
+                    string gioiTinh = ViewBag.GioiTinh ?? "";
+                    string phongBanId = ViewBag.PhongBanId?.ToString() ?? "";
+                    string sortBy = ViewBag.SortBy ?? "";
+                    string sortOrder = ViewBag.SortOrder ?? "asc";
+                }
+                <li class="page-item @(current == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("DanhSachThucTap", new { page = current - 1, pageSize = ViewBag.PageSize, search = search, gioiTinh = gioiTinh, phongBanId = phongBanId, sortBy = sortBy, sortOrder = sortOrder })">«</a>
+                </li>
+                @for (int i = 1; i <= total; i++)
+                {
+                    <li class="page-item @(i == current ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("DanhSachThucTap", new { page = i, pageSize = ViewBag.PageSize, search = search, gioiTinh = gioiTinh, phongBanId = phongBanId, sortBy = sortBy, sortOrder = sortOrder })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(current == total ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("DanhSachThucTap", new { page = current + 1, pageSize = ViewBag.PageSize, search = search, gioiTinh = gioiTinh, phongBanId = phongBanId, sortBy = sortBy, sortOrder = sortOrder })">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<div id="modalContainer"></div>
+<div id="deleteModalContainer"></div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // View Detail - Click on name to open detail dialog
+            $(document).on('click', "a[data-action='view-detail']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                loadModalChiTietNhanVien(id);
+            });
+
+            // Add new
+            $('.btn-primary[data-bs-target="#themNhanVienModal"]').click(function(e) {
+                e.preventDefault();
+                loadModalThemNhanSu();
+            });
+
+            // Edit - Load modal sửa
+            $(document).on('click', "a[data-action='edit']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                loadModalSuaNhanVien(id);
+            });
+
+            // Activate - Không cần xác nhận
+            $(document).on('click', "a[data-action='activate']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $.post('/NhanSu/ActivateNhanVien', { id: id })
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.success(res.message);
+                            location.reload();
+                        } else {
+                            Notification.error(res.message);
+                        }
+                    })
+                    .fail(function() {
+                        Notification.error('Có lỗi xảy ra');
+                    });
+            });
+
+            // Deactivate - Không cần xác nhận
+            $(document).on('click', "a[data-action='deactivate']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $.post('/NhanSu/DeactivateNhanVien', { id: id })
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.success(res.message);
+                            location.reload();
+                        } else {
+                            Notification.error(res.message);
+                        }
+                    })
+                    .fail(function() {
+                        Notification.error('Có lỗi xảy ra');
+                    });
+            });
+
+            // Delete - Cần xác nhận
+            $(document).on('click', "a[data-action='delete']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                loadModalConfirmDelete(id);
+            });
+        });
+
+        function loadModalThemNhanSu() {
+            $.get('/NhanSu/GetModalThemNhanSu', function(data) {
+                $('#modalContainer').html(data);
+                setTimeout(function() {
+                    var modalElement = document.getElementById('themNhanVienModal');
+                    if (modalElement) {
+                        var modal = new bootstrap.Modal(modalElement, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    }
+                }, 100);
+            }).fail(function(xhr, status, error) {
+                Notification.error('Không thể tải form thêm thực tập sinh');
+            });
+        }
+
+        function loadModalSuaNhanVien(id) {
+            $.get('/NhanSu/GetModalSuaNhanVien/' + id, function(data) {
+                $('#modalContainer').html(data);
+                setTimeout(function() {
+                    var modalElement = document.getElementById('suaNhanVienModal');
+                    if (modalElement) {
+                        var modal = new bootstrap.Modal(modalElement, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    }
+                }, 100);
+            }).fail(function(xhr, status, error) {
+                Notification.error('Không thể tải form sửa thực tập sinh');
+            });
+        }
+
+        function loadModalChiTietNhanVien(id) {
+            $.get('/NhanSu/GetModalChiTietNhanVien/' + id, function(data) {
+                $('#modalContainer').html(data);
+                setTimeout(function() {
+                    var modalElement = document.getElementById('chiTietNhanVienModal');
+                    if (modalElement) {
+                        var modal = new bootstrap.Modal(modalElement, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    }
+                }, 100);
+            }).fail(function(xhr, status, error) {
+                Notification.error('Không thể tải chi tiết thực tập sinh');
+            });
+        }
+
+        function loadModalConfirmDelete(id) {
+            $.get('/NhanSu/GetModalConfirmDelete/' + id, function(data) {
+                $('#deleteModalContainer').html(data);
+                setTimeout(function() {
+                    var modalElement = document.getElementById('confirmDeleteModal');
+                    if (modalElement) {
+                        var modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+                    }
+                }, 100);
+            }).fail(function(xhr, status, error) {
+                Notification.error('Không thể tải modal xác nhận');
+            });
+        }
+    </script>
+}

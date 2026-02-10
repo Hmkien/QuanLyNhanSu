@@ -1,0 +1,40 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace QuanLyNhanLuc.Models.Entities;
+
+public class KhenThuongKyLuat : EntityBase
+{
+    [MaxLength(50)]
+    public string MaQuyetDinh { get; set; } = string.Empty;
+    
+    public Guid NhanSuId { get; set; }
+    
+    [MaxLength(20)]
+    public string Loai { get; set; } = string.Empty; // KhenThuong, KyLuat
+    
+    [MaxLength(200)]
+    public string HinhThuc { get; set; } = string.Empty; // Thưởng tiền, Kỷ luật cảnh cáo, etc.
+    
+    public decimal? SoTien { get; set; }
+    
+    [MaxLength(500)]
+    public string LyDo { get; set; } = string.Empty;
+    
+    public DateTime NgayQuyetDinh { get; set; }
+    
+    public DateTime? NgayHieuLuc { get; set; }
+    
+    [MaxLength(50)]
+    public string TrangThai { get; set; } = "ChoDuyet"; // ChoDuyet, DaDuyet, TuChoi
+    
+    public string? NguoiDuyet { get; set; }
+    
+    public DateTime? NgayDuyet { get; set; }
+    
+    public string? GhiChu { get; set; }
+    
+    public string? TepDinhKem { get; set; }
+
+    // Navigation properties
+    public virtual NhanSu NhanSu { get; set; } = null!;
+}

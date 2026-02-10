@@ -1,0 +1,294 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.ViewModels;
+
+namespace QuanLyNhanLuc.Controllers;
+
+public class LuongController : Controller
+{
+    private readonly QLNLContext _context;
+
+    public LuongController(QLNLContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> BangLuong(int? thang = null, int? nam = null, string? trangThai = null, string? keyword = null)
+    {
+        thang ??= DateTime.Now.Month;
+        nam ??= DateTime.Now.Year;
+
+        var query = _context.BangLuongs
+            .Include(b => b.NhanSu)
+            .ThenInclude(n => n.PhongBan)
+            .Where(b => b.Thang == thang && b.Nam == nam)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(trangThai))
+            query = query.Where(b => b.TrangThai == trangThai);
+
+        if (!string.IsNullOrEmpty(keyword))
+            query = query.Where(b => b.NhanSu.HoVaTen.Contains(keyword) || b.NhanSu.MaNhanVien.Contains(keyword));
+
+        var bangLuongs = await query
+            .OrderBy(b => b.NhanSu.MaNhanVien)
+            .Select(b => new BangLuongVM
+            {
+                Id = b.Id,
+                NhanSuId = b.NhanSuId,
+                MaNhanVien = b.NhanSu.MaNhanVien,
+                HoTen = b.NhanSu.HoVaTen,
+                PhongBan = b.NhanSu.PhongBan.TenPhongBan,
+                Thang = b.Thang,
+                Nam = b.Nam,
+                LuongCoBan = b.LuongCoBan,
+                HeSoLuong = b.HeSoLuong,
+                SoNgayCong = b.SoNgayCong,
+                PhuCapAnTrua = b.PhuCapAnTrua,
+                PhuCapXangXe = b.PhuCapXangXe,
+                PhuCapDienThoai = b.PhuCapDienThoai,
+                PhuCapKhac = b.PhuCapKhac,
+                TienThuong = b.TienThuong,
+                TienPhat = b.TienPhat,
+                TienLamThem = b.TienLamThem,
+                KhauTruBHXH = b.KhauTruBHXH,
+                KhauTruBHYT = b.KhauTruBHYT,
+                KhauTruBHTN = b.KhauTruBHTN,
+                KhauTruThueNCCT = b.KhauTruThueNCCT,
+                KhauTruKhac = b.KhauTruKhac,
+                TongThuNhap = b.TongThuNhap,
+                TongKhauTru = b.TongKhauTru,
+                LuongThucNhan = b.LuongThucNhan,
+                TrangThai = b.TrangThai,
+                NguoiDuyet = b.NguoiDuyet,
+                NgayDuyet = b.NgayDuyet,
+                NgayThanhToan = b.NgayThanhToan,
+                GhiChu = b.GhiChu
+            })
+            .ToListAsync();
+
+        ViewBag.Thang = thang;
+        ViewBag.Nam = nam;
+        ViewBag.NhanSuList = new SelectList(await _context.NhanSus.ToListAsync(), "Id", "HoVaTen");
+        return View(bangLuongs);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetBangLuong(Guid id)
+    {
+        var bangLuong = await _context.BangLuongs
+            .Include(b => b.NhanSu)
+            .FirstOrDefaultAsync(b => b.Id == id);
+        
+        if (bangLuong == null) return NotFound();
+        
+        return Json(new
+        {
+            id = bangLuong.Id,
+            nhanSuId = bangLuong.NhanSuId,
+            hoTen = bangLuong.NhanSu.HoVaTen,
+            thang = bangLuong.Thang,
+            nam = bangLuong.Nam,
+            luongCoBan = bangLuong.LuongCoBan,
+            heSoLuong = bangLuong.HeSoLuong,
+            soNgayCong = bangLuong.SoNgayCong,
+            phuCapAnTrua = bangLuong.PhuCapAnTrua,
+            phuCapXangXe = bangLuong.PhuCapXangXe,
+            phuCapDienThoai = bangLuong.PhuCapDienThoai,
+            phuCapKhac = bangLuong.PhuCapKhac,
+            tienThuong = bangLuong.TienThuong,
+            tienPhat = bangLuong.TienPhat,
+            tienLamThem = bangLuong.TienLamThem,
+            khauTruBHXH = bangLuong.KhauTruBHXH,
+            khauTruBHYT = bangLuong.KhauTruBHYT,
+            khauTruBHTN = bangLuong.KhauTruBHTN,
+            khauTruThueNCCT = bangLuong.KhauTruThueNCCT,
+            khauTruKhac = bangLuong.KhauTruKhac,
+            tongThuNhap = bangLuong.TongThuNhap,
+            tongKhauTru = bangLuong.TongKhauTru,
+            luongThucNhan = bangLuong.LuongThucNhan,
+            trangThai = bangLuong.TrangThai,
+            ghiChu = bangLuong.GhiChu
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateAjax([FromForm] BangLuongVM model)
+    {
+        if (model.NhanSuId == Guid.Empty)
+            return Json(new { success = false, message = "Vui lòng chọn nhân viên" });
+
+        // Kiểm tra đã có bảng lương chưa
+        var existing = await _context.BangLuongs
+            .AnyAsync(b => b.NhanSuId == model.NhanSuId && b.Thang == model.Thang && b.Nam == model.Nam);
+        if (existing)
+            return Json(new { success = false, message = "Nhân viên này đã có bảng lương trong tháng này" });
+
+        // Tính toán
+        var tongThuNhap = model.LuongCoBan * model.HeSoLuong 
+            + (model.PhuCapAnTrua ?? 0) + (model.PhuCapXangXe ?? 0) + (model.PhuCapDienThoai ?? 0) + (model.PhuCapKhac ?? 0)
+            + (model.TienThuong ?? 0) + (model.TienLamThem ?? 0);
+        
+        var tongKhauTru = (model.KhauTruBHXH ?? 0) + (model.KhauTruBHYT ?? 0) + (model.KhauTruBHTN ?? 0) 
+            + (model.KhauTruThueNCCT ?? 0) + (model.KhauTruKhac ?? 0) + (model.TienPhat ?? 0);
+
+        var bangLuong = new BangLuong
+        {
+            Id = Guid.NewGuid(),
+            NhanSuId = model.NhanSuId,
+            Thang = model.Thang,
+            Nam = model.Nam,
+            LuongCoBan = model.LuongCoBan,
+            HeSoLuong = model.HeSoLuong,
+            SoNgayCong = model.SoNgayCong,
+            PhuCapAnTrua = model.PhuCapAnTrua,
+            PhuCapXangXe = model.PhuCapXangXe,
+            PhuCapDienThoai = model.PhuCapDienThoai,
+            PhuCapKhac = model.PhuCapKhac,
+            TienThuong = model.TienThuong,
+            TienPhat = model.TienPhat,
+            TienLamThem = model.TienLamThem,
+            KhauTruBHXH = model.KhauTruBHXH,
+            KhauTruBHYT = model.KhauTruBHYT,
+            KhauTruBHTN = model.KhauTruBHTN,
+            KhauTruThueNCCT = model.KhauTruThueNCCT,
+            KhauTruKhac = model.KhauTruKhac,
+            TongThuNhap = tongThuNhap,
+            TongKhauTru = tongKhauTru,
+            LuongThucNhan = tongThuNhap - tongKhauTru,
+            TrangThai = "ChuaDuyet",
+            GhiChu = model.GhiChu,
+            Created = DateTime.Now
+        };
+
+        _context.BangLuongs.Add(bangLuong);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditAjax([FromForm] BangLuongVM model)
+    {
+        var bangLuong = await _context.BangLuongs.FindAsync(model.Id);
+        if (bangLuong == null)
+            return Json(new { success = false, message = "Không tìm thấy bảng lương" });
+
+        if (bangLuong.TrangThai == "DaThanhToan")
+            return Json(new { success = false, message = "Không thể sửa bảng lương đã thanh toán" });
+
+        // Tính toán lại
+        var tongThuNhap = model.LuongCoBan * model.HeSoLuong 
+            + (model.PhuCapAnTrua ?? 0) + (model.PhuCapXangXe ?? 0) + (model.PhuCapDienThoai ?? 0) + (model.PhuCapKhac ?? 0)
+            + (model.TienThuong ?? 0) + (model.TienLamThem ?? 0);
+        
+        var tongKhauTru = (model.KhauTruBHXH ?? 0) + (model.KhauTruBHYT ?? 0) + (model.KhauTruBHTN ?? 0) 
+            + (model.KhauTruThueNCCT ?? 0) + (model.KhauTruKhac ?? 0) + (model.TienPhat ?? 0);
+
+        bangLuong.LuongCoBan = model.LuongCoBan;
+        bangLuong.HeSoLuong = model.HeSoLuong;
+        bangLuong.SoNgayCong = model.SoNgayCong;
+        bangLuong.PhuCapAnTrua = model.PhuCapAnTrua;
+        bangLuong.PhuCapXangXe = model.PhuCapXangXe;
+        bangLuong.PhuCapDienThoai = model.PhuCapDienThoai;
+        bangLuong.PhuCapKhac = model.PhuCapKhac;
+        bangLuong.TienThuong = model.TienThuong;
+        bangLuong.TienPhat = model.TienPhat;
+        bangLuong.TienLamThem = model.TienLamThem;
+        bangLuong.KhauTruBHXH = model.KhauTruBHXH;
+        bangLuong.KhauTruBHYT = model.KhauTruBHYT;
+        bangLuong.KhauTruBHTN = model.KhauTruBHTN;
+        bangLuong.KhauTruThueNCCT = model.KhauTruThueNCCT;
+        bangLuong.KhauTruKhac = model.KhauTruKhac;
+        bangLuong.TongThuNhap = tongThuNhap;
+        bangLuong.TongKhauTru = tongKhauTru;
+        bangLuong.LuongThucNhan = tongThuNhap - tongKhauTru;
+        bangLuong.GhiChu = model.GhiChu;
+
+        _context.BangLuongs.Update(bangLuong);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DuyetAjax([FromForm] Guid id, [FromForm] string trangThai)
+    {
+        var bangLuong = await _context.BangLuongs.FindAsync(id);
+        if (bangLuong == null)
+            return Json(new { success = false, message = "Không tìm thấy bảng lương" });
+
+        bangLuong.TrangThai = trangThai;
+        if (trangThai == "DaDuyet")
+        {
+            bangLuong.NgayDuyet = DateTime.Now;
+            bangLuong.NguoiDuyet = User.Identity?.Name ?? "Admin";
+        }
+        else if (trangThai == "DaThanhToan")
+        {
+            bangLuong.NgayThanhToan = DateTime.Now;
+        }
+
+        _context.BangLuongs.Update(bangLuong);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
+    {
+        var bangLuong = await _context.BangLuongs.FindAsync(id);
+        if (bangLuong == null)
+            return Json(new { success = false, message = "Không tìm thấy bảng lương" });
+
+        if (bangLuong.TrangThai == "DaThanhToan")
+            return Json(new { success = false, message = "Không thể xóa bảng lương đã thanh toán" });
+
+        _context.BangLuongs.Remove(bangLuong);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> TaoBangLuongThang([FromForm] int thang, [FromForm] int nam)
+    {
+        // Lấy danh sách nhân sự chưa có bảng lương trong tháng
+        var nhanSuIds = await _context.NhanSus
+            .Where(n => !_context.BangLuongs.Any(b => b.NhanSuId == n.Id && b.Thang == thang && b.Nam == nam))
+            .Select(n => n.Id)
+            .ToListAsync();
+
+        if (!nhanSuIds.Any())
+            return Json(new { success = false, message = "Tất cả nhân viên đã có bảng lương trong tháng này" });
+
+        // Lấy thông tin hợp đồng để có lương cơ bản
+        foreach (var nhanSuId in nhanSuIds)
+        {
+            var hopDong = await _context.HopDongs
+                .Where(h => h.NhanSuId == nhanSuId && h.TrangThai == "HieuLuc")
+                .FirstOrDefaultAsync();
+
+            var bangLuong = new BangLuong
+            {
+                Id = Guid.NewGuid(),
+                NhanSuId = nhanSuId,
+                Thang = thang,
+                Nam = nam,
+                LuongCoBan = hopDong?.LuongCoBan ?? 0,
+                HeSoLuong = 1,
+                SoNgayCong = 22,
+                TrangThai = "ChuaDuyet",
+                Created = DateTime.Now
+            };
+
+            bangLuong.TongThuNhap = bangLuong.LuongCoBan;
+            bangLuong.LuongThucNhan = bangLuong.TongThuNhap;
+
+            _context.BangLuongs.Add(bangLuong);
+        }
+
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, count = nhanSuIds.Count });
+    }
+}

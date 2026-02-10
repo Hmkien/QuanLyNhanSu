@@ -1,0 +1,1146 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ThongTinNguoiDung
+
+@{
+    ViewData["Title"] = "Chi tiết nhân viên";
+    var isApproved = Model.Status == QuanLyNhanLuc.Models.Enums.Status.Approved;
+}
+
+<div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb custom-breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/" class="text-decoration-none text-secondary">
+                    <i class="bi bi-house-door"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="DanhSachNhanVien" class="text-decoration-none text-secondary">Hồ sơ nhân sự</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-action="DanhSachNhanVien" class="text-decoration-none text-secondary">Danh sách nhân sự</a>
+            </li>
+            <li class="breadcrumb-item active text-primary" aria-current="page">Chi tiết nhân sự</li>
+        </ol>
+    </nav>
+    <div class="header-section mb-4">
+        <div class="row">
+            <!-- Avatar Section -->
+            <div class="col-md-2 text-center">
+                <div class="position-relative d-inline-block">
+                    <img id="avatarPreview" src="@(string.IsNullOrEmpty(Model.ImageLink) || Model.ImageLink == "/Image/AvatarMIG.png" ? "/Image/AvatarMIG.png" : "/Image/" + Model.ImageLink)" 
+                         alt="Ảnh đại diện" 
+                         class="rounded-circle border shadow-sm" 
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    <label for="avatarUpload" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2" style="cursor: pointer;" title="Thay đổi ảnh đại diện">
+                        <i class="bi bi-camera-fill"></i>
+                    </label>
+                    <input type="file" id="avatarUpload" accept="image/*" class="d-none" data-id="@Model.Id">
+                </div>
+                <p class="text-muted mt-2 small">@(Model.User?.MaNhanVien ?? Model.UserId ?? "Chưa có mã")</p>
+            </div>
+            <!-- Info Section -->
+            <div class="col-md-7">
+                <div class="row g-3">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <h5 class="text-primary mb-0">@Model.FullName</h5>
+                        @if (isApproved)
+                        {
+                            <span class="badge bg-success">Đã duyệt</span>
+                        }
+                        else if (Model.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
+                        {
+                            <span class="badge bg-warning">Chờ duyệt</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Vô hiệu</span>
+                        }
+                    </div>
+                    <div class="col-md-3 text-secondary"><i class="fas fa-building"></i> Phòng ban:</div>
+                    <div class="col-md-9 text-primary">@(Model.Department?.TenPhongBan ?? "Chưa cập nhật")</div>
+
+                    <div class="col-md-3 text-secondary"><i class="fas fa-calendar-alt"></i> Ngày sinh:</div>
+                    <div class="col-md-9 text-primary">@(Model.BirthDay.ToString("dd/MM/yyyy"))</div>
+
+                    <div class="col-md-3 text-secondary"><i class="fas fa-user-tie"></i> Chức vụ:</div>
+                    <div class="col-md-9 text-primary">@(Model.ChucVu?.TenChucVu ?? "Chưa cập nhật")</div>
+
+                    <div class="col-md-3 text-secondary"><i class="fas fa-envelope"></i> Email:</div>
+                    <div class="col-md-9 text-primary">@(Model.User?.Email ?? "Chưa cập nhật")</div>
+
+                    <div class="col-md-3 text-secondary"><i class="fas fa-clipboard-list"></i> Loại nhân viên:</div>
+                    <div class="col-md-9 text-primary">@(Model.NhanSuTypeStxt ?? "Chưa cập nhật")</div>
+
+                    <div class="col-md-3 text-secondary"><i class="fas fa-phone"></i> Số điện thoại:</div>
+                    <div class="col-md-9 text-primary">@(Model.User?.PhoneNumber ?? "Chưa cập nhật")</div>
+                </div>
+            </div>
+            <!-- Action Buttons -->
+            <div class="col-md-3 text-end">
+                <div class="d-flex flex-column gap-2 align-items-end">
+                    @if (!isApproved)
+                    {
+                        <button class="btn btn-success btn-sm" id="btnDuyet" data-id="@Model.Id">
+                            <i class="bi bi-check-circle me-1"></i>Duyệt
+                        </button>
+                        <button class="btn btn-danger btn-sm" id="btnXoa" data-id="@Model.Id">
+                            <i class="bi bi-trash me-1"></i>Xóa
+                        </button>
+                    }
+                    <a asp-action="DanhSachNhanVien" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden field for JavaScript -->
+    <input type="hidden" id="hiddenNguoiDungId" value="@Model.UserId" />
+    
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link active text-primary menu-link-top" data-target-top="#thong-tin-chung" href="#">Thông tin chung</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#hop-dong-bao-hiem" href="#">Hợp đồng và bảo hiểm</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#khen-thuong-ky-luat" href="#">Khen thưởng kỷ luật</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark menu-link-top" data-target-top="#luong" href="#">Lương</a>
+        </li>
+    </ul>
+
+    <!-- Các section tương ứng -->
+    <section id="thong-tin-chung" class="content-section-top">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="bg-white rounded p-3 shadow-sm">
+                    <ul class="list-unstyled">
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link active text-primary"
+                                data-target="ThongTinChung">Thông tin chung</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="ViTriCongTac">Vị trí công tác</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="TaiKhoanNganHang">Tài khoản ngân hàng</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="TrinhDo">Trình độ</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="HoKhau">Hộ khẩu</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <section id="ThongTinChung" class="content-section">
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary ">Thông tin tài khoản</h5>
+                            <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#editTaiKhoanModal"></i>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1 text-secondary">Mã nhân viên</p>
+                            <p class="text-primary ">@(Model.UserId ?? "Chưa cập nhật")</p>
+
+                            <div class="row">
+                                <div class="col text-secondary">Email</div>
+                                <div class="col text-secondary text-end">Số điện thoại</div>
+                            </div>
+                            <div class="row ">
+                                <div class="col">
+                                    <a href="mailto:@Model.User?.Email"
+                                        class="text-primary text-decoration-none">@(Model.User?.Email ?? "Chưa cập nhật")</a>
+                                </div>
+                                <div class="col text-primary text-end">@(Model.User?.PhoneNumber ?? "Chưa cập nhật")</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Thông tin cơ bản</h5>
+                            <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#EditinfoModal"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="text-secondary">Tên nhân viên</p>
+                                    <p class="text-primary">@Model.FullName</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="text-secondary">CMND/CCCD</p>
+                                    <p class="text-primary">@(Model.IdentityNumber ?? "Chưa cập nhật")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="text-secondary">Ngày sinh</p>
+                                    <p class="text-primary">@Model.BirthDay.ToString("dd/MM/yyyy")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="text-secondary">Giới tính</p>
+                                    <p class="text-primary">@Model.GioiTinhStxt</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary ">Thông tin khác</h5>
+                            <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#editThongTinKhacModal"></i>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Các thông tin khác chưa có trong hệ thống</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="ViTriCongTac" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Thông tin công tác</h5>
+                            <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#ModalSuaViTriCongTac"></i>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <p class="mb-1">Phòng ban</p>
+                                <p class="text-primary">@(Model.Department?.TenPhongBan ?? "Chưa cập nhật")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">Chức vụ</p>
+                                <p class="text-primary">@(Model.ChucVu?.TenChucVu ?? "Chưa cập nhật")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">Loại nhân viên</p>
+                                <p class="text-primary">@(Model.NhanSuTypeStxt ?? "Chưa cập nhật")</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="TaiKhoanNganHang" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Tài khoản ngân hàng</h5>
+                            <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" onclick="loadBankInfo('@Model.UserId')"></i>
+                        </div>
+                        <div class="row mt-3" id="bankInfoContent">
+                            <p class="text-muted">Đang tải...</p>
+                        </div>
+                    </div>
+                </section>
+                <section id="TrinhDo" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Trình độ</h5>
+                            <i class="bi bi-pen text-primary edit-icon" style="cursor: pointer;" onclick="loadTrinhDo('@Model.UserId')"></i>
+                        </div>
+                        <div id="trinhDoContent" class="row mt-3">
+                            <p class="text-muted">Đang tải...</p>
+                        </div>
+                    </div>
+                    <div class="card border-0 p-3 mt-3 shadow-sm ">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Đào tạo, bồi dưỡng chuyên môn, nghiệp vụ, lý luận chính trị, ngoại ngữ</h5>
+                            <button class="btn btn-primary" onclick="openAddDaoTao('@Model.UserId')">+ Thêm mới</button>
+                        </div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-bordered">
+                                <thead class="text-primary">
+                                    <tr>
+                                        <th class="text-primary">STT</th>
+                                        <th class="text-primary">Tên trường/ Tổ chức</th>
+                                        <th class="text-primary">Ngành học hoặc tên lớp học</th>
+                                        <th class="text-primary">Thời gian học</th>
+                                        <th class="text-primary">Hình thức học</th>
+                                        <th class="text-primary">Văn bằng chứng chỉ, trình độ gì</th>
+                                        <th class="text-primary">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daoTaoTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Đang tải...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                <section id="HoKhau" class="content-section d-none">
+                    <div class="card border-0 p-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary fw-bold">Quan hệ gia đình</h5>
+                            <button class="btn btn-primary" onclick="openAddFamily('@Model.UserId')">+ Thêm mới</button>
+                        </div>
+                        <div class="row mt-3">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th class="text-primary">STT</th>
+                                        <th class="text-primary">Tên người thân</th>
+                                        <th class="text-primary">Giới tính</th>
+                                        <th class="text-primary">Ngày sinh</th>
+                                        <th class="text-primary">Điện thoại</th>
+                                        <th class="text-primary">Quan hệ với chủ hộ</th>
+                                        <th class="text-primary">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="familyTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Đang tải...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <section id="hop-dong-bao-hiem" class="content-section-top d-none">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="bg-white rounded p-3 shadow-sm">
+                    <ul class="list-unstyled">
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link active text-primary"
+                                data-target="HopDong">Hợp đồng</a></li>
+                        <li class="p-2"><a href="#"
+                                class="text-decoration-none fw-medium d-block px-2 py-1 rounded hover-bg menu-link text-dark"
+                                data-target="ThongTinBaoHiem">Thông tin bảo hiểm</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <section id="HopDong" class="content-section">
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Danh sách hợp đồng</h5>
+                            <button class="btn btn-primary" onclick="openAddHopDong('@Model.UserId')">+ Thêm mới</button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th class="text-primary">STT</th>
+                                        <th class="text-primary">Số hợp đồng</th>
+                                        <th class="text-primary">Loại hợp đồng</th>
+                                        <th class="text-primary">Ngày ký</th>
+                                        <th class="text-primary">Ngày bắt đầu</th>
+                                        <th class="text-primary">Ngày kết thúc</th>
+                                        <th class="text-primary">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hopDongTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                <section id="ThongTinBaoHiem" class="content-section d-none">
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Bảo hiểm xã hội</h5>
+                            <i class="bi bi-pen text-primary" style="cursor: pointer;" onclick="openEditBaoHiem('BHXH', '@Model.UserId')"></i>
+                        </div>
+                        <div class="card-body" id="bhxhContent">
+                            <p class="text-muted">Đang tải...</p>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Bảo hiểm thất nghiệp</h5>
+                            <i class="bi bi-pen text-primary" style="cursor: pointer;" onclick="openEditBaoHiem('BHTN', '@Model.UserId')"></i>
+                        </div>
+                        <div class="card-body" id="bhtnContent">
+                            <p class="text-muted">Đang tải...</p>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center border-0">
+                            <h5 class="card-title mb-0 text-primary">Bảo hiểm y tế</h5>
+                            <i class="bi bi-pen text-primary" style="cursor: pointer;" onclick="openEditBaoHiem('BHYT', '@Model.UserId')"></i>
+                        </div>
+                        <div class="card-body" id="bhytContent">
+                            <p class="text-muted">Đang tải...</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+    
+    <section id="khen-thuong-ky-luat" class="content-section-top d-none">
+        <div class="card border-0 p-3 shadow-sm mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-primary fw-bold">Khen thưởng</h5>
+                <button class="btn btn-primary" onclick="openAddKhenThuong('@Model.UserId')">+ Thêm mới</button>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-primary">STT</th>
+                            <th class="text-primary">Nội dung khen thưởng</th>
+                            <th class="text-primary">Hình thức</th>
+                            <th class="text-primary">Ngày ký</th>
+                            <th class="text-primary">Số quyết định</th>
+                            <th class="text-primary">Giá trị</th>
+                            <th class="text-primary">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="khenThuongTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card border-0 p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-primary fw-bold">Kỷ luật</h5>
+                <button class="btn btn-primary" onclick="openAddKyLuat('@Model.UserId')">+ Thêm mới</button>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="text-primary">STT</th>
+                            <th class="text-primary">Nội dung kỷ luật</th>
+                            <th class="text-primary">Ngày quyết định</th>
+                            <th class="text-primary">Hình thức</th>
+                            <th class="text-primary">Lý do</th>
+                            <th class="text-primary">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kyLuatTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Đang tải...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="luong" class="content-section-top d-none">
+        <div class="card border-0 p-3 shadow-sm">
+            <h4 class="text-primary mb-3">Lịch sử lương</h4>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="yearSelect">
+                        <option value="">--Chọn năm--</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="monthSelect">
+                        <option value="">--Chọn tháng--</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary" onclick="searchLuong()"><i class="fas fa-search me-2"></i>Tìm</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Tháng/Năm</th>
+                            <th>Lương cơ bản</th>
+                            <th>Phụ cấp</th>
+                            <th>Khấu trừ</th>
+                            <th>Thực lĩnh</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="luongTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Đang tải...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+
+</div>
+</div>
+<script>
+// ==================== GLOBAL STATE ====================
+const AppState = {
+    nguoiDungId: '@Model.UserId',
+    cache: {},
+    loadedSections: new Set(),
+    currentTopTab: '#thong-tin-chung',
+    currentSubTab: 'ThongTinChung'
+};
+
+// ==================== TAB NAVIGATION ====================
+$(document).ready(function() {
+    console.log('Page loaded, initializing...');
+    
+    // Top level tabs
+    $(document).on('click', '.menu-link-top', function(e) {
+        e.preventDefault();
+        const targetSection = $(this).data('target-top');
+        console.log('Top tab clicked:', targetSection);
+        switchTopTab(targetSection);
+    });
+
+    // Sub level tabs  
+    $(document).on('click', '.menu-link', function(e) {
+        e.preventDefault();
+        const targetSection = $(this).data('target');
+        console.log('Sub tab clicked:', targetSection);
+        switchSubTab(targetSection);
+    });
+
+    // Initialize
+    initYearMonthSelects();
+    setupEventHandlers();
+    
+    // Restore last state
+    restoreTabState();
+});
+
+function switchTopTab(targetSection) {
+    console.log('Switching to top tab:', targetSection);
+    
+    // Hide all top sections
+    $('.content-section-top').addClass('d-none');
+    
+    // Show target section
+    $(targetSection).removeClass('d-none');
+    
+    // Update nav styling
+    $('.menu-link-top').removeClass('active text-primary').addClass('text-dark');
+    $(`.menu-link-top[data-target-top="${targetSection}"]`).addClass('active text-primary').removeClass('text-dark');
+    
+    // Save state
+    AppState.currentTopTab = targetSection;
+    sessionStorage.setItem('currentTopTab', targetSection);
+    
+    // Load data for this tab
+    loadTopTabData(targetSection);
+}
+
+function switchSubTab(targetSection) {
+    console.log('Switching to sub tab:', targetSection);
+    
+    // Hide all sub sections
+    $('.content-section').addClass('d-none');
+    
+    // Show target section
+    $('#' + targetSection).removeClass('d-none');
+    
+    // Update nav styling
+    $('.menu-link').removeClass('active text-primary').addClass('text-dark');
+    $(`.menu-link[data-target="${targetSection}"]`).addClass('active text-primary').removeClass('text-dark');
+    
+    // Save state
+    AppState.currentSubTab = targetSection;
+    sessionStorage.setItem('currentSubTab', targetSection);
+    
+    // Load data for this section
+    loadSubTabData(targetSection);
+}
+
+function restoreTabState() {
+    const savedTopTab = sessionStorage.getItem('currentTopTab');
+    const savedSubTab = sessionStorage.getItem('currentSubTab');
+    
+    if (savedTopTab && savedTopTab !== '#thong-tin-chung') {
+        switchTopTab(savedTopTab);
+    }
+    
+    if (savedSubTab && savedSubTab !== 'ThongTinChung') {
+        setTimeout(() => switchSubTab(savedSubTab), 100);
+    }
+}
+
+// ==================== DATA LOADING ====================
+function loadTopTabData(section) {
+    switch(section) {
+        case '#hop-dong-bao-hiem':
+            if (!AppState.loadedSections.has('hopDong')) {
+                loadHopDongList(AppState.nguoiDungId);
+                loadBaoHiemData(AppState.nguoiDungId);
+            }
+            break;
+        case '#khen-thuong-ky-luat':
+            if (!AppState.loadedSections.has('khenThuong')) {
+                loadKhenThuongList(AppState.nguoiDungId);
+                loadKyLuatList(AppState.nguoiDungId);
+            }
+            break;
+        case '#luong':
+            if (!AppState.loadedSections.has('luong')) {
+                loadLuongList(AppState.nguoiDungId);
+            }
+            break;
+    }
+}
+
+function loadSubTabData(section) {
+    switch(section) {
+        case 'TaiKhoanNganHang':
+            if (!AppState.loadedSections.has('bank')) {
+                loadBankInfoDisplay(AppState.nguoiDungId);
+            }
+            break;
+        case 'TrinhDo':
+            if (!AppState.loadedSections.has('trinhDo')) {
+                loadTrinhDoDisplay(AppState.nguoiDungId);
+                loadDaoTaoList(AppState.nguoiDungId);
+            }
+            break;
+        case 'HoKhau':
+            if (!AppState.loadedSections.has('family')) {
+                loadFamilyList(AppState.nguoiDungId);
+            }
+            break;
+    }
+}
+
+function loadBankInfoDisplay(userId) {
+    $('#bankInfoContent').html('<p class="text-muted">Đang tải...</p>');
+    $.get('/NhanSu/GetTaiKhoanNganHang', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#bankInfoContent').html(`
+                <div class="col-md-6"><p class="mb-1 text-secondary">Ngân hàng</p><p class="text-primary">${d.tenNganHang || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="mb-1 text-secondary">Chi nhánh</p><p class="text-primary">${d.chiNhanh || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Số tài khoản</p><p class="text-primary">${d.soTaiKhoan || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Tên chủ TK</p><p class="text-primary">${d.tenChuTaiKhoan || 'Chưa cập nhật'}</p></div>
+            `);
+        } else {
+            $('#bankInfoContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+        AppState.loadedSections.add('bank');
+    });
+}
+
+function loadBankInfo(userId) {
+    $.get('/NhanSu/GetTaiKhoanNganHang', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#bankId').val(d.id);
+            $('#bankNguoiDungId').val(userId);
+            $('#tenNganHang').val(d.tenNganHang);
+            $('#chiNhanh').val(d.chiNhanh);
+            $('#soTaiKhoan').val(d.soTaiKhoan);
+            $('#tenChuTaiKhoan').val(d.tenChuTaiKhoan);
+        } else {
+            $('#bankNguoiDungId').val(userId);
+        }
+        $('#ModalSuaThongTinNganHang').modal('show');
+    });
+}
+
+function loadTrinhDoDisplay(userId) {
+    $('#trinhDoContent').html('<p class="text-muted">Đang tải...</p>');
+    $.get('/NhanSu/GetTrinhDo', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#trinhDoContent').html(`
+                <div class="col-md-6"><p class="mb-1 text-secondary">Trình độ học vấn</p><p class="text-primary">${d.trinhDoHocVan || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="mb-1 text-secondary">Học hàm, học vị</p><p class="text-primary">${d.hocHamHocVi || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Lý luận chính trị</p><p class="text-primary">${d.lyLuanChinhTri || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6 mt-3"><p class="mb-1 text-secondary">Ngoại ngữ</p><p class="text-primary">${d.ngoaiNgu || 'Chưa cập nhật'}</p></div>
+            `);
+        } else {
+            $('#trinhDoContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+        AppState.loadedSections.add('trinhDo');
+    });
+}
+
+function loadTrinhDo(userId) {
+    $.get('/NhanSu/GetTrinhDo', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            $('#trinhDoId').val(d.id);
+            $('#trinhDoNguoiDungId').val(userId);
+            $('#trinhDoHocVan').val(d.trinhDoHocVan);
+            $('#hocHamHocVi').val(d.hocHamHocVi);
+            $('#lyLuanChinhTri').val(d.lyLuanChinhTri);
+            $('#ngoaiNgu').val(d.ngoaiNgu);
+        } else {
+            $('#trinhDoNguoiDungId').val(userId);
+        }
+        $('#ModalSuaTrinhDo').modal('show');
+    });
+}
+
+function loadDaoTaoList(userId) {
+    $.get('/NhanSu/GetDanhSachDaoTao', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const bd = item.thoiGianBatDau ? new Date(item.thoiGianBatDau).toLocaleDateString('vi-VN') : '';
+                const kt = item.thoiGianKetThuc ? new Date(item.thoiGianKetThuc).toLocaleDateString('vi-VN') : '';
+                const tg = bd && kt ? `${bd} - ${kt}` : (bd || kt || '');
+                return `<tr><td>${idx + 1}</td><td>${item.tenTruongToChuc || ''}</td><td>${item.nganhHocTenLop || ''}</td><td>${tg}</td><td>${item.hinhThucHoc || ''}</td><td>${item.vanBangChungChi || ''}</td><td><i class="bi bi-trash text-danger" style="cursor:pointer" onclick="deleteDaoTao('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#daoTaoTableBody').html(html);
+        } else {
+            $('#daoTaoTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        AppState.loadedSections.add('daoTao');
+    });
+}
+
+function loadFamilyList(userId) {
+    $.get('/NhanSu/GetDanhSachQuanHeGiaDinh', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const ns = item.ngaySinh ? new Date(item.ngaySinh).toLocaleDateString('vi-VN') : '';
+                return `<tr><td>${idx + 1}</td><td class="text-primary">${item.tenNguoiThan || ''}</td><td>${item.gioiTinh == 0 ? 'Nam' : 'Nữ'}</td><td>${ns}</td><td class="text-primary">${item.dienThoai || ''}</td><td class="text-primary">${item.quanHeVoiChuHo || ''}</td><td><i class="bi bi-trash text-danger" style="cursor:pointer" onclick="deleteFamily('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#familyTableBody').html(html);
+        } else {
+            $('#familyTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        AppState.loadedSections.add('family');
+    });
+}
+
+function loadHopDongList(userId) {
+    $.get('/NhanSu/GetDanhSachHopDong', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const nk = item.ngayKyHopDong ? new Date(item.ngayKyHopDong).toLocaleDateString('vi-VN') : '';
+                const nbd = item.ngayBatDau ? new Date(item.ngayBatDau).toLocaleDateString('vi-VN') : '';
+                const nkt = item.ngayKetThuc ? new Date(item.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+                return `<tr><td>${idx + 1}</td><td><a href="#" class="text-primary" onclick="viewHopDong('${item.id}');return false">${item.soHopDong || ''}</a></td><td>${item.loaiHopDongStxt || ''}</td><td>${nk}</td><td>${nbd}</td><td>${nkt}</td><td><i class="bi bi-pencil-square text-primary mx-1" style="cursor:pointer" onclick="editHopDong('${item.id}')"></i><i class="bi bi-trash text-danger mx-1" style="cursor:pointer" onclick="deleteHopDong('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#hopDongTableBody').html(html);
+        } else {
+            $('#hopDongTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        AppState.loadedSections.add('hopDong');
+    });
+}
+
+function loadKhenThuongList(userId) {
+    $.get('/NhanSu/GetDanhSachKhenThuong', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const nk = item.ngayKy ? new Date(item.ngayKy).toLocaleDateString('vi-VN') : '';
+                const gt = item.giaTri ? item.giaTri.toLocaleString('vi-VN') + ' VNĐ' : '';
+                return `<tr><td>${idx + 1}</td><td><a href="#" class="text-primary" onclick="viewKhenThuong('${item.id}');return false">${item.noiDung || ''}</a></td><td>${item.hinhThucStxt || ''}</td><td>${nk}</td><td>${item.soQuyetDinh || ''}</td><td class="text-primary">${gt}</td><td><i class="bi bi-pencil-square text-primary mx-1" style="cursor:pointer" onclick="editKhenThuong('${item.id}')"></i><i class="bi bi-trash text-danger mx-1" style="cursor:pointer" onclick="deleteKhenThuong('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#khenThuongTableBody').html(html);
+        } else {
+            $('#khenThuongTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        AppState.loadedSections.add('khenThuong');
+    });
+}
+
+function loadKyLuatList(userId) {
+    $.get('/NhanSu/GetDanhSachKyLuat', { nguoiDungId: userId }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                const nqd = item.ngayQuyetDinh ? new Date(item.ngayQuyetDinh).toLocaleDateString('vi-VN') : '';
+                return `<tr><td>${idx + 1}</td><td><a href="#" class="text-primary" onclick="viewKyLuat('${item.id}');return false">${item.noiDung || ''}</a></td><td>${nqd}</td><td>${item.hinhThucStxt || ''}</td><td>${item.lyDo || ''}</td><td><i class="bi bi-pencil-square text-primary mx-1" style="cursor:pointer" onclick="editKyLuat('${item.id}')"></i><i class="bi bi-trash text-danger mx-1" style="cursor:pointer" onclick="deleteKyLuat('${item.id}')"></i></td></tr>`;
+            }).join('');
+            $('#kyLuatTableBody').html(html);
+        } else {
+            $('#kyLuatTableBody').html('<tr><td colspan="6" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        AppState.loadedSections.add('kyLuat');
+    });
+}
+
+function loadLuongList(userId) {
+    const year = $('#yearSelect').val();
+    const month = $('#monthSelect').val();
+    $.get('/NhanSu/GetDanhSachLuong', { nguoiDungId: userId, nam: year, thang: month }, function(res) {
+        if (res.success && res.data && res.data.length > 0) {
+            let html = res.data.map((item, idx) => {
+                return `<tr><td>${idx + 1}</td><td>${item.thang}/${item.nam}</td><td>${(item.luongCoBan || 0).toLocaleString('vi-VN')}</td><td>${(item.phuCap || 0).toLocaleString('vi-VN')}</td><td>${(item.khauTru || 0).toLocaleString('vi-VN')}</td><td class="text-primary fw-bold">${(item.thucLinh || 0).toLocaleString('vi-VN')}</td><td><span class="badge ${item.trangThai == 1 ? 'bg-success' : 'bg-warning'}">${item.trangThaiStxt || 'Chờ duyệt'}</span></td></tr>`;
+            }).join('');
+            $('#luongTableBody').html(html);
+        } else {
+            $('#luongTableBody').html('<tr><td colspan="7" class="text-center text-muted">Chưa có thông tin</td></tr>');
+        }
+        AppState.loadedSections.add('luong');
+    });
+}
+
+function loadBaoHiemData(userId) {
+    // Load BHXH
+    $.get('/NhanSu/GetBaoHiem', { nguoiDungId: userId, loai: 'BHXH' }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            const nbd = d.ngayBatDau ? new Date(d.ngayBatDau).toLocaleDateString('vi-VN') : '';
+            const nkt = d.ngayKetThuc ? new Date(d.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+            $('#bhxhContent').html(`
+                <div class="row"><div class="col-md-6"><p class="text-secondary mb-1">Số sổ BHXH</p><p class="text-primary">${d.soSo || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Nơi đăng ký</p><p class="text-primary">${d.noiDangKy || 'Chưa cập nhật'}</p></div></div>
+                <div class="row mt-2"><div class="col-md-6"><p class="text-secondary mb-1">Ngày bắt đầu</p><p class="text-primary">${nbd}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Ngày kết thúc</p><p class="text-primary">${nkt || 'Đang tham gia'}</p></div></div>
+            `);
+        } else {
+            $('#bhxhContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+    });
+    
+    // Load BHTN
+    $.get('/NhanSu/GetBaoHiem', { nguoiDungId: userId, loai: 'BHTN' }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            const nbd = d.ngayBatDau ? new Date(d.ngayBatDau).toLocaleDateString('vi-VN') : '';
+            const nkt = d.ngayKetThuc ? new Date(d.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+            $('#bhtnContent').html(`
+                <div class="row"><div class="col-md-6"><p class="text-secondary mb-1">Số sổ BHTN</p><p class="text-primary">${d.soSo || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Nơi đăng ký</p><p class="text-primary">${d.noiDangKy || 'Chưa cập nhật'}</p></div></div>
+                <div class="row mt-2"><div class="col-md-6"><p class="text-secondary mb-1">Ngày bắt đầu</p><p class="text-primary">${nbd}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Ngày kết thúc</p><p class="text-primary">${nkt || 'Đang tham gia'}</p></div></div>
+            `);
+        } else {
+            $('#bhtnContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+    });
+    
+    // Load BHYT
+    $.get('/NhanSu/GetBaoHiem', { nguoiDungId: userId, loai: 'BHYT' }, function(res) {
+        if (res.success && res.data) {
+            const d = res.data;
+            const nbd = d.ngayBatDau ? new Date(d.ngayBatDau).toLocaleDateString('vi-VN') : '';
+            const nkt = d.ngayKetThuc ? new Date(d.ngayKetThuc).toLocaleDateString('vi-VN') : '';
+            $('#bhytContent').html(`
+                <div class="row"><div class="col-md-6"><p class="text-secondary mb-1">Số thẻ BHYT</p><p class="text-primary">${d.soSo || 'Chưa cập nhật'}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Nơi đăng ký KCB</p><p class="text-primary">${d.noiDangKy || 'Chưa cập nhật'}</p></div></div>
+                <div class="row mt-2"><div class="col-md-6"><p class="text-secondary mb-1">Ngày bắt đầu</p><p class="text-primary">${nbd}</p></div>
+                <div class="col-md-6"><p class="text-secondary mb-1">Ngày kết thúc</p><p class="text-primary">${nkt || 'Đang tham gia'}</p></div></div>
+            `);
+        } else {
+            $('#bhytContent').html('<p class="text-muted">Chưa có thông tin</p>');
+        }
+    });
+}
+
+function searchLuong() {
+    AppState.loadedSections.delete('luong');
+    loadLuongList(AppState.nguoiDungId);
+}
+
+// ==================== MODAL FUNCTIONS ====================
+function openAddDaoTao(userId) {
+    $('#daoTaoId').val('');
+    $('#daoTaoNguoiDungId').val(userId);
+    $('#formDaoTao')[0].reset();
+    $('#ModalDaoTao').modal('show');
+}
+
+function openAddFamily(userId) {
+    $('#familyId').val('');
+    $('#familyNguoiDungId').val(userId);
+    $('#formThemQuanHeGiaDinh')[0].reset();
+    $('#familyModal').modal('show');
+}
+
+function openAddHopDong(userId) {
+    $('#hopDongId').val('');
+    $('#hopDongNguoiDungId').val(userId);
+    $('#formHopDong')[0].reset();
+    $('#modalHopDongTitle').text('Thêm hợp đồng');
+    $('#ModalHopDong').modal('show');
+}
+
+function openAddKhenThuong(userId) {
+    $('#khenThuongId').val('');
+    $('#khenThuongNguoiDungId').val(userId);
+    $('#formKhenThuong')[0].reset();
+    $('#modalKhenThuongTitle').text('Thêm khen thưởng');
+    $('#ModalKhenThuong').modal('show');
+}
+
+function openAddKyLuat(userId) {
+    $('#kyLuatId').val('');
+    $('#kyLuatNguoiDungId').val(userId);
+    $('#formKyLuat')[0].reset();
+    $('#modalKyLuatTitle').text('Thêm kỷ luật');
+    $('#ModalKyLuat').modal('show');
+}
+
+function editHopDong(id) {
+    $.get('/NhanSu/GetHopDong', { id: id }, function(res) {
+        if (res.success) {
+            const d = res.data;
+            $('#hopDongId').val(d.id);
+            $('#hopDongNguoiDungId').val(AppState.nguoiDungId);
+            $('#maHopDong').val(d.maHopDong);
+            $('#loaiHopDong').val(d.loaiHopDong);
+            $('#ngayKy').val(d.ngayKy);
+            $('#ngayBatDau').val(d.ngayBatDau);
+            $('#ngayKetThuc').val(d.ngayKetThuc);
+            $('#luongCoBan').val(d.luongCoBan);
+            $('#ghiChuHopDong').val(d.ghiChu);
+            $('#modalHopDongTitle').text('Sửa hợp đồng');
+            $('#ModalHopDong').modal('show');
+        } else {
+            Notification.error(res.message);
+        }
+    });
+}
+
+function viewHopDong(id) { editHopDong(id); }
+
+function editKhenThuong(id) {
+    $.get('/NhanSu/GetKhenThuongKyLuat', { id: id }, function(res) {
+        if (res.success) {
+            const d = res.data;
+            $('#khenThuongId').val(d.id);
+            $('#khenThuongNguoiDungId').val(AppState.nguoiDungId);
+            $('#maQuyetDinhKT').val(d.maQuyetDinh);
+            $('#ngayQuyetDinhKT').val(d.ngayQuyetDinh);
+            $('#hinhThucKT').val(d.hinhThuc);
+            $('#soTienKT').val(d.soTien);
+            $('#lyDoKT').val(d.lyDo);
+            $('#ghiChuKT').val(d.ghiChu);
+            $('#modalKhenThuongTitle').text('Sửa khen thưởng');
+            $('#ModalKhenThuong').modal('show');
+        } else {
+            Notification.error(res.message);
+        }
+    });
+}
+
+function viewKhenThuong(id) { editKhenThuong(id); }
+
+function editKyLuat(id) {
+    $.get('/NhanSu/GetKhenThuongKyLuat', { id: id }, function(res) {
+        if (res.success) {
+            const d = res.data;
+            $('#kyLuatId').val(d.id);
+            $('#kyLuatNguoiDungId').val(AppState.nguoiDungId);
+            $('#maQuyetDinhKL').val(d.maQuyetDinh);
+            $('#ngayQuyetDinhKL').val(d.ngayQuyetDinh);
+            $('#hinhThucKL').val(d.hinhThuc);
+            $('#soTienKL').val(d.soTien);
+            $('#lyDoKL').val(d.lyDo);
+            $('#ghiChuKL').val(d.ghiChu);
+            $('#modalKyLuatTitle').text('Sửa kỷ luật');
+            $('#ModalKyLuat').modal('show');
+        } else {
+            Notification.error(res.message);
+        }
+    });
+}
+
+function viewKyLuat(id) { editKyLuat(id); }
+
+function openEditBaoHiem(type, userId) {
+    Notification.info('Chức năng sửa thông tin bảo hiểm đang được phát triển');
+}
+
+// ==================== DELETE FUNCTIONS ====================
+function deleteDaoTao(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa thông tin đào tạo này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteDaoTao', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                AppState.loadedSections.delete('daoTao');
+                loadDaoTaoList(AppState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteFamily(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa thông tin người thân này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteQuanHeGiaDinh', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                AppState.loadedSections.delete('family');
+                loadFamilyList(AppState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteHopDong(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa hợp đồng này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteHopDong', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                AppState.loadedSections.delete('hopDong');
+                loadHopDongList(AppState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteKhenThuong(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa khen thưởng này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteKhenThuong', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                AppState.loadedSections.delete('khenThuong');
+                loadKhenThuongList(AppState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+function deleteKyLuat(id) {
+    showConfirmModal('Xác nhận xóa', 'Bạn có chắc muốn xóa kỷ luật này?', 'btn-danger', function() {
+        $.post('/NhanSu/DeleteKyLuat', { id: id }, function(res) {
+            if (res.success) {
+                Notification.success(res.message);
+                AppState.loadedSections.delete('kyLuat');
+                loadKyLuatList(AppState.nguoiDungId);
+            } else {
+                Notification.error(res.message);
+            }
+        });
+    });
+}
+
+// ==================== INIT ====================
+function initYearMonthSelects() {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    for (let year = 2020; year <= 2030; year++) {
+        $('#yearSelect').append(`<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`);
+    }
+    for (let month = 1; month <= 12; month++) {
+        $('#monthSelect').append(`<option value="${month}" ${month === currentMonth ? 'selected' : ''}>Tháng ${month}</option>`);
+    }
+}
+
+function setupEventHandlers() {
+    $("#btnDuyet").click(function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        showConfirmModal('Xác nhận duyệt', 'Bạn có chắc muốn duyệt nhân viên này?', 'btn-success', function() {
+            $.post('/NhanSu/ActivateNhanVien', { id: id })
+                .done(function(res) {
+                    if (res.success) {
+                        Notification.success(res.message);
+                        location.reload();
+                    } else {
+                        Notification.error(res.message);
+                    }
+                })
+                .fail(function() { Notification.error('Có lỗi xảy ra'); });
+        });
+    });
+
+    $("#btnXoa").click(function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        showConfirmModal('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa nhân viên này?', 'btn-danger', function() {
+            $.post('/NhanSu/XoaNhanVien', { id: id })
+                .done(function(res) {
+                    if (res.success) {
+                        Notification.success(res.message);
+                        window.location.href = '/NhanSu/DanhSachNhanVien';
+                    } else {
+                        Notification.error(res.message);
+                    }
+                })
+                .fail(function() { Notification.error('Có lỗi xảy ra'); });
+        });
+    });
+
+    document.getElementById('avatarUpload')?.addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+
+        var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            Notification.error('Chỉ cho phép upload file ảnh (JPG, PNG, GIF, WEBP)');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            Notification.error('Kích thước file không được vượt quá 5MB');
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('id', $('#avatarUpload').data('id'));
+        formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+        $.ajax({
+            url: '/NhanSu/UploadAvatar',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res.success) {
+                    Notification.success(res.message || 'Cập nhật ảnh đại diện thành công');
+                } else {
+                    Notification.error(res.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function() { Notification.error('Có lỗi xảy ra khi upload ảnh'); }
+        });
+    });
+}
+
+// Global access
+window.nguoiDungId = AppState.nguoiDungId;
+window.refreshData = function(section) {
+    AppState.loadedSections.delete(section);
+    switch(section) {
+        case 'bank': loadBankInfoDisplay(AppState.nguoiDungId); break;
+        case 'trinhDo': loadTrinhDoDisplay(AppState.nguoiDungId); break;
+        case 'daoTao': loadDaoTaoList(AppState.nguoiDungId); break;
+        case 'family': loadFamilyList(AppState.nguoiDungId); break;
+        case 'hopDong': loadHopDongList(AppState.nguoiDungId); break;
+        case 'khenThuong': loadKhenThuongList(AppState.nguoiDungId); break;
+        case 'kyLuat': loadKyLuatList(AppState.nguoiDungId); break;
+    }
+};
+</script>
+
+@Html.AntiForgeryToken()
+
+<partial name="~/Views/Modals/_ModalSuaThongTinCoBan.cshtml" model="Model" />
+<partial name="~/Views/Modals/_ModalSuaThongTinTaiKhoan.cshtml" model="Model" />
+<partial name="~/Views/Modals/_ModalSuaThongTinKhac.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaViTriCongTac.cshtml" model="Model" />
+<partial name="~/Views/Modals/_ModalSuaThongTinNganHang.cshtml" />
+<partial name="~/Views/Modals/_ModalSuaTrinhDo.cshtml" />
+<partial name="~/Views/Modals/_ModalDaoTao.cshtml" />
+<partial name="~/Views/Modals/_ModalChiTietQuanHeGiaDinh.cshtml" />
+<partial name="~/Views/Modals/_ModalThemQuanHeGiaDinh.cshtml" />
+<partial name="~/Views/Modals/_ModalXacNhan.cshtml" />
+<partial name="~/Views/Modals/_ModalHopDong.cshtml" />
+<partial name="~/Views/Modals/_ModalKhenThuong.cshtml" />
+<partial name="~/Views/Modals/_ModalKyLuat.cshtml" />
+
+@section Scripts {
+    <script src="~/js/chi-tiet-nhan-vien.js" asp-append-version="true"></script>
+}
+

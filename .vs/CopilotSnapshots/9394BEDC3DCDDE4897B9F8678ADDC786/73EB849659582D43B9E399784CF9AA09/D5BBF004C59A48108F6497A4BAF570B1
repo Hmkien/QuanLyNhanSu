@@ -1,0 +1,162 @@
+﻿@model IEnumerable<dynamic>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary" href="#">
+                        <i class="bi bi-house-door"></i>
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary" href="#">Hồ sơ nhân sự</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Danh sách thực tập sinh</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-12 text-end d-flex justify-content-between">
+        <div>
+            <h2 class="text-primary mb-0">Danh sách thực tập sinh</h2>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2 btn-hover text-primary"><i
+                    class="bi bi-box-arrow-right me-2 "></i></i>Nhập
+                excel
+            </button>
+            <button class="btn btn-outline-primary btn-hover me-2 text-primary"><i
+                    class="bi bi-file-earmark-excel me-2 "></i></i>Xuất
+                excel
+            </button>
+            <button class="btn btn-primary btn-hover" data-bs-toggle="modal" data-bs-target="#themNhanVienModal">
+                <i class="fas fa-plus me-2"></i>Thêm mới
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-lg-2">
+        <select class="form-select">
+            <option selected>-- Chọn giới tính --</option>
+            <option>Nam</option>
+            <option>Nữ</option>
+        </select>
+    </div>
+    <div class="col-lg-2" style="min-width: fit-content;">
+        <select class="form-select">
+            <option selected>-- Chọn phòng ban --</option>
+            <option>Phòng giao phó</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <input type="text" class="form-control" placeholder="Tên thực tập sinh, CMND/CCCD, email, số điện thoại">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-75"><i class="fas fa-search me-2"></i>Tìm kiếm</button>
+    </div>
+</div>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th><input type="checkbox"></th>
+            <th>STT</th>
+            <th>Tên thực tập sinh</th>
+            <th>CMND/CCCD</th>
+            <th>Giới tính</th>
+            <th>Phòng ban</th>
+            <th>Chức vụ</th>
+            <th>Email / Số điện thoại</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var stt = 1;
+        }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td class="text-center"><input type="checkbox"></td>
+                <td>@stt</td>
+                <td>@item.FullName</td>
+                <td>@item.IdentityNumber</td>
+                <td>@item.GioiTinhStxt</td>
+                <td>@item.DepartmentName</td>
+                <td>@item.PositionName</td>
+                <td>@item.PhoneNumber / @item.Email</td>
+                <td class="d-flex justify-content-between">
+                    <i class="fas fa-eye text-dark action-icon"></i>
+                    <i class="bi bi-pen text-primary"></i>
+                    <i class="bi bi-trash text-primary"></i>
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <select class="form-select d-inline-block text-primary" style="width: auto;">
+            <option>20</option>
+            <option>50</option>
+            <option>100</option>
+        </select>
+        <span class="ms-2 text-primary">Tổng số bản ghi: 915</span>
+    </div>
+    <nav>
+        <ul class="pagination custom-pagination mb-0">
+            <li class="page-item">
+                <a class="page-link rounded-circle" href="#"><i class="bi bi-chevron-left"></i></a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item active"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+            <li class="page-item"><a class="page-link" href="#">8</a></li>
+            <li class="page-item"><a class="page-link" href="#">9</a></li>
+            <li class="page-item"><a class="page-link" href="#">10</a></li>
+            <li class="page-item">
+                <a class="page-link rounded-circle" href="#"><i class="bi bi-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<div id="modalContainer"></div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.btn-primary[data-bs-target="#themNhanVienModal"]').click(function(e) {
+                e.preventDefault();
+                loadModalThemNhanSu();
+            });
+        });
+
+        function loadModalThemNhanSu() {
+            $.get('/NhanSu/GetModalThemNhanSu', function(data) {
+                $('#modalContainer').html(data);
+                // Delay nhỏ để đảm bảo DOM đã sẵn sàng
+                setTimeout(function() {
+                    var modalElement = document.getElementById('themNhanVienModal');
+                    if (modalElement) {
+                        var modal = new bootstrap.Modal(modalElement, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    } else {
+                        console.error('Modal element not found');
+                    }
+                }, 100);
+            }).fail(function(xhr, status, error) {
+                console.error('Error loading modal:', error);
+                Notification.error('Không thể tải form thêm nhân viên: ' + error);
+            });
+        }
+    </script>
+}

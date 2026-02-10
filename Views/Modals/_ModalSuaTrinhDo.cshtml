@@ -1,0 +1,42 @@
+﻿@* Modal Sửa Trình độ *@
+<div class="modal fade" id="ModalSuaTrinhDo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">Cập nhật trình độ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formSuaTrinhDo">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="trinhDoId" />
+                <input type="hidden" name="NguoiDungId" id="trinhDoNguoiDungId" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Trình độ học vấn (Giáo dục phổ thông)</label>
+                            <input type="text" class="form-control" name="TrinhDoHocVan" id="trinhDoHocVan" placeholder="VD: 12/12" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Học hàm, học vị cao nhất</label>
+                            <input type="text" class="form-control" name="HocHamHocVi" id="hocHamHocVi" placeholder="VD: Cử nhân" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Lý luận chính trị</label>
+                            <input type="text" class="form-control" name="LyLuanChinhTri" id="lyLuanChinhTri" placeholder="VD: Cao cấp" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngoại ngữ</label>
+                            <input type="text" class="form-control" name="NgoaiNgu" id="ngoaiNgu" placeholder="VD: B2" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

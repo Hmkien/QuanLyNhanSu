@@ -1,0 +1,59 @@
+﻿@* Modal Thêm/S?a K? lu?t *@
+<div class="modal fade" id="ModalKyLuat" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="modalKyLuatTitle">Thêm k? lu?t</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formKyLuat">
+                <input type="hidden" name="Id" id="kyLuatId" />
+                <input type="hidden" name="NguoiDungId" id="kyLuatNguoiDungId" />
+                <input type="hidden" name="Loai" value="1" /> @* 1 = KyLuat *@
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">S? quy?t ??nh <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="MaQuyetDinh" id="maQuyetDinhKL" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày quy?t ??nh <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayQuyetDinh" id="ngayQuyetDinhKL" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Hình th?c k? lu?t <span class="text-danger">*</span></label>
+                            <select class="form-select" name="HinhThuc" id="hinhThucKL" required>
+                                <option value="">--Ch?n--</option>
+                                <option value="Khi?n trách">Khi?n trách</option>
+                                <option value="C?nh cáo">C?nh cáo</option>
+                                <option value="H? b?c l??ng">H? b?c l??ng</option>
+                                <option value="Cách ch?c">Cách ch?c</option>
+                                <option value="Sa th?i">Sa th?i</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">M?c ph?t (VN?)</label>
+                            <input type="number" class="form-control" name="SoTien" id="soTienKL" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">N?i dung vi ph?m <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="LyDo" id="lyDoKL" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" name="GhiChu" id="ghiChuKL" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

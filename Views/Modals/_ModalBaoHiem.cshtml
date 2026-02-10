@@ -1,0 +1,110 @@
+﻿@* Modal Thêm/Sửa Bảo hiểm *@
+<div class="modal fade" id="ModalBaoHiem" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary" id="modalBaoHiemTitle">Thêm bảo hiểm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formBaoHiem">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="baoHiemId" />
+                <input type="hidden" name="NguoiDungId" id="baoHiemNguoiDungId" />
+                <input type="hidden" name="Loai" id="baoHiemLoai" />
+                
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span id="baoHiemTypeLabel">Bảo hiểm xã hội</span>
+                    </div>
+
+                    <div class="row">
+                        <!-- Số sổ BHXH/BHTN hoặc Số thẻ BHYT -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" id="labelSoSo">Số sổ BHXH <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="SoSo" id="soSoBH" required />
+                        </div>
+
+                        <!-- Nơi đăng ký -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" id="labelNoiDangKy">Nơi đăng ký BHXH <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="NoiDangKy" id="noiDangKyBH" required />
+                        </div>
+
+                        <!-- Ngày bắt đầu -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" id="labelNgayBatDau">Ngày bắt đầu <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="NgayBatDau" id="ngayBatDauBH" required />
+                        </div>
+
+                        <!-- Ngày kết thúc (chỉ cho BHYT) -->
+                        <div class="col-md-6 mb-3" id="divNgayKetThuc" style="display:none;">
+                            <label class="form-label">Ngày hết hạn</label>
+                            <input type="date" class="form-control" name="NgayKetThuc" id="ngayKetThucBH" />
+                        </div>
+
+                        <!-- Trạng thái -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-select" name="TrangThai" id="trangThaiBH">
+                                <option value="0">Đang tham gia</option>
+                                <option value="1">Tạm ngừng</option>
+                                <option value="2">Đã chuyển</option>
+                                <option value="3">Đã nghỉ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <small>Lưu ý: Thông tin bảo hiểm cần được cập nhật chính xác theo sổ bảo hiểm</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Update labels dựa trên loại bảo hiểm
+    function updateBaoHiemLabels(loai) {
+        const typeLabel = $('#baoHiemTypeLabel');
+        const labelSoSo = $('#labelSoSo');
+        const labelNoiDangKy = $('#labelNoiDangKy');
+        const labelNgayBatDau = $('#labelNgayBatDau');
+        const divNgayKetThuc = $('#divNgayKetThuc');
+        
+        switch(loai.toUpperCase()) {
+            case 'BHXH':
+                typeLabel.text('Bảo hiểm xã hội');
+                labelSoSo.html('Số sổ BHXH <span class="text-danger">*</span>');
+                labelNoiDangKy.html('Nơi đăng ký BHXH <span class="text-danger">*</span>');
+                labelNgayBatDau.html('Ngày tham gia <span class="text-danger">*</span>');
+                divNgayKetThuc.hide();
+                break;
+            case 'BHTN':
+                typeLabel.text('Bảo hiểm thất nghiệp');
+                labelSoSo.html('Số sổ BHTN <span class="text-danger">*</span>');
+                labelNoiDangKy.html('Nơi đăng ký BHTN <span class="text-danger">*</span>');
+                labelNgayBatDau.html('Ngày tham gia <span class="text-danger">*</span>');
+                divNgayKetThuc.hide();
+                break;
+            case 'BHYT':
+                typeLabel.text('Bảo hiểm y tế');
+                labelSoSo.html('Số thẻ BHYT <span class="text-danger">*</span>');
+                labelNoiDangKy.html('Nơi đăng ký KCB <span class="text-danger">*</span>');
+                labelNgayBatDau.html('Ngày cấp thẻ <span class="text-danger">*</span>');
+                divNgayKetThuc.show();
+                break;
+        }
+    }
+</script>

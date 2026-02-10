@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhanLuc.Models.Entities;
 
@@ -15,7 +15,6 @@ namespace QuanLyNhanLuc.Data
         public DbSet<NguoiDung> NguoiDungs { get; set; } = null!;
         public DbSet<ThongTinNguoiDung> ThongTinNguoiDungs { get; set; } = null!;
         public DbSet<ChucVu> ChucVus { get; set; } = null!;
-        public DbSet<Department> Departments { get; set; } = null!;
         public DbSet<MenuQuanTri> MenuQuanTris { get; set; } = null!;
         public DbSet<VaiTro> VaiTros { get; set; } = null!;
         public DbSet<VaiTroMenu> VaiTroMenus { get; set; } = null!;
@@ -26,60 +25,113 @@ namespace QuanLyNhanLuc.Data
         public DbSet<NhanSu> NhanSus { get; set; }
         public DbSet<PhongBan> PhongBans { get; set; }
         public DbSet<BaoHiem> BaoHiems { get; set; }
+        public DbSet<HopDong> HopDongs { get; set; }
+        public DbSet<KhenThuongKyLuat> KhenThuongKyLuats { get; set; }
+        public DbSet<ThuTucHanhChinh> ThuTucHanhChinhs { get; set; }
+        public DbSet<BangLuong> BangLuongs { get; set; }
+        public DbSet<PhanLoaiNhanSu> PhanLoaiNhanSus { get; set; }
+        public DbSet<TaiKhoanNganHang> TaiKhoanNganHangs { get; set; }
+        public DbSet<TrinhDo> TrinhDos { get; set; }
+        public DbSet<DaoTao> DaoTaos { get; set; }
+        public DbSet<QuanHeGiaDinh> QuanHeGiaDinhs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<ThongTinNguoiDung>()
-                .HasOne(t => t.Department)
-                .WithMany(d => d.NhanSus)
-                .HasForeignKey(t => t.DepartmentId)
+            _ = builder.Entity<ThongTinNguoiDung>()
+                .HasOne(t => t.PhongBan)
+                .WithMany(p => p.ThongTinNguoiDungs)
+                .HasForeignKey(t => t.PhongBanId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.Entity<ThongTinNguoiDung>()
+            _ = builder.Entity<ThongTinNguoiDung>()
                 .HasOne(t => t.ChucVu)
                 .WithMany(c => c.NhanSus)
                 .HasForeignKey(t => t.ChucVuId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.Entity<VaiTroMenu>()
+            _ = builder.Entity<VaiTroMenu>()
                 .HasKey(vm => new { vm.VaiTroId, vm.MenuId });
 
-            builder.Entity<NguoiDung>()
+            _ = builder.Entity<NguoiDung>()
                 .HasOne(u => u.ThongTinNguoiDung)
                 .WithOne(t => t.User)
                 .HasForeignKey<ThongTinNguoiDung>(t => t.UserId);
 
             // Cấu hình PhongBan
-            builder.Entity<PhongBan>()
+            _ = builder.Entity<PhongBan>()
                 .HasIndex(p => p.MaPhongBan)
                 .IsUnique();
 
             // Cấu hình NhanSu
-            builder.Entity<NhanSu>()
+            _ = builder.Entity<NhanSu>()
                 .HasIndex(n => n.MaNhanVien)
                 .IsUnique();
 
-            builder.Entity<NhanSu>()
+            _ = builder.Entity<NhanSu>()
                 .HasOne(n => n.PhongBan)
                 .WithMany(p => p.NhanSus)
                 .HasForeignKey(n => n.PhongBanId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Cấu hình ChamCong
-            builder.Entity<ChamCong>()
+            _ = builder.Entity<ChamCong>()
                 .HasOne(c => c.NhanSu)
                 .WithMany(n => n.ChamCongs)
                 .HasForeignKey(c => c.NhanSuId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Cấu hình LichLamThem
-            builder.Entity<LichLamThem>()
+            _ = builder.Entity<LichLamThem>()
                 .HasOne(l => l.NhanSu)
                 .WithMany(n => n.LichLamThems)
                 .HasForeignKey(l => l.NhanSuId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình HopDong
+            _ = builder.Entity<HopDong>()
+                .HasIndex(h => h.MaHopDong)
+                .IsUnique();
+
+            _ = builder.Entity<HopDong>()
+                .HasOne(h => h.NhanSu)
+                .WithMany()
+                .HasForeignKey(h => h.NhanSuId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình KhenThuongKyLuat
+            _ = builder.Entity<KhenThuongKyLuat>()
+                .HasIndex(k => k.MaQuyetDinh)
+                .IsUnique();
+
+            _ = builder.Entity<KhenThuongKyLuat>()
+                .HasOne(k => k.NhanSu)
+                .WithMany()
+                .HasForeignKey(k => k.NhanSuId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình ThuTucHanhChinh
+            _ = builder.Entity<ThuTucHanhChinh>()
+                .HasIndex(t => t.MaThuTuc)
+                .IsUnique();
+
+            _ = builder.Entity<ThuTucHanhChinh>()
+                .HasOne(t => t.NhanSu)
+                .WithMany()
+                .HasForeignKey(t => t.NhanSuId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình BangLuong
+            _ = builder.Entity<BangLuong>()
+                .HasOne(b => b.NhanSu)
+                .WithMany()
+                .HasForeignKey(b => b.NhanSuId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            _ = builder.Entity<BangLuong>()
+                .HasIndex(b => new { b.NhanSuId, b.Thang, b.Nam })
+                .IsUnique();
         }
     }
 }

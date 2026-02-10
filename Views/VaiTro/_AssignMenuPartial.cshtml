@@ -1,0 +1,89 @@
+﻿@model QuanLyNhanLuc.Models.ViewModels.AssignMenuViewModel
+
+<form id="assignMenuForm">
+    <input type="hidden" name="VaiTro.Id" value="@Model.VaiTro.Id" />
+    
+    <div class="mb-3">
+        <h6 class="text-primary">Vai trò: <strong>@Model.VaiTro.Name</strong></h6>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-bold">Chọn menu được phép truy cập:</label>
+        <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+            @if (Model.MenuList != null && Model.MenuList.Any())
+            {
+                foreach (var menu in Model.MenuList.Where(m => m.ParentId == null).OrderBy(m => m.ViTri))
+                {
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input parent-checkbox" type="checkbox" 
+                                   value="@menu.Id" id="menu_@menu.Id"
+                                   @(Model.SelectedMenuIds != null && Model.SelectedMenuIds.Contains(menu.Id) ? "checked" : "") />
+                            <label class="form-check-label fw-bold" for="menu_@menu.Id">
+                                @if (!string.IsNullOrEmpty(menu.IconClass))
+                                {
+                                    <i class="@menu.IconClass me-2"></i>
+                                }
+                                @menu.TenMenu
+                            </label>
+                        </div>
+                        
+                        @{
+                            var subMenus = Model.MenuList.Where(m => m.ParentId == menu.Id).OrderBy(m => m.ViTri);
+                            if (subMenus.Any())
+                            {
+                                <div class="ms-4 mt-2">
+                                    @foreach (var sub in subMenus)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input child-checkbox" type="checkbox" 
+                                                   value="@sub.Id" id="menu_@sub.Id"
+                                                   data-parent="menu_@menu.Id"
+                                                   @(Model.SelectedMenuIds != null && Model.SelectedMenuIds.Contains(sub.Id) ? "checked" : "") />
+                                            <label class="form-check-label" for="menu_@sub.Id">
+                                                @if (!string.IsNullOrEmpty(sub.IconClass))
+                                                {
+                                                    <i class="@sub.IconClass me-2"></i>
+                                                }
+                                                @sub.TenMenu
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted text-center">Chưa có menu nào trong hệ thống</p>
+            }
+        </div>
+    </div>
+</form>
+
+<script>
+    $(function() {
+        // Auto check parent when all children are checked
+        $('.child-checkbox').on('change', function() {
+            var parentId = $(this).data('parent');
+            var allChildren = $('.child-checkbox[data-parent="' + parentId + '"]');
+            var checkedChildren = $('.child-checkbox[data-parent="' + parentId + '"]:checked');
+            
+            if (allChildren.length === checkedChildren.length && allChildren.length > 0) {
+                $('#' + parentId).prop('checked', true);
+            } else {
+                $('#' + parentId).prop('checked', false);
+            }
+        });
+
+        // Auto check all children when parent is checked
+        $('.parent-checkbox').on('change', function() {
+            var parentId = $(this).attr('id');
+            var isChecked = $(this).is(':checked');
+            $('.child-checkbox[data-parent="' + parentId + '"]').prop('checked', isChecked);
+        });
+    });
+</script>
+

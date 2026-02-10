@@ -1,0 +1,32 @@
+﻿@model QuanLyNhanLuc.Models.ViewModels.AssignMenuViewModel
+
+<div>
+    <form id="assignMenuForm">
+        <input type="hidden" name="VaiTro.Id" value="@Model.VaiTro.Id" />
+        <div class="mb-3">
+            <label class="form-label">Tên vai trò</label>
+            <input class="form-control" value="@Model.VaiTro.Name" readonly />
+        </div>
+        <div class="mb-3">
+            <label>Danh sách Menu</label>
+            <div class="menu-tree">
+                @if(Model.MenuList != null)
+                {
+                    @foreach (var menu in Model.MenuList.OrderBy(m => m.ViTri))
+                    {
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   name="SelectedMenuIds"
+                                   value="@menu.Id"
+                            @(Model.SelectedMenuIds.Contains(menu.Id) ? "checked" : "") />
+                            <label class="form-check-label">
+                                <i class="@menu.IconClass me-2"></i> @menu.TenMenu
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </form>
+</div>

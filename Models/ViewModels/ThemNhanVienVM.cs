@@ -5,7 +5,7 @@ namespace QuanLyNhanLuc.Models.ViewModels;
 
 public class ThemNhanVienVM
 {
-    public SelectList? Departments { get; set; }
+    public SelectList? PhongBans { get; set; }
     public SelectList? ChucVus { get; set; }
     public SelectList? NhanSuTypes { get; set; }
 }

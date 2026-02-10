@@ -1,0 +1,53 @@
+﻿@* Modal Thêm/S?a ?ào t?o *@
+<div class="modal fade" id="ModalDaoTao" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary">Thêm thông tin ?ào t?o</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formDaoTao">
+                <input type="hidden" name="Id" id="daoTaoId" />
+                <input type="hidden" name="NguoiDungId" id="daoTaoNguoiDungId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên tr??ng/ T? ch?c <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="TenTruongToChuc" id="tenTruongToChuc" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngành h?c ho?c tên l?p h?c <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="NganhHocTenLop" id="nganhHocTenLop" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Th?i gian b?t ??u</label>
+                            <input type="date" class="form-control" name="ThoiGianBatDau" id="thoiGianBatDau" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Th?i gian k?t thúc</label>
+                            <input type="date" class="form-control" name="ThoiGianKetThuc" id="thoiGianKetThuc" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hình th?c h?c</label>
+                        <select class="form-select" name="HinhThucHoc" id="hinhThucHoc">
+                            <option value="">--Ch?n--</option>
+                            <option value="T?p trung">T?p trung</option>
+                            <option value="T? xa">T? xa</option>
+                            <option value="V?a h?c v?a làm">V?a h?c v?a làm</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">V?n b?ng ch?ng ch?, trình ??</label>
+                        <input type="text" class="form-control" name="VanBangChungChi" id="vanBangChungChi" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">H?y</button>
+                    <button type="submit" class="btn btn-primary">L?u</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

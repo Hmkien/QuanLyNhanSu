@@ -1,0 +1,11 @@
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using QuanLyNhanLuc.Models.Entities;
+
+namespace QuanLyNhanLuc.Models.ViewModels;
+
+public class ThemNhanVienVM
+{
+    public SelectList? PhongBans { get; set; }
+    public SelectList? ChucVus { get; set; }
+    public SelectList? NhanSuTypes { get; set; }
+}
