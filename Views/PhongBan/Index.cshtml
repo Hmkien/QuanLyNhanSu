@@ -1,333 +1,333 @@
-﻿@{
-    ViewData["Title"] = "Quản lý phòng ban";
-    bool canManage = User.IsInRole("Admin") || User.IsInRole("HR");
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.PhongBan>
+@using QuanLyNhanLuc.Models.Enums
+
+@{
+    ViewData["Title"] = "Phòng ban";
 }
 
-<div class="container-fluid">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
-            <li class="breadcrumb-item active">Quản lý phòng ban</li>
-        </ol>
-    </nav>
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+    .status-approved { background-color: #d4edda; color: #155724; }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
+</style>
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="text-primary">
-            <i class="bi bi-building me-2"></i>Danh sách phòng ban
-        </h3>
-        @if (canManage)
-        {
-            <button class="btn btn-primary" onclick="openModalThemPhongBan()">
-                <i class="bi bi-plus-circle me-2"></i>Thêm phòng ban
-            </button>
-        }
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Danh mục</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Phòng ban</li>
+            </ol>
+        </nav>
     </div>
+</div>
 
-    <!-- Search and Filter -->
-    <div class=" mb-4 shadow-sm">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Tìm kiếm</label>
-                    <input type="text" name="search" class="form-control" placeholder="Tên hoặc mã phòng ban..." value="@ViewBag.Search">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Sắp xếp theo</label>
-                    <select name="sortBy" class="form-select">
-                        <option value="">--Chọn--</option>
-                        <option value="name" selected="@(ViewBag.SortBy == "name")">Tên phòng ban</option>
-                        <option value="code" selected="@(ViewBag.SortBy == "code")">Mã phòng ban</option>
-                        <option value="status" selected="@(ViewBag.SortBy == "status")">Trạng thái</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Thứ tự</label>
-                    <select name="sortOrder" class="form-select">
-                        <option value="asc" selected="@(ViewBag.SortOrder == "asc")">Tăng dần</option>
-                        <option value="desc" selected="@(ViewBag.SortOrder == "desc")">Giảm dần</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search me-1"></i>Tìm kiếm
-                    </button>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <a href="/PhongBan" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Làm mới
-                    </a>
-                </div>
-            </form>
-        </div>
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Phòng ban</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
+        <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
     </div>
+</div>
 
-    <!-- Table -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th width="5%">STT</th>
-                            <th width="15%">Mã phòng ban</th>
-                            <th width="20%">Tên phòng ban</th>
-                            <th width="25%">Mô tả</th>
-                            <th width="10%" class="text-center">Số nhân viên</th>
-                            <th width="10%" class="text-center">Trạng thái</th>
-                            <th width="15%" class="text-center">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && ((IEnumerable<dynamic>)Model).Any())
-                        {
-                            int stt = (ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1;
-                            foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="text-center">@stt</td>
-                                    <td><span class="badge bg-info">@item.MaPhongBan</span></td>
-                                    <td class="fw-bold">@item.TenPhongBan</td>
-                                    <td>@(string.IsNullOrEmpty(item.MoTa) ? "-" : item.MoTa)</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-primary">@item.SoLuongNhanVien</span>
-                                    </td>
-                                    <td class="text-center">
-                                        @if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
-                                        {
-                                            <span class="badge bg-success">Đã duyệt</span>
-                                        }
-                                        else if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
-                                        {
-                                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">Đã hủy</span>
-                                        }
-                                    </td>
-                                    <td class="text-center">
-                                        @if (canManage)
-                                        {
-                                            <div class="btn-group btn-group-sm">
-                                                @if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Pending)
-                                                {
-                                                    <button class="btn btn-success" onclick="approvePhongBan('@item.Id')" title="Duyệt">
-                                                        <i class="bi bi-check-circle"></i>
-                                                    </button>
-                                                }
-                                                @if (item.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
-                                                {
-                                                    <button class="btn btn-warning" onclick="cancelPhongBan('@item.Id')" title="Hủy duyệt">
-                                                        <i class="bi bi-x-circle"></i>
-                                                    </button>
-                                                }
-                                                <button class="btn btn-primary" onclick="openModalSuaPhongBan('@item.Id')" title="Sửa">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-danger" onclick="openModalXoaPhongBan('@item.Id')" title="Xóa">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </td>
-                                </tr>
-                                stt++;
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    <i class="bi bi-inbox fs-1"></i>
-                                    <p class="mt-2">Không có dữ liệu</p>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+<!-- Search Form -->
+<div class=" mb-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm phòng ban..." value="@ViewBag.Search" />
+                </div>
             </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="0" selected="@(ViewBag.Status == 0)">Đã duyệt</option>
+                    <option value="1" selected="@(ViewBag.Status == 1)">Chờ duyệt</option>
+                    <option value="3" selected="@(ViewBag.Status == 3)">Huỷ duyệt</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
+            </div>
+        </form>
+</div>
 
-            <!-- Pagination -->
-            @if (ViewBag.TotalPages > 1)
-            {
-                <nav aria-label="Page navigation" class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(ViewBag.CurrentPage - 1)&pageSize=@ViewBag.PageSize&search=@ViewBag.Search&sortBy=@ViewBag.SortBy&sortOrder=@ViewBag.SortOrder">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Mã phòng ban</th>
+            <th>Tên phòng ban</th>
+            <th>Mô tả</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var stt = 1; }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@stt</td>
+                <td><span >@item.MaPhongBan</span></td>
+                <td>@item.TenPhongBan</td>
+                <td>@item.MoTa</td>
+                <td>
+                    @if (item.Status == Status.Approved)
+                    {
+                        <span class="status-badge status-approved">Đã duyệt</span>
+                    }
+                    else if (item.Status == Status.Pending)
+                    {
+                        <span class="status-badge status-pending">Chờ duyệt</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-rejected">Huỷ duyệt</span>
+                    }
+                </td>
+                <td class="text-center">
+                    @if (item.Status == Status.Approved)
+                    {
+                        <a href="javascript:void(0)" data-action="reject" data-id="@item.Id" title="Huỷ duyệt">
+                            <i class="bi bi-x-circle text-warning"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0)" data-action="approve" data-id="@item.Id" title="Duyệt" class="me-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="edit" data-id="@item.Id" title="Sửa" class="me-2">
+                            <i class="bi bi-pen text-primary"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="delete" data-id="@item.Id" title="Xóa">
+                            <i class="bi bi-trash text-danger"></i>
+                        </a>
+                    }
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
 
-                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                        {
-                            <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
-                                <a class="page-link" href="?page=@i&pageSize=@ViewBag.PageSize&search=@ViewBag.Search&sortBy=@ViewBag.SortBy&sortOrder=@ViewBag.SortOrder">@i</a>
-                            </li>
-                        }
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-primary">Tổng số bản ghi: @(ViewBag.TotalItems ?? Model.Count())</span>
+    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{ 
+                    int current = ViewBag.CurrentPage; 
+                    int total = ViewBag.TotalPages; 
+                    string search = ViewBag.Search ?? "";
+                    int? status = ViewBag.Status;
+                }
+                <li class="page-item @(current == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current - 1, pageSize = ViewBag.PageSize, search = search, status = status })">«</a>
+                </li>
+                @for (int i = 1; i <= total; i++)
+                {
+                    <li class="page-item @(i == current ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = ViewBag.PageSize, search = search, status = status })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(current == total ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current + 1, pageSize = ViewBag.PageSize, search = search, status = status })">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
 
-                        <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(ViewBag.CurrentPage + 1)&pageSize=@ViewBag.PageSize&search=@ViewBag.Search&sortBy=@ViewBag.SortBy&sortOrder=@ViewBag.SortOrder">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            }
-
-            <div class="text-center text-muted mt-2">
-                Tổng số: <strong>@ViewBag.TotalItems</strong> phòng ban
+<!-- Modal Thêm/Sửa -->
+<div class="modal fade" id="phongBanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="phongBanModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="phongBanForm">
+                    <input type="hidden" id="phongBanId" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label">Mã phòng ban <span class="text-danger">*</span></label>
+                        <input id="maPhongBan" name="maPhongBan" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tên phòng ban <span class="text-danger">*</span></label>
+                        <input id="tenPhongBan" name="tenPhongBan" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="moTa" name="moTa" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="text-danger" id="phongBanError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="phongBanSaveBtn" class="btn btn-primary">Lưu</button>
             </div>
         </div>
     </div>
 </div>
 
-@Html.AntiForgeryToken()
-
-<!-- Modals -->
-<div id="modalContainer"></div>
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
-        function openModalThemPhongBan() {
-            $.get('/PhongBan/GetModalThemPhongBan', function (data) {
-                $('#modalContainer').html(data);
-                $('#ModalThemPhongBan').modal('show');
-            });
-        }
+        $(function() {
+            var deleteId = null;
 
-        function openModalSuaPhongBan(id) {
-            $.get('/PhongBan/GetModalSuaPhongBan/' + id, function (data) {
-                $('#modalContainer').html(data);
-                $('#ModalSuaPhongBan').modal('show');
+            // Create
+            $("button[data-action='create']").on('click', function(e) {
+                e.preventDefault();
+                $('#phongBanModalTitle').text('Thêm phòng ban');
+                $('#phongBanForm')[0].reset();
+                $('#phongBanId').val('');
+                $('#maPhongBan').prop('readonly', false);
+                $('#phongBanError').hide();
+                new bootstrap.Modal(document.getElementById('phongBanModal')).show();
             });
-        }
 
-        function openModalXoaPhongBan(id) {
-            $.get('/PhongBan/GetModalXoaPhongBan/' + id, function (data) {
-                $('#modalContainer').html(data);
-                $('#ModalXoaPhongBan').modal('show');
-            });
-        }
-
-        function approvePhongBan(id) {
-            if (confirm('Bạn có chắc chắn muốn duyệt phòng ban này?')) {
-                $.ajax({
-                    url: '/PhongBan/Approve',
-                    type: 'POST',
-                    data: {
-                        id: id,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            location.reload();
-                        } else {
-                            toastr.error(response.message);
-                        }
-                    },
-                    error: function () {
-                        toastr.error('Có lỗi xảy ra');
-                    }
+            // Edit
+            $(document).on('click', "a[data-action='edit']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $('#phongBanModalTitle').text('Chỉnh sửa phòng ban');
+                $('#phongBanError').hide();
+                $.get('/PhongBan/GetPhongBan', { id: id }).done(function(res) {
+                    $('#phongBanId').val(res.id);
+                    $('#maPhongBan').val(res.maPhongBan).prop('readonly', true);
+                    $('#tenPhongBan').val(res.tenPhongBan);
+                    $('#moTa').val(res.moTa);
+                    new bootstrap.Modal(document.getElementById('phongBanModal')).show();
+                }).fail(function() {
+                    Notification.error('Không thể tải thông tin phòng ban');
                 });
-            }
-        }
+            });
 
-        function cancelPhongBan(id) {
-            if (confirm('Bạn có chắc chắn muốn hủy duyệt phòng ban này?')) {
-                $.ajax({
-                    url: '/PhongBan/Cancel',
-                    type: 'POST',
-                    data: {
-                        id: id,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            location.reload();
+            // Save
+            $('#phongBanSaveBtn').on('click', function() {
+                var id = $('#phongBanId').val();
+                var maPhongBan = $('#maPhongBan').val();
+                var tenPhongBan = $('#tenPhongBan').val();
+                
+                if (!maPhongBan || maPhongBan.trim() === '') {
+                    $('#phongBanError').text('Mã phòng ban không được để trống').show();
+                    return;
+                }
+                
+                if (!tenPhongBan || tenPhongBan.trim() === '') {
+                    $('#phongBanError').text('Tên phòng ban không được để trống').show();
+                    return;
+                }
+                
+                var url = id ? '/PhongBan/EditAjax' : '/PhongBan/CreateAjax';
+                var action = id ? 'cập nhật' : 'thêm mới';
+                
+                $.post(url, $('#phongBanForm').serialize())
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.successAndReload('Đã ' + action + ' phòng ban thành công');
                         } else {
-                            toastr.error(response.message);
+                            $('#phongBanError').text(res.message).show();
+                            Notification.error(res.message || 'Có lỗi xảy ra khi ' + action);
                         }
-                    },
-                    error: function () {
-                        toastr.error('Có lỗi xảy ra');
+                    }).fail(function() { 
+                        $('#phongBanError').text('Có lỗi xảy ra').show();
+                        Notification.error('Có lỗi xảy ra');
+                    });
+            });
+
+            // Delete
+            $(document).on('click', "a[data-action='delete']", function(e) {
+                e.preventDefault();
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+            
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                
+                $(this).prop('disabled', true).text('Đang xóa...');
+                
+                $.post('/PhongBan/DeleteAjax', { id: deleteId })
+                    .done(function(res) {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        
+                        if (res.success) {
+                            Notification.successAndReload('Đã xóa phòng ban thành công');
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi xóa');
+                            $('#deleteConfirmBtn').prop('disabled', false).text('Xóa');
+                        }
+                    })
+                    .fail(function() {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        Notification.error('Có lỗi xảy ra khi xóa');
+                        $('#deleteConfirmBtn').prop('disabled', false).text('Xóa');
+                    });
+            });
+
+            // Approve
+            $(document).on('click', "a[data-action='approve']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $.post('/PhongBan/ApproveAjax', { id: id }).done(function(res) {
+                    if (res.success) {
+                        Notification.successAndReload('Đã duyệt phòng ban thành công');
+                    } else {
+                        Notification.error(res.message || 'Có lỗi xảy ra khi duyệt');
                     }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra khi duyệt');
                 });
-            }
-        }
-
-        // Handle form submit for Thêm Phòng Ban
-        $(document).on('submit', '#formThemPhongBan', function (e) {
-            e.preventDefault();
-            $.ajax({
-                url: '/PhongBan/Create',
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function (response) {
-                    if (response.success) {
-                        toastr.success(response.message);
-                        $('#ModalThemPhongBan').modal('hide');
-                        location.reload();
-                    } else {
-                        toastr.error(response.message);
-                    }
-                },
-                error: function () {
-                    toastr.error('Có lỗi xảy ra');
-                }
             });
-        });
 
-        // Handle form submit for Sửa Phòng Ban
-        $(document).on('submit', '#formSuaPhongBan', function (e) {
-            e.preventDefault();
-            $.ajax({
-                url: '/PhongBan/Update',
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function (response) {
-                    if (response.success) {
-                        toastr.success(response.message);
-                        $('#ModalSuaPhongBan').modal('hide');
-                        location.reload();
+            // Reject
+            $(document).on('click', "a[data-action='reject']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $.post('/PhongBan/RejectAjax', { id: id }).done(function(res) {
+                    if (res.success) {
+                        Notification.successAndReload('Đã huỷ duyệt phòng ban');
                     } else {
-                        toastr.error(response.message);
+                        Notification.error(res.message || 'Có lỗi xảy ra khi huỷ duyệt');
                     }
-                },
-                error: function () {
-                    toastr.error('Có lỗi xảy ra');
-                }
-            });
-        });
-
-        // Handle form submit for Xóa Phòng Ban
-        $(document).on('submit', '#formXoaPhongBan', function (e) {
-            e.preventDefault();
-            $.ajax({
-                url: '/PhongBan/Delete',
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function (response) {
-                    if (response.success) {
-                        toastr.success(response.message);
-                        $('#ModalXoaPhongBan').modal('hide');
-                        location.reload();
-                    } else {
-                        toastr.error(response.message);
-                    }
-                },
-                error: function () {
-                    toastr.error('Có lỗi xảy ra');
-                }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra khi huỷ duyệt');
+                });
             });
         });
     </script>

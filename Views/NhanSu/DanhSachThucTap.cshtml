@@ -3,8 +3,9 @@
 
 @{
     ViewData["Title"] = "Danh sách thực tập sinh";
-    // Kiểm tra quyền quản lý nhân sự (Admin hoặc HR)
-    bool canManage = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HR);
+    bool canManage = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.QuanLyNhanSu);
+    var userRoles = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+  
 }
 
 <style>
@@ -46,6 +47,8 @@
 
 <div class="d-flex justify-content-between gap-4 mb-4">
     <h2 class="text-primary">Danh sách thực tập sinh</h2>
+
+
     @if (canManage)
     {
         <div class="d-flex gap-2">
@@ -54,6 +57,12 @@
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#themNhanVienModal">
                 <i class="fas fa-plus me-2"></i>Thêm mới
             </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning mb-0">
+            Bạn không có quyền quản lý. Cần role: Admin hoặc QuanLyNhanSu
         </div>
     }
 </div>
@@ -74,9 +83,10 @@
                     <option value="">-- Chọn phòng ban --</option>
                     @if (ViewBag.Departments != null)
                     {
-                        foreach (var dept in ViewBag.Departments)
+                        var currentPhongBanIdStr = ViewBag.PhongBanId?.ToString() ?? "";
+                        foreach (QuanLyNhanLuc.Models.Entities.PhongBan dept in ViewBag.Departments)
                         {
-                            var isSelected = ViewBag.PhongBanId != null && ViewBag.PhongBanId.ToString() == dept.Id.ToString();
+                            var isSelected = currentPhongBanIdStr == dept.Id.ToString();
                             <option value="@dept.Id" selected="@isSelected">@dept.TenPhongBan</option>
                         }
                     }
@@ -108,19 +118,7 @@
 
 <div class="card">
     <div class="card-body">
-        @if (!Model.Any())
-        {
-            <div class="alert alert-info text-center py-5">
-                <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
-                <h5>Không có thực tập sinh nào</h5>
-                <p class="text-muted mb-3">Hiện tại chưa có thực tập sinh nào trong hệ thống hoặc không tìm thấy kết quả phù hợp với tiêu chí tìm kiếm.</p>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#themNhanVienModal">
-                    <i class="fas fa-plus me-2"></i>Thêm thực tập sinh mới
-                </button>
-            </div>
-        }
-        else
-        {
+       
             <table class="table table-bordered table-hover">
                 <thead>
                     <tr>
@@ -241,7 +239,6 @@
                 }
             </tbody>
         </table>
-        }
     </div>
 </div>
 

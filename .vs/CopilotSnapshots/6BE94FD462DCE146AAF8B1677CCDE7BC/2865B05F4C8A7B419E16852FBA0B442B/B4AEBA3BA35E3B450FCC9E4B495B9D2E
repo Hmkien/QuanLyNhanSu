@@ -1,0 +1,531 @@
+﻿@model QuanLyNhanLuc.Models.Entities.ThuTucHanhChinh
+@using QuanLyNhanLuc.Helpers
+@using QuanLyNhanLuc.Extensions
+
+@{
+    var canEdit = ViewBag.CanEdit ?? false;
+    var canApprove = ViewBag.CanApprove ?? false;
+    var canReject = ViewBag.CanReject ?? false;
+}
+
+<style>
+    .detail-card {
+        border-left: 4px solid #0d6efd;
+        background: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+    .detail-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    .detail-value {
+        font-size: 15px;
+        color: #212529;
+        font-weight: 500;
+    }
+    .timeline-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 60px;
+        padding-bottom: 20px;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 19px;
+        top: 40px;
+        width: 2px;
+        height: calc(100% - 20px);
+        background: #dee2e6;
+    }
+    .timeline-item:last-child::before {
+        display: none;
+    }
+    .info-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+    }
+</style>
+
+<!-- Header with Status -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="card-title mb-1">
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                    @Model.MaThuTuc
+                </h5>
+                <p class="text-muted mb-0">
+                    <small>
+                        <i class="bi bi-calendar3 me-1"></i>
+                        Nộp ngày: @Model.NgayNop.ToString("dd/MM/yyyy HH:mm")
+                    </small>
+                </p>
+            </div>
+            <div>
+                <span class="@Model.TrangThai.GetStatusBadgeClass()" style="font-size: 14px; padding: 8px 16px;">
+                    <i class="@Model.TrangThai.GetStatusIcon()"></i>
+                    @EnumHelper.GetEnumDescription(Model.TrangThai)
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thông tin nhân viên -->
+<div class="detail-card">
+    <h6 class="fw-bold mb-3">
+        <i class="bi bi-person-badge text-primary me-2"></i>
+        Thông tin người đăng ký
+    </h6>
+    <div class="row">
+        <div class="col-md-6 mb-2">
+            <div class="d-flex align-items-center">
+                <span class="info-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-person"></i>
+                </span>
+                <div>
+                    <div class="detail-label">Họ và tên</div>
+                    <div class="detail-value">@Model.NhanSu.HoVaTen</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-2">
+            <div class="d-flex align-items-center">
+                <span class="info-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-building"></i>
+                </span>
+                <div>
+                    <div class="detail-label">Phòng ban</div>
+                    <div class="detail-value">@(Model.NhanSu.PhongBan?.TenPhongBan ?? "-")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thông tin thủ tục -->
+<div class="detail-card">
+    <h6 class="fw-bold mb-3">
+        <i class="bi bi-clipboard-check text-success me-2"></i>
+        Chi tiết thủ tục
+    </h6>
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <div class="d-flex align-items-center">
+                <span class="info-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="@Model.LoaiThuTuc.GetLoaiThuTucIcon()"></i>
+                </span>
+                <div>
+                    <div class="detail-label">Loại thủ tục</div>
+                    <div class="detail-value" data-loai-thu-tuc="@((int)Model.LoaiThuTuc)">
+                        @EnumHelper.GetEnumDescription(Model.LoaiThuTuc)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-2">
+            <div class="detail-label">
+                <i class="bi bi-calendar-check me-1"></i>Từ ngày
+            </div>
+            <div class="detail-value text-primary" data-ngay-bat-dau="@Model.NgayBatDau.ToString("yyyy-MM-dd")">
+                @Model.NgayBatDau.ToString("dd/MM/yyyy")
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-2">
+            <div class="detail-label">
+                <i class="bi bi-calendar-x me-1"></i>Đến ngày
+            </div>
+            <div class="detail-value text-danger" data-ngay-ket-thuc="@(Model.NgayKetThuc?.ToString("yyyy-MM-dd") ?? "")">
+                @(Model.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "-")
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-2">
+            <div class="detail-label">
+                <i class="bi bi-clock-history me-1"></i>Số ngày
+            </div>
+            <div class="detail-value text-info" data-so-ngay="@(Model.SoNgay?.ToString() ?? "")">
+                @if (Model.SoNgay.HasValue)
+                {
+                    <text>
+                        <strong>@Model.SoNgay.Value.ToString("0.#")</strong> ngày
+                    </text>
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lý do -->
+<div class="detail-card">
+    <h6 class="fw-bold mb-2">
+        <i class="bi bi-chat-left-text text-secondary me-2"></i>
+        Lý do
+    </h6>
+    <p class="mb-0" style="line-height: 1.6;" data-ly-do>@Model.LyDo</p>
+</div>
+
+<!-- File đính kèm -->
+@if (!string.IsNullOrEmpty(Model.TepDinhKem))
+{
+    <div class="detail-card">
+        <h6 class="fw-bold mb-2">
+            <i class="bi bi-paperclip text-info me-2"></i>
+            Tệp đính kèm
+        </h6>
+        <a href="@Model.TepDinhKem" target="_blank" class="btn btn-sm btn-outline-primary" data-tep-dinh-kem>
+            <i class="bi bi-download me-2"></i>Tải xuống file
+        </a>
+    </div>
+}
+
+<!-- Timeline duyệt -->
+@if (Model.TrangThai != QuanLyNhanLuc.Models.Enums.TrangThaiThuTuc.NopDon || !string.IsNullOrEmpty(Model.NguoiDuyet))
+{
+    <div class="card border-0 shadow-sm mt-3">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-diagram-3 text-info me-2"></i>
+                Lịch sử duyệt
+            </h6>
+
+            <!-- Nộp đơn -->
+            <div class="timeline-item">
+                <span class="timeline-badge bg-info bg-opacity-10 text-info position-absolute" style="left: 0;">
+                    <i class="bi bi-file-earmark-arrow-up"></i>
+                </span>
+                <div>
+                    <strong class="text-info">Nộp đơn</strong>
+                    <p class="mb-0 text-muted small">@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+            </div>
+
+            <!-- Trưởng phòng duyệt -->
+            @if (Model.TrangThai >= QuanLyNhanLuc.Models.Enums.TrangThaiThuTuc.TruongPhongDuyet)
+            {
+                <div class="timeline-item">
+                    <span class="timeline-badge bg-warning bg-opacity-10 text-warning position-absolute" style="left: 0;">
+                        <i class="bi bi-person-check"></i>
+                    </span>
+                    <div>
+                        <strong class="text-warning">Trưởng phòng duyệt</strong>
+                        @if (Model.NgayDuyet.HasValue)
+                        {
+                            <p class="mb-0 text-muted small">@Model.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Kế toán duyệt -->
+            @if (Model.TrangThai >= QuanLyNhanLuc.Models.Enums.TrangThaiThuTuc.KeToanDuyet)
+            {
+                <div class="timeline-item">
+                    <span class="timeline-badge bg-primary bg-opacity-10 text-primary position-absolute" style="left: 0;">
+                        <i class="bi bi-calculator"></i>
+                    </span>
+                    <div>
+                        <strong class="text-primary">Kế toán duyệt</strong>
+                        @if (Model.NgayDuyet.HasValue)
+                        {
+                            <p class="mb-0 text-muted small">@Model.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Giám đốc duyệt hoặc Hoàn thành -->
+            @if (Model.TrangThai == QuanLyNhanLuc.Models.Enums.TrangThaiThuTuc.HoanThanh)
+            {
+                <div class="timeline-item">
+                    <span class="timeline-badge bg-success bg-opacity-10 text-success position-absolute" style="left: 0;">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </span>
+                    <div>
+                        <strong class="text-success">Hoàn thành</strong>
+                        @if (Model.NgayDuyet.HasValue)
+                        {
+                            <p class="mb-0 text-muted small">@Model.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.NguoiDuyet))
+                        {
+                            <p class="mb-0 text-muted small">Người duyệt: <strong>@Model.NguoiDuyet</strong></p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Từ chối -->
+            @if (Model.TrangThai == QuanLyNhanLuc.Models.Enums.TrangThaiThuTuc.TuChoi)
+            {
+                <div class="timeline-item">
+                    <span class="timeline-badge bg-danger bg-opacity-10 text-danger position-absolute" style="left: 0;">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </span>
+                    <div>
+                        <strong class="text-danger">Từ chối</strong>
+                        @if (Model.NgayDuyet.HasValue)
+                        {
+                            <p class="mb-0 text-muted small">@Model.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.NguoiDuyet))
+                        {
+                            <p class="mb-0 text-muted small">Người từ chối: <strong>@Model.NguoiDuyet</strong></p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Ghi chú người duyệt -->
+@if (!string.IsNullOrEmpty(Model.GhiChu))
+{
+    <div class="alert alert-secondary mt-3">
+        <strong>
+            <i class="bi bi-chat-quote me-2"></i>
+            Ghi chú từ người duyệt:
+        </strong>
+        <p class="mb-0 mt-2">@Model.GhiChu</p>
+    </div>
+}
+
+<!-- Actions -->
+@if (canEdit || canApprove || canReject)
+{
+    <div class="mt-3 pt-3 border-top">
+        <div class="d-flex gap-2 justify-content-end">
+            @if (canEdit)
+            {
+                <button type="button" class="btn btn-primary" onclick="openEditModal('@Model.Id')">
+                    <i class="bi bi-pen me-2"></i>Chỉnh sửa
+                </button>
+            }
+            @if (canReject)
+            {
+                <button type="button" class="btn btn-danger" onclick="rejectFromDetail('@Model.Id')">
+                    <i class="bi bi-x-circle me-2"></i>Từ chối
+                </button>
+            }
+            @if (canApprove)
+            {
+                <button type="button" class="btn btn-success" onclick="approveFromDetail('@Model.Id')">
+                    <i class="bi bi-check-circle me-2"></i>Duyệt
+                </button>
+            }
+        </div>
+    </div>
+}
+
+<script>
+    function openEditModal(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        setTimeout(() => {
+            $("a[data-action='edit'][data-id='" + id + "']").click();
+        }, 300);
+    }
+
+    function approveFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        setTimeout(() => {
+            $("a[data-action='approve'][data-id='" + id + "']").click();
+        }, 300);
+    }
+
+    function rejectFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        setTimeout(() => {
+            $("a[data-action='reject'][data-id='" + id + "']").click();
+        }, 300);
+    }
+</script>
+
+    <div class="col-md-6 mb-3">
+        <label class="text-muted small">Phòng ban</label>
+        <h6>@(Model.NhanSu.PhongBan?.TenPhongBan ?? "-")</h6>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="text-muted small">Loại thủ tục</label>
+        <h6 data-loai-thu-tuc="@((int)Model.LoaiThuTuc)">
+            <span class="badge bg-secondary">@EnumHelper.GetEnumDescription(Model.LoaiThuTuc)</span>
+        </h6>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <label class="text-muted small">Ngày nộp</label>
+        <h6><i class="bi bi-calendar-event me-2"></i>@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</h6>
+    </div>
+</div>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label class="text-muted small">Từ ngày</label>
+        <h6 data-ngay-bat-dau="@Model.NgayBatDau.ToString("yyyy-MM-dd")">
+            <i class="bi bi-calendar-check me-2"></i>@Model.NgayBatDau.ToString("dd/MM/yyyy")
+        </h6>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <label class="text-muted small">Đến ngày</label>
+        <h6 data-ngay-ket-thuc="@(Model.NgayKetThuc?.ToString("yyyy-MM-dd") ?? "")">
+            @if (Model.NgayKetThuc.HasValue)
+            {
+                <i class="bi bi-calendar-x me-2"></i>@Model.NgayKetThuc.Value.ToString("dd/MM/yyyy")
+            }
+            else
+            {
+                <span class="text-muted">-</span>
+            }
+        </h6>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <label class="text-muted small">Số ngày</label>
+        <h6 data-so-ngay="@(Model.SoNgay?.ToString() ?? "")">
+            @if (Model.SoNgay.HasValue)
+            {
+                <text><i class="bi bi-clock-history me-2"></i><strong class="text-primary">@Model.SoNgay.Value.ToString("0.#")</strong> ngày</text>
+            }
+            else
+            {
+                <span class="text-muted">-</span>
+            }
+        </h6>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="text-muted small">Lý do</label>
+    <div class="p-3 bg-light border rounded">
+        <p class="mb-0" data-ly-do>@Model.LyDo</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.TepDinhKem))
+{
+    <div class="mb-3">
+        <label class="text-muted small">Tệp đính kèm</label>
+        <div>
+            <a href="@Model.TepDinhKem" target="_blank" class="btn btn-sm btn-outline-primary" data-tep-dinh-kem="@Model.TepDinhKem">
+                <i class="bi bi-file-earmark-arrow-down me-2"></i>Tải xuống tệp đính kèm
+            </a>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.NguoiDuyet) || Model.NgayDuyet.HasValue)
+{
+    <hr />
+    <h6 class="text-muted mb-3"><i class="bi bi-clipboard-check me-2"></i>Thông tin duyệt</h6>
+    
+    <div class="row">
+        @if (!string.IsNullOrEmpty(Model.NguoiDuyet))
+        {
+            <div class="col-md-6 mb-3">
+                <label class="text-muted small">Người duyệt</label>
+                <h6><i class="bi bi-person-badge me-2"></i>@Model.NguoiDuyet</h6>
+            </div>
+        }
+        
+        @if (Model.NgayDuyet.HasValue)
+        {
+            <div class="col-md-6 mb-3">
+                <label class="text-muted small">Ngày duyệt</label>
+                <h6><i class="bi bi-calendar-check me-2"></i>@Model.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm")</h6>
+            </div>
+        }
+    </div>
+    
+    @if (!string.IsNullOrEmpty(Model.GhiChu))
+    {
+        <div class="mb-3">
+            <label class="text-muted small">Ghi chú</label>
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-chat-left-text me-2"></i>@Model.GhiChu
+            </div>
+        </div>
+    }
+}
+
+@if (canEdit || canApprove || canReject)
+{
+    <hr />
+    <div class="d-flex gap-2 justify-content-end">
+        @if (canEdit)
+        {
+            <button type="button" class="btn btn-primary" onclick="editFromDetail('@Model.Id')">
+                <i class="bi bi-pen me-2"></i>Chỉnh sửa
+            </button>
+            <button type="button" class="btn btn-danger" onclick="deleteFromDetail('@Model.Id')">
+                <i class="bi bi-trash me-2"></i>Xóa
+            </button>
+        }
+        @if (canApprove)
+        {
+            <button type="button" class="btn btn-success" onclick="approveFromDetail('@Model.Id')">
+                <i class="bi bi-check-circle me-2"></i>Duyệt
+            </button>
+        }
+        @if (canReject)
+        {
+            <button type="button" class="btn btn-danger" onclick="rejectFromDetail('@Model.Id')">
+                <i class="bi bi-x-circle me-2"></i>Từ chối
+            </button>
+        }
+    </div>
+}
+
+<script>
+    function editFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        $("a[data-action='edit'][data-id='" + id + "']").trigger('click');
+    }
+    
+    function deleteFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        $("a[data-action='delete'][data-id='" + id + "']").trigger('click');
+    }
+    
+    function approveFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        $("a[data-action='approve'][data-id='" + id + "']").trigger('click');
+    }
+    
+    function rejectFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        $("a[data-action='reject'][data-id='" + id + "']").trigger('click');
+    }
+</script>

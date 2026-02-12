@@ -1,0 +1,404 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.VaiTro>
+@using QuanLyNhanLuc.Models.Enums
+
+@{
+    ViewData["Title"] = "Vai trò";
+}
+
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+    .status-approved { background-color: #d4edda; color: #155724; }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Quản trị hệ thống</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Vai trò</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Vai trò</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-info" onclick="syncRoles()"><i class="bi bi-arrow-repeat me-2"></i>Đồng bộ từ hệ thống</button>
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
+        <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class=" mb-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm vai trò..." value="@ViewBag.Search" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="0" selected="@(ViewBag.Status == 0)">Đã duyệt</option>
+                    <option value="1" selected="@(ViewBag.Status == 1)">Chờ duyệt</option>
+                    <option value="3" selected="@(ViewBag.Status == 3)">Huỷ duyệt</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
+            </div>
+        </form>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Mã vai trò</th>
+            <th>Tên vai trò</th>
+            <th>Mô tả</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var stt = 1; }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@stt</td>
+                <td><span>@(item.RoleCode ?? "")</span></td>
+                <td>@item.Name</td>
+                <td>@(item.Description ?? "-")</td>
+                <td>
+                    @if (item.Status == Status.Approved)
+                    {
+                        <span class="status-badge status-approved">Đã duyệt</span>
+                    }
+                    else if (item.Status == Status.Pending)
+                    {
+                        <span class="status-badge status-pending">Chờ duyệt</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-rejected">Huỷ duyệt</span>
+                    }
+                </td>
+                <td class="text-center">
+                    @if (item.Status == Status.Approved)
+                    {
+                        <a href="javascript:void(0)" data-action="assign" data-id="@item.Id" title="Cấu hình menu" class="me-2">
+                            <i class="bi bi-gear text-info"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="reject" data-id="@item.Id" title="Huỷ duyệt">
+                            <i class="bi bi-x-circle text-warning"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0)" data-action="approve" data-id="@item.Id" title="Duyệt" class="me-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="edit" data-id="@item.Id" title="Sửa" class="me-2">
+                            <i class="bi bi-pen text-primary"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="delete" data-id="@item.Id" title="Xóa">
+                            <i class="bi bi-trash text-danger"></i>
+                        </a>
+                    }
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-primary">Tổng số bản ghi: @(ViewBag.TotalItems ?? Model.Count())</span>
+    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{ 
+                    int current = ViewBag.CurrentPage; 
+                    int total = ViewBag.TotalPages; 
+                    string search = ViewBag.Search ?? "";
+                    int? status = ViewBag.Status;
+                }
+                <li class="page-item @(current == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current - 1, pageSize = ViewBag.PageSize, search = search, status = status })">«</a>
+                </li>
+                @for (int i = 1; i <= total; i++)
+                {
+                    <li class="page-item @(i == current ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = ViewBag.PageSize, search = search, status = status })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(current == total ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current + 1, pageSize = ViewBag.PageSize, search = search, status = status })">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<!-- Modal Thêm/Sửa -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <input type="hidden" id="roleId" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label">Mã vai trò <span class="text-danger">*</span></label>
+                        <input id="roleCode" name="roleCode" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tên vai trò <span class="text-danger">*</span></label>
+                        <input id="roleName" name="name" class="form-control" required />
+                    </div>
+                    <div class="text-danger" id="roleError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="roleSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Menu Modal -->
+<div class="modal fade" id="assignMenuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>Phân quyền menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="assignMenuBody">
+                <!-- loaded via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="assignMenuSaveBtn" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+
+            // Create
+            $("button[data-action='create']").on('click', function(e) {
+                e.preventDefault();
+                $('#roleModalTitle').text('Thêm vai trò');
+                $('#roleForm')[0].reset();
+                $('#roleId').val('');
+                $('#roleCode').prop('readonly', false);
+                $('#roleError').hide();
+                new bootstrap.Modal(document.getElementById('roleModal')).show();
+            });
+
+            // Edit
+            $(document).on('click', "a[data-action='edit']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $('#roleModalTitle').text('Chỉnh sửa vai trò');
+                $('#roleError').hide();
+                $.get('/VaiTro/GetRole', { id: id }).done(function(res) {
+                    $('#roleId').val(res.id);
+                    $('#roleCode').val(res.roleCode).prop('readonly', true);
+                    $('#roleName').val(res.name);
+                    new bootstrap.Modal(document.getElementById('roleModal')).show();
+                }).fail(function() {
+                    Notification.error('Không thể tải thông tin vai trò');
+                });
+            });
+
+            // Save
+            $('#roleSaveBtn').on('click', function() {
+                var id = $('#roleId').val();
+                var roleCode = $('#roleCode').val();
+                var name = $('#roleName').val();
+                
+                if (!roleCode || roleCode.trim() === '') {
+                    $('#roleError').text('Mã vai trò không được để trống').show();
+                    return;
+                }
+                
+                if (!name || name.trim() === '') {
+                    $('#roleError').text('Tên vai trò không được để trống').show();
+                    return;
+                }
+                
+                var url = id ? '/VaiTro/EditAjax' : '/VaiTro/CreateAjax';
+                var action = id ? 'cập nhật' : 'thêm mới';
+                
+                $.post(url, $('#roleForm').serialize())
+                    .done(function(res) {
+                        if (res.success) {
+                            Notification.successAndReload('Đã ' + action + ' vai trò thành công');
+                        } else {
+                            $('#roleError').text(res.message).show();
+                            Notification.error(res.message || 'Có lỗi xảy ra khi ' + action);
+                        }
+                    }).fail(function() { 
+                        $('#roleError').text('Có lỗi xảy ra').show();
+                        Notification.error('Có lỗi xảy ra');
+                    });
+            });
+
+            // Delete
+            $(document).on('click', "a[data-action='delete']", function(e) {
+                e.preventDefault();
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+            
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                
+                $(this).prop('disabled', true).text('Đang xóa...');
+                
+                $.post('/VaiTro/DeleteAjax', { id: deleteId })
+                    .done(function(res) {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        
+                        if (res.success) {
+                            Notification.successAndReload('Đã xóa vai trò thành công');
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi xóa');
+                            $('#deleteConfirmBtn').prop('disabled', false).text('Xóa');
+                        }
+                    })
+                    .fail(function() {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        Notification.error('Có lỗi xảy ra khi xóa');
+                        $('#deleteConfirmBtn').prop('disabled', false).text('Xóa');
+                    });
+            });
+
+            // Approve
+            $(document).on('click', "a[data-action='approve']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $.post('/VaiTro/ApproveAjax', { id: id }).done(function(res) {
+                    if (res.success) {
+                        Notification.successAndReload('Đã duyệt vai trò thành công');
+                    } else {
+                        Notification.error(res.message || 'Có lỗi xảy ra khi duyệt');
+                    }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra khi duyệt');
+                });
+            });
+
+            // Reject
+            $(document).on('click', "a[data-action='reject']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $.post('/VaiTro/RejectAjax', { id: id }).done(function(res) {
+                    if (res.success) {
+                        Notification.successAndReload('Đã huỷ duyệt vai trò');
+                    } else {
+                        Notification.error(res.message || 'Có lỗi xảy ra khi huỷ duyệt');
+                    }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra khi huỷ duyệt');
+                });
+            });
+
+            // Assign menu
+            $(document).on('click', "a[data-action='assign']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $('#assignMenuBody').html('<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải...</p></div>');
+                var modal = new bootstrap.Modal(document.getElementById('assignMenuModal'));
+                modal.show();
+                
+                $.get('/VaiTro/GetAssignMenu', { id: id }).done(function(html) {
+                    $('#assignMenuBody').html(html);
+                }).fail(function() {
+                    $('#assignMenuBody').html('<div class="text-danger text-center">Có lỗi xảy ra khi tải dữ liệu</div>');
+                });
+            });
+
+            // Save assign menu
+            $('#assignMenuSaveBtn').on('click', function() {
+                var form = $('#assignMenuBody').find('form');
+                if (!form.length) return;
+                var roleId = form.find('input[name="VaiTro.Id"]').val();
+                var selected = [];
+                form.find('input[type="checkbox"]:checked').each(function() {
+                    selected.push($(this).val());
+                });
+
+                $.post('/VaiTro/AssignMenuAjax', { roleId: roleId, selectedMenuIds: selected })
+                    .done(function(res) {
+                        if (res.success) {
+                            bootstrap.Modal.getInstance(document.getElementById('assignMenuModal')).hide();
+                            Notification.successAndReload('Đã phân quyền menu thành công');
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi phân quyền');
+                        }
+                    }).fail(function() {
+                        Notification.error('Có lỗi xảy ra khi phân quyền');
+                    });
+            });
+        });
+
+        // Sync roles from enum
+        function syncRoles() {
+
+            $.post('/VaiTro/SyncRolesFromEnum').done(function(res) {
+                if (res.success) {
+                    Notification.successAndReload(res.message);
+                } else {
+                    Notification.error(res.message || 'Có lỗi xảy ra');
+                }
+            }).fail(function() {
+                Notification.error('Có lỗi xảy ra khi đồng bộ');
+            });
+        }
+    </script>
+}

@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+﻿using QuanLyNhanLuc.Models.Enums;
+using System.ComponentModel;
 using System.Reflection;
-using QuanLyNhanLuc.Models.Enums;
 
 namespace QuanLyNhanLuc.Helpers;
 
@@ -8,10 +8,25 @@ public static class EnumHelper
 {
     public static string GetDescription<T>(this T enumValue) where T : Enum
     {
-        var field = enumValue.GetType().GetField(enumValue.ToString());
-        if (field == null) return enumValue.ToString();
-        
-        var attribute = field.GetCustomAttribute<DescriptionAttribute>();
+        FieldInfo? field = enumValue.GetType().GetField(enumValue.ToString());
+        if (field == null)
+        {
+            return enumValue.ToString();
+        }
+
+        DescriptionAttribute? attribute = field.GetCustomAttribute<DescriptionAttribute>();
+        return attribute?.Description ?? enumValue.ToString();
+    }
+
+    public static string GetEnumDescription(Enum enumValue)
+    {
+        FieldInfo? field = enumValue.GetType().GetField(enumValue.ToString());
+        if (field == null)
+        {
+            return enumValue.ToString();
+        }
+
+        DescriptionAttribute? attribute = field.GetCustomAttribute<DescriptionAttribute>();
         return attribute?.Description ?? enumValue.ToString();
     }
 
@@ -61,8 +76,10 @@ public static class EnumHelper
         return trangThai switch
         {
             TrangThaiThuTuc.NopDon => "Nộp đơn",
-            TrangThaiThuTuc.ChoDuyet => "Chờ duyệt",
-            TrangThaiThuTuc.DaDuyet => "Đã duyệt",
+            TrangThaiThuTuc.TruongPhongDuyet => "Trưởng phòng duyệt",
+            TrangThaiThuTuc.KeToanDuyet => "Kế toán duyệt",
+            TrangThaiThuTuc.GiamDocDuyet => "Giám đốc duyệt",
+            TrangThaiThuTuc.HoanThanh => "Hoàn thành",
             TrangThaiThuTuc.TuChoi => "Từ chối",
             _ => trangThai.ToString()
         };
@@ -73,9 +90,9 @@ public static class EnumHelper
         return loai switch
         {
             LoaiThuTuc.NghiPhep => "Nghỉ phép",
-            LoaiThuTuc.LamThem => "Làm thêm giờ",
-            LoaiThuTuc.NghiViec => "Nghỉ việc",
-            LoaiThuTuc.CongTac => "Công tác",
+            LoaiThuTuc.LamOnsite => "Làm onsite",
+            LoaiThuTuc.HoiCo => "Hồi cố",
+            LoaiThuTuc.Khac => "Khác",
             _ => loai.ToString()
         };
     }

@@ -5,8 +5,7 @@
 
 @{
     ViewData["Title"] = "Danh sách nhân viên";
-    // Kiểm tra quyền quản lý nhân sự (Admin hoặc HR)
-    bool canManage = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.HR);
+    bool canManage = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.QuanLyNhanSu);
 }
 
 <style>

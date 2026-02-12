@@ -1,165 +1,377 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyNhanLuc.Data;
 using QuanLyNhanLuc.Models.Entities;
 using QuanLyNhanLuc.Models.Enums;
-using QuanLyNhanLuc.Models.ViewModels;
+using System.Security.Claims;
 
 namespace QuanLyNhanLuc.Controllers;
 
+[Authorize]
 public class ThuTucHanhChinhController : Controller
 {
     private readonly QLNLContext _context;
+    private readonly IWebHostEnvironment _environment;
 
-    public ThuTucHanhChinhController(QLNLContext context)
+    public ThuTucHanhChinhController(QLNLContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
 
-    public async Task<IActionResult> Index(LoaiThuTuc? loaiThuTuc = null, TrangThaiThuTuc? trangThai = null, string? keyword = null)
+    private async Task<(NhanSu? NhanSu, List<string> Roles, bool IsAdmin, bool IsGiamDoc, bool IsTruongPhong, bool IsKeToan)> GetCurrentUserInfo()
     {
-        var query = _context.ThuTucHanhChinhs
+        string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        NguoiDung? user = await _context.Users
+            .Include(u => u.ThongTinNguoiDung)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        List<string> roles = User.Claims
+            .Where(c => c.Type == ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+
+        // Tìm NhanSu theo tên của user (giả định MaNhanVien hoặc mapping)
+        NhanSu? nhanSu = null;
+        if (user?.ThongTinNguoiDung != null)
+        {
+            // Tìm theo tên hoặc có thể tìm theo email/id tùy logic của bạn
+            nhanSu = await _context.NhanSus
+                .Include(n => n.PhongBan)
+                .FirstOrDefaultAsync(n => n.HoVaTen == user.ThongTinNguoiDung.FullName);
+        }
+
+        bool isAdmin = roles.Contains("Admin") || roles.Contains("QuanLyNhanSu");
+        bool isGiamDoc = roles.Contains("GiamDoc");
+        bool isTruongPhong = roles.Contains("TruongPhong");
+        bool isKeToan = roles.Contains("KeToan");
+
+        return (nhanSu, roles, isAdmin, isGiamDoc, isTruongPhong, isKeToan);
+    }
+
+    public async Task<IActionResult> Index(string? search, int? loaiThuTuc, int? trangThai, int page = 1, int pageSize = 10)
+    {
+        (NhanSu? nhanSu, List<string>? roles, bool isAdmin, bool isGiamDoc, bool isTruongPhong, bool isKeToan) = await GetCurrentUserInfo();
+
+        IQueryable<ThuTucHanhChinh> query = _context.ThuTucHanhChinhs
             .Include(t => t.NhanSu)
             .ThenInclude(n => n.PhongBan)
+            .AsNoTracking()
             .AsQueryable();
 
-        if (loaiThuTuc.HasValue)
-            query = query.Where(t => t.LoaiThuTuc == loaiThuTuc.Value);
-
-        if (trangThai.HasValue)
-            query = query.Where(t => t.TrangThai == trangThai.Value);
-
-        if (!string.IsNullOrEmpty(keyword))
-            query = query.Where(t => t.NhanSu.HoVaTen.Contains(keyword) || t.MaThuTuc.Contains(keyword));
-
-        var thuTucs = await query
-            .OrderByDescending(t => t.NgayNop)
-            .Select(t => new ThuTucHanhChinhVM
+        // Phân quyền xem
+        if (!isAdmin && !isGiamDoc)
+        {
+            if (isTruongPhong && nhanSu?.PhongBanId != null)
             {
-                Id = t.Id,
-                MaThuTuc = t.MaThuTuc,
-                NhanSuId = t.NhanSuId,
-                MaNhanVien = t.NhanSu.MaNhanVien,
-                HoTen = t.NhanSu.HoVaTen,
-                PhongBan = t.NhanSu.PhongBan.TenPhongBan,
-                LoaiThuTuc = t.LoaiThuTuc,
-                LyDo = t.LyDo,
-                NgayNop = t.NgayNop,
-                NgayBatDau = t.NgayBatDau,
-                NgayKetThuc = t.NgayKetThuc,
-                SoNgay = t.SoNgay,
-                TrangThai = t.TrangThai,
-                NguoiDuyet = t.NguoiDuyet,
-                NgayDuyet = t.NgayDuyet,
-                GhiChu = t.GhiChu
-            })
-            .ToListAsync();
+                // Trưởng phòng xem nhân viên phòng mình
+                query = query.Where(t => t.NhanSu.PhongBanId == nhanSu.PhongBanId);
+            }
+            else if (isKeToan)
+            {
+                // Kế toán xem những đơn đã được trưởng phòng duyệt
+                query = query.Where(t => (int)t.TrangThai >= (int)TrangThaiThuTuc.TruongPhongDuyet);
+            }
+            else if (nhanSu != null)
+            {
+                // Nhân viên chỉ xem đơn của mình
+                query = query.Where(t => t.NhanSuId == nhanSu.Id);
+            }
+            else
+            {
+                query = query.Where(t => false); // Không có quyền
+            }
+        }
 
-        ViewBag.NhanSuList = new SelectList(await _context.NhanSus.ToListAsync(), "Id", "HoVaTen");
-        return View(thuTucs);
+        // Tìm kiếm
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t => t.NhanSu.HoVaTen.Contains(search) ||
+                                    t.MaThuTuc.Contains(search) ||
+                                    t.LyDo.Contains(search));
+        }
+
+        // Lọc loại thủ tục
+        if (loaiThuTuc.HasValue)
+        {
+            query = query.Where(t => (int)t.LoaiThuTuc == loaiThuTuc.Value);
+        }
+
+        // Lọc trạng thái
+        if (trangThai.HasValue)
+        {
+            query = query.Where(t => (int)t.TrangThai == trangThai.Value);
+        }
+
+        query = query.OrderByDescending(t => t.NgayNop);
+        int total = await query.CountAsync();
+        List<ThuTucHanhChinh> items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+        ViewBag.TotalItems = total;
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.LoaiThuTuc = loaiThuTuc;
+        ViewBag.TrangThai = trangThai;
+
+        // Permission flags
+        ViewBag.CanCreate = nhanSu != null;
+        ViewBag.CanApprove = isTruongPhong || isKeToan || isGiamDoc || isAdmin;
+        ViewBag.IsTruongPhong = isTruongPhong;
+        ViewBag.IsKeToan = isKeToan;
+        ViewBag.IsGiamDoc = isGiamDoc;
+        ViewBag.IsAdmin = isAdmin;
+        ViewBag.CurrentNhanSuId = nhanSu?.Id;
+
+        return View(items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetThuTuc(Guid id)
+    public async Task<IActionResult> GetChiTiet(Guid id)
     {
-        var thuTuc = await _context.ThuTucHanhChinhs
+        ThuTucHanhChinh? item = await _context.ThuTucHanhChinhs
             .Include(t => t.NhanSu)
+            .ThenInclude(n => n.PhongBan)
             .FirstOrDefaultAsync(t => t.Id == id);
-        
-        if (thuTuc == null) return NotFound();
-        
-        return Json(new
+
+        if (item == null)
         {
-            id = thuTuc.Id,
-            maThuTuc = thuTuc.MaThuTuc,
-            nhanSuId = thuTuc.NhanSuId,
-            hoTen = thuTuc.NhanSu.HoVaTen,
-            loaiThuTuc = (int)thuTuc.LoaiThuTuc,
-            lyDo = thuTuc.LyDo,
-            ngayBatDau = thuTuc.NgayBatDau.ToString("yyyy-MM-dd"),
-            ngayKetThuc = thuTuc.NgayKetThuc?.ToString("yyyy-MM-dd"),
-            soNgay = thuTuc.SoNgay,
-            trangThai = (int)thuTuc.TrangThai,
-            ghiChu = thuTuc.GhiChu
-        });
+            return NotFound();
+        }
+
+        (NhanSu? nhanSu, List<string>? roles, bool isAdmin, bool isGiamDoc, bool isTruongPhong, bool isKeToan) = await GetCurrentUserInfo();
+
+        // Check permission
+        if (!isAdmin && !isGiamDoc)
+        {
+            if (isTruongPhong && item.NhanSu.PhongBanId != nhanSu?.PhongBanId)
+            {
+                return Forbid();
+            }
+
+            if (isKeToan && (int)item.TrangThai < (int)TrangThaiThuTuc.TruongPhongDuyet)
+            {
+                return Forbid();
+            }
+
+            if (!isTruongPhong && !isKeToan && item.NhanSuId != nhanSu?.Id)
+            {
+                return Forbid();
+            }
+        }
+
+        ViewBag.CanEdit = item.TrangThai == TrangThaiThuTuc.NopDon && item.NhanSuId == nhanSu?.Id;
+        ViewBag.CanApprove = (isTruongPhong && item.TrangThai == TrangThaiThuTuc.NopDon) ||
+                            (isKeToan && item.TrangThai == TrangThaiThuTuc.TruongPhongDuyet) ||
+                            (isGiamDoc && item.TrangThai == TrangThaiThuTuc.KeToanDuyet) ||
+                            isAdmin;
+        ViewBag.CanReject = ViewBag.CanApprove;
+
+        return PartialView("_ChiTietPartial", item);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateAjax([FromForm] ThuTucHanhChinhVM model)
+    public async Task<IActionResult> CreateAjax([FromForm] ThuTucHanhChinh model, IFormFile? tepDinhKem)
     {
-        if (model.NhanSuId == Guid.Empty)
-            return Json(new { success = false, message = "Vui lòng chọn nhân viên" });
-
-        var thuTuc = new ThuTucHanhChinh
+        (NhanSu? nhanSu, _, _, _, _, _) = await GetCurrentUserInfo();
+        if (nhanSu == null)
         {
-            MaThuTuc = $"TT-{DateTime.Now:yyyyMMddHHmmss}",
-            NhanSuId = model.NhanSuId,
-            LoaiThuTuc = model.LoaiThuTuc,
-            LyDo = model.LyDo,
-            NgayNop = DateTime.Now,
-            NgayBatDau = model.NgayBatDau,
-            NgayKetThuc = model.NgayKetThuc,
-            SoNgay = model.SoNgay,
-            TrangThai = TrangThaiThuTuc.NopDon,
-            GhiChu = model.GhiChu
-        };
+            return Json(new { success = false, message = "Không tìm thấy thông tin nhân sự" });
+        }
 
-        _context.ThuTucHanhChinhs.Add(thuTuc);
-        await _context.SaveChangesAsync();
+        if (string.IsNullOrWhiteSpace(model.LyDo))
+        {
+            return Json(new { success = false, message = "Lý do không được để trống" });
+        }
+
+        // Auto generate MaThuTuc
+        int count = await _context.ThuTucHanhChinhs.CountAsync();
+        model.MaThuTuc = $"TT{DateTime.Now:yyyyMMdd}{count + 1:D4}";
+
+        model.Id = Guid.NewGuid();
+        model.NhanSuId = nhanSu.Id;
+        model.NgayNop = DateTime.Now;
+        model.TrangThai = TrangThaiThuTuc.NopDon;
+
+        // Upload file
+        if (tepDinhKem != null && tepDinhKem.Length > 0)
+        {
+            string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "thu-tuc");
+            _ = Directory.CreateDirectory(uploadsFolder);
+            string fileName = $"{Guid.NewGuid()}{Path.GetExtension(tepDinhKem.FileName)}";
+            string filePath = Path.Combine(uploadsFolder, fileName);
+            using (FileStream stream = new(filePath, FileMode.Create))
+            {
+                await tepDinhKem.CopyToAsync(stream);
+            }
+            model.TepDinhKem = $"/uploads/thu-tuc/{fileName}";
+        }
+
+        _ = _context.ThuTucHanhChinhs.Add(model);
+        _ = await _context.SaveChangesAsync();
+
         return Json(new { success = true });
     }
 
     [HttpPost]
-    public async Task<IActionResult> EditAjax([FromForm] ThuTucHanhChinhVM model)
+    public async Task<IActionResult> EditAjax([FromForm] ThuTucHanhChinh model, IFormFile? tepDinhKem)
     {
-        var thuTuc = await _context.ThuTucHanhChinhs.FindAsync(model.Id);
-        if (thuTuc == null)
+        ThuTucHanhChinh? item = await _context.ThuTucHanhChinhs.FindAsync(model.Id);
+        if (item == null)
+        {
             return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+        }
 
-        if (thuTuc.TrangThai == TrangThaiThuTuc.DaDuyet)
-            return Json(new { success = false, message = "Không thể sửa thủ tục đã được duyệt" });
+        (NhanSu? nhanSu, _, _, _, _, _) = await GetCurrentUserInfo();
 
-        thuTuc.LoaiThuTuc = model.LoaiThuTuc;
-        thuTuc.LyDo = model.LyDo;
-        thuTuc.NgayBatDau = model.NgayBatDau;
-        thuTuc.NgayKetThuc = model.NgayKetThuc;
-        thuTuc.SoNgay = model.SoNgay;
-        thuTuc.GhiChu = model.GhiChu;
+        // Chỉ cho phép sửa khi chưa gửi và là người tạo
+        if (item.TrangThai != TrangThaiThuTuc.NopDon || item.NhanSuId != nhanSu?.Id)
+        {
+            return Json(new { success = false, message = "Không thể sửa thủ tục này" });
+        }
 
-        await _context.SaveChangesAsync();
-        return Json(new { success = true });
-    }
+        item.LoaiThuTuc = model.LoaiThuTuc;
+        item.LyDo = model.LyDo;
+        item.NgayBatDau = model.NgayBatDau;
+        item.NgayKetThuc = model.NgayKetThuc;
+        item.SoNgay = model.SoNgay;
+        item.GhiChu = model.GhiChu;
 
-    [HttpPost]
-    public async Task<IActionResult> DuyetAjax([FromForm] Guid id, [FromForm] TrangThaiThuTuc trangThai, [FromForm] string? ghiChu)
-    {
-        var thuTuc = await _context.ThuTucHanhChinhs.FindAsync(id);
-        if (thuTuc == null)
-            return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+        // Upload file
+        if (tepDinhKem != null && tepDinhKem.Length > 0)
+        {
+            // Delete old file
+            if (!string.IsNullOrEmpty(item.TepDinhKem))
+            {
+                string oldFilePath = Path.Combine(_environment.WebRootPath, item.TepDinhKem.TrimStart('/'));
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+            }
 
-        thuTuc.TrangThai = trangThai;
-        thuTuc.NgayDuyet = DateTime.Now;
-        thuTuc.NguoiDuyet = User.Identity?.Name ?? "Admin";
-        if (!string.IsNullOrEmpty(ghiChu))
-            thuTuc.GhiChu = ghiChu;
+            string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "thu-tuc");
+            _ = Directory.CreateDirectory(uploadsFolder);
+            string fileName = $"{Guid.NewGuid()}{Path.GetExtension(tepDinhKem.FileName)}";
+            string filePath = Path.Combine(uploadsFolder, fileName);
+            using (FileStream stream = new(filePath, FileMode.Create))
+            {
+                await tepDinhKem.CopyToAsync(stream);
+            }
+            item.TepDinhKem = $"/uploads/thu-tuc/{fileName}";
+        }
 
-        await _context.SaveChangesAsync();
+        _ = await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 
     [HttpPost]
     public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
     {
-        var thuTuc = await _context.ThuTucHanhChinhs.FindAsync(id);
-        if (thuTuc == null)
+        ThuTucHanhChinh? item = await _context.ThuTucHanhChinhs.FindAsync(id);
+        if (item == null)
+        {
             return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+        }
 
-        if (thuTuc.TrangThai == TrangThaiThuTuc.DaDuyet)
-            return Json(new { success = false, message = "Không thể xóa thủ tục đã được duyệt" });
+        (NhanSu? nhanSu, _, _, _, _, _) = await GetCurrentUserInfo();
 
-        _context.ThuTucHanhChinhs.Remove(thuTuc);
-        await _context.SaveChangesAsync();
+        // Chỉ cho phép xóa khi chưa gửi và là người tạo
+        if (item.TrangThai != TrangThaiThuTuc.NopDon || item.NhanSuId != nhanSu?.Id)
+        {
+            return Json(new { success = false, message = "Không thể xóa thủ tục này" });
+        }
+
+        // Delete file
+        if (!string.IsNullOrEmpty(item.TepDinhKem))
+        {
+            string filePath = Path.Combine(_environment.WebRootPath, item.TepDinhKem.TrimStart('/'));
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+        }
+
+        _ = _context.ThuTucHanhChinhs.Remove(item);
+        _ = await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ApproveAjax([FromForm] Guid id, [FromForm] string? ghiChu)
+    {
+        ThuTucHanhChinh? item = await _context.ThuTucHanhChinhs
+            .Include(t => t.NhanSu)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (item == null)
+        {
+            return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+        }
+
+        (NhanSu? nhanSu, _, bool isAdmin, bool isGiamDoc, bool isTruongPhong, bool isKeToan) = await GetCurrentUserInfo();
+
+        // Check permission and update status
+        if (isTruongPhong && item.TrangThai == TrangThaiThuTuc.NopDon && item.NhanSu.PhongBanId == nhanSu?.PhongBanId)
+        {
+            item.TrangThai = TrangThaiThuTuc.TruongPhongDuyet;
+        }
+        else if (isKeToan && item.TrangThai == TrangThaiThuTuc.TruongPhongDuyet)
+        {
+            item.TrangThai = TrangThaiThuTuc.KeToanDuyet;
+        }
+        else if (isGiamDoc && item.TrangThai == TrangThaiThuTuc.KeToanDuyet)
+        {
+            item.TrangThai = TrangThaiThuTuc.HoanThanh;
+        }
+        else if (isAdmin)
+        {
+            item.TrangThai = TrangThaiThuTuc.HoanThanh;
+        }
+        else
+        {
+            return Json(new { success = false, message = "Không có quyền duyệt" });
+        }
+
+        item.NguoiDuyet = User.Identity?.Name;
+        item.NgayDuyet = DateTime.Now;
+        item.GhiChu = ghiChu;
+
+        _ = await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RejectAjax([FromForm] Guid id, [FromForm] string? ghiChu)
+    {
+        ThuTucHanhChinh? item = await _context.ThuTucHanhChinhs
+            .Include(t => t.NhanSu)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (item == null)
+        {
+            return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+        }
+
+        (NhanSu? nhanSu, _, bool isAdmin, bool isGiamDoc, bool isTruongPhong, bool isKeToan) = await GetCurrentUserInfo();
+
+        // Check permission
+        bool canReject = (isTruongPhong && item.NhanSu.PhongBanId == nhanSu?.PhongBanId) ||
+                       isKeToan || isGiamDoc || isAdmin;
+
+        if (!canReject)
+        {
+            return Json(new { success = false, message = "Không có quyền từ chối" });
+        }
+
+        item.TrangThai = TrangThaiThuTuc.TuChoi;
+        item.NguoiDuyet = User.Identity?.Name;
+        item.NgayDuyet = DateTime.Now;
+        item.GhiChu = ghiChu;
+
+        _ = await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 }

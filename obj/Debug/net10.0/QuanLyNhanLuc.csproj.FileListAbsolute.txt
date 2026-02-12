@@ -1568,7 +1568,7 @@ C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\swae.build.ex.cache
 C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\QuanLyNh.6B622638.Up2Date
 C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\QuanLyNhanLuc.genruntimeconfig.cache
 C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\ref\QuanLyNhanLuc.dll
-C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\compressed\yovnf2ux0v-{0}-oj5wa4wdn8-oj5wa4wdn8.gz
 C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\compressed\3mmgipm44w-{0}-fuu4kc8sd2-fuu4kc8sd2.gz
 C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\compressed\mb95e8v7e8-{0}-s1g78shdky-s1g78shdky.gz
+C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\compressed\yovnf2ux0v-{0}-rjk8593xov-rjk8593xov.gz
 C:\Dự án\QuanLyNhanSu\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

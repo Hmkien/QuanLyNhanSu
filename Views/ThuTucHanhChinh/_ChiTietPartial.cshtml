@@ -1,0 +1,237 @@
+@model QuanLyNhanLuc.Models.Entities.ThuTucHanhChinh
+@using QuanLyNhanLuc.Helpers
+@using QuanLyNhanLuc.Extensions
+
+@{
+    var canEdit = ViewBag.CanEdit ?? false;
+    var canApprove = ViewBag.CanApprove ?? false;
+    var canReject = ViewBag.CanReject ?? false;
+}
+
+<style>
+    body {
+        font-size: 14px;
+    }
+
+    .admin-card {
+        background: #fff;
+        border: 1px solid #e3e6f0;
+        border-radius: 6px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+    }
+
+    .admin-title {
+        font-weight: 600;
+        font-size: 16px;
+        border-left: 4px solid #0d6efd;
+        padding-left: 10px;
+        margin-bottom: 12px;
+    }
+
+    .admin-label {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 2px;
+    }
+
+    .admin-value {
+        font-size: 14px;
+        font-weight: 500;
+        color: #212529;
+    }
+
+    .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+        gap: 12px 20px;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-nopdon {
+        background: #e3f2fd;
+        color: #0d47a1;
+    }
+
+    .status-truongphong {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-ketoan {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-giamdoc {
+        background: #ede7f6;
+        color: #4527a0;
+    }
+
+    .status-hoanthanh {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-tuchoi {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+<!-- HEADER -->
+<div class="admin-card d-flex justify-content-between align-items-center">
+    <div>
+        <strong>Mã thủ tục:</strong> @Model.MaThuTuc <br />
+        <small class="text-muted">Ngày nộp: @Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</small>
+    </div>
+
+    <span class="@Model.TrangThai.GetStatusBadgeClass() status-badge">
+        @EnumHelper.GetEnumDescription(Model.TrangThai)
+    </span>
+</div>
+
+<!-- THÔNG TIN NGƯỜI ĐĂNG KÝ -->
+<div class="admin-card">
+    <div class="admin-title">Thông tin người đăng ký</div>
+
+    <div class="admin-grid">
+        <div>
+            <div class="admin-label">Họ và tên</div>
+            <div class="admin-value">@Model.NhanSu.HoVaTen</div>
+        </div>
+
+        <div>
+            <div class="admin-label">Phòng ban</div>
+            <div class="admin-value">@(Model.NhanSu.PhongBan?.TenPhongBan ?? "-")</div>
+        </div>
+    </div>
+</div>
+
+<!-- CHI TIẾT THỦ TỤC -->
+<div class="admin-card">
+    <div class="admin-title">Chi tiết thủ tục</div>
+
+    <div class="admin-grid">
+        <div>
+            <div class="admin-label">Loại thủ tục</div>
+            <div class="admin-value">@EnumHelper.GetEnumDescription(Model.LoaiThuTuc)</div>
+        </div>
+
+        <div>
+            <div class="admin-label">Từ ngày</div>
+            <div class="admin-value">@Model.NgayBatDau.ToString("dd/MM/yyyy")</div>
+        </div>
+
+        <div>
+            <div class="admin-label">Đến ngày</div>
+            <div class="admin-value">@Model.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "-"</div>
+        </div>
+
+        <div>
+            <div class="admin-label">Số ngày</div>
+            <div class="admin-value">@Model.SoNgay?.ToString("0.#") ?? "-"</div>
+        </div>
+    </div>
+</div>
+
+<!-- LÝ DO -->
+<div class="admin-card">
+    <div class="admin-title">Lý do</div>
+    <div class="admin-value" style="white-space: pre-line;">
+        @Model.LyDo
+    </div>
+</div>
+
+<!-- FILE ĐÍNH KÈM -->
+@if (!string.IsNullOrEmpty(Model.TepDinhKem))
+{
+    <div class="admin-card">
+        <div class="admin-title">Tệp đính kèm</div>
+        <a href="@Model.TepDinhKem" target="_blank" class="btn btn-sm btn-outline-primary">
+            Tải xuống
+        </a>
+    </div>
+}
+
+<!-- THÔNG TIN DUYỆT -->
+@if (!string.IsNullOrEmpty(Model.NguoiDuyet) || Model.NgayDuyet.HasValue)
+{
+    <div class="admin-card">
+        <div class="admin-title">Thông tin duyệt</div>
+
+        <div class="admin-grid">
+            @if (!string.IsNullOrEmpty(Model.NguoiDuyet))
+            {
+                <div>
+                    <div class="admin-label">Người duyệt</div>
+                    <div class="admin-value">@Model.NguoiDuyet</div>
+                </div>
+            }
+
+            @if (Model.NgayDuyet.HasValue)
+            {
+                <div>
+                    <div class="admin-label">Ngày duyệt</div>
+                    <div class="admin-value">@Model.NgayDuyet.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.GhiChu))
+        {
+            <div class="mt-3">
+                <div class="admin-label">Ghi chú</div>
+                <div class="alert alert-light border">@Model.GhiChu</div>
+            </div>
+        }
+    </div>
+}
+
+<!-- ACTION BUTTONS -->
+@if (canEdit || canApprove || canReject)
+{
+    <div class="admin-card text-end">
+        @if (canEdit)
+        {
+            <button class="btn btn-outline-primary btn-sm" onclick="openEditModal('@Model.Id')">Sửa</button>
+        }
+        @if (canReject)
+        {
+            <button class="btn btn-outline-danger btn-sm" onclick="rejectFromDetail('@Model.Id')">Từ chối</button>
+        }
+        @if (canApprove)
+        {
+            <button class="btn btn-primary btn-sm" onclick="approveFromDetail('@Model.Id')">Duyệt</button>
+        }
+    </div>
+}
+
+<script>
+    function openEditModal(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        setTimeout(() => {
+            $("a[data-action='edit'][data-id='" + id + "']").click();
+        }, 200);
+    }
+
+    function approveFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        setTimeout(() => {
+            $("a[data-action='approve'][data-id='" + id + "']").click();
+        }, 200);
+    }
+
+    function rejectFromDetail(id) {
+        bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+        setTimeout(() => {
+            $("a[data-action='reject'][data-id='" + id + "']").click();
+        }, 200);
+    }
+</script>

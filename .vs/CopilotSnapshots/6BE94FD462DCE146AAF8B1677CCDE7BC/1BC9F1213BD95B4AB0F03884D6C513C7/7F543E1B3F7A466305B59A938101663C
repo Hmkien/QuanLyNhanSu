@@ -1,0 +1,165 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.Enums;
+using QuanLyNhanLuc.Models.ViewModels;
+
+namespace QuanLyNhanLuc.Controllers;
+
+public class ThuTucHanhChinhController : Controller
+{
+    private readonly QLNLContext _context;
+
+    public ThuTucHanhChinhController(QLNLContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index(LoaiThuTuc? loaiThuTuc = null, TrangThaiThuTuc? trangThai = null, string? keyword = null)
+    {
+        var query = _context.ThuTucHanhChinhs
+            .Include(t => t.NhanSu)
+            .ThenInclude(n => n.PhongBan)
+            .AsQueryable();
+
+        if (loaiThuTuc.HasValue)
+            query = query.Where(t => t.LoaiThuTuc == loaiThuTuc.Value);
+
+        if (trangThai.HasValue)
+            query = query.Where(t => t.TrangThai == trangThai.Value);
+
+        if (!string.IsNullOrEmpty(keyword))
+            query = query.Where(t => t.NhanSu.HoVaTen.Contains(keyword) || t.MaThuTuc.Contains(keyword));
+
+        var thuTucs = await query
+            .OrderByDescending(t => t.NgayNop)
+            .Select(t => new ThuTucHanhChinhVM
+            {
+                Id = t.Id,
+                MaThuTuc = t.MaThuTuc,
+                NhanSuId = t.NhanSuId,
+                MaNhanVien = t.NhanSu.MaNhanVien,
+                HoTen = t.NhanSu.HoVaTen,
+                PhongBan = t.NhanSu.PhongBan.TenPhongBan,
+                LoaiThuTuc = t.LoaiThuTuc,
+                LyDo = t.LyDo,
+                NgayNop = t.NgayNop,
+                NgayBatDau = t.NgayBatDau,
+                NgayKetThuc = t.NgayKetThuc,
+                SoNgay = t.SoNgay,
+                TrangThai = t.TrangThai,
+                NguoiDuyet = t.NguoiDuyet,
+                NgayDuyet = t.NgayDuyet,
+                GhiChu = t.GhiChu
+            })
+            .ToListAsync();
+
+        ViewBag.NhanSuList = new SelectList(await _context.NhanSus.ToListAsync(), "Id", "HoVaTen");
+        return View(thuTucs);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetThuTuc(Guid id)
+    {
+        var thuTuc = await _context.ThuTucHanhChinhs
+            .Include(t => t.NhanSu)
+            .FirstOrDefaultAsync(t => t.Id == id);
+        
+        if (thuTuc == null) return NotFound();
+        
+        return Json(new
+        {
+            id = thuTuc.Id,
+            maThuTuc = thuTuc.MaThuTuc,
+            nhanSuId = thuTuc.NhanSuId,
+            hoTen = thuTuc.NhanSu.HoVaTen,
+            loaiThuTuc = (int)thuTuc.LoaiThuTuc,
+            lyDo = thuTuc.LyDo,
+            ngayBatDau = thuTuc.NgayBatDau.ToString("yyyy-MM-dd"),
+            ngayKetThuc = thuTuc.NgayKetThuc?.ToString("yyyy-MM-dd"),
+            soNgay = thuTuc.SoNgay,
+            trangThai = (int)thuTuc.TrangThai,
+            ghiChu = thuTuc.GhiChu
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateAjax([FromForm] ThuTucHanhChinhVM model)
+    {
+        if (model.NhanSuId == Guid.Empty)
+            return Json(new { success = false, message = "Vui lòng chọn nhân viên" });
+
+        var thuTuc = new ThuTucHanhChinh
+        {
+            MaThuTuc = $"TT-{DateTime.Now:yyyyMMddHHmmss}",
+            NhanSuId = model.NhanSuId,
+            LoaiThuTuc = model.LoaiThuTuc,
+            LyDo = model.LyDo,
+            NgayNop = DateTime.Now,
+            NgayBatDau = model.NgayBatDau,
+            NgayKetThuc = model.NgayKetThuc,
+            SoNgay = model.SoNgay,
+            TrangThai = TrangThaiThuTuc.NopDon,
+            GhiChu = model.GhiChu
+        };
+
+        _context.ThuTucHanhChinhs.Add(thuTuc);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditAjax([FromForm] ThuTucHanhChinhVM model)
+    {
+        var thuTuc = await _context.ThuTucHanhChinhs.FindAsync(model.Id);
+        if (thuTuc == null)
+            return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+
+        if (thuTuc.TrangThai == TrangThaiThuTuc.DaDuyet)
+            return Json(new { success = false, message = "Không thể sửa thủ tục đã được duyệt" });
+
+        thuTuc.LoaiThuTuc = model.LoaiThuTuc;
+        thuTuc.LyDo = model.LyDo;
+        thuTuc.NgayBatDau = model.NgayBatDau;
+        thuTuc.NgayKetThuc = model.NgayKetThuc;
+        thuTuc.SoNgay = model.SoNgay;
+        thuTuc.GhiChu = model.GhiChu;
+
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DuyetAjax([FromForm] Guid id, [FromForm] TrangThaiThuTuc trangThai, [FromForm] string? ghiChu)
+    {
+        var thuTuc = await _context.ThuTucHanhChinhs.FindAsync(id);
+        if (thuTuc == null)
+            return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+
+        thuTuc.TrangThai = trangThai;
+        thuTuc.NgayDuyet = DateTime.Now;
+        thuTuc.NguoiDuyet = User.Identity?.Name ?? "Admin";
+        if (!string.IsNullOrEmpty(ghiChu))
+            thuTuc.GhiChu = ghiChu;
+
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
+    {
+        var thuTuc = await _context.ThuTucHanhChinhs.FindAsync(id);
+        if (thuTuc == null)
+            return Json(new { success = false, message = "Không tìm thấy thủ tục" });
+
+        if (thuTuc.TrangThai == TrangThaiThuTuc.DaDuyet)
+            return Json(new { success = false, message = "Không thể xóa thủ tục đã được duyệt" });
+
+        _context.ThuTucHanhChinhs.Remove(thuTuc);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+}

@@ -1,0 +1,161 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Data;
+using QuanLyNhanLuc.Models.Entities;
+using QuanLyNhanLuc.Models.ViewModels;
+
+namespace QuanLyNhanLuc.Controllers
+{
+    public class VaiTroController : Controller
+    {
+        private readonly RoleManager<VaiTro> _roleManager;
+        private readonly QLNLContext _context;
+        
+        public VaiTroController(RoleManager<VaiTro> roleManager, QLNLContext context)
+        {
+            _roleManager = roleManager;
+            _context = context;
+        }
+
+        public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = 10)
+        {
+            var query = _roleManager.Roles.AsQueryable();
+            
+            // Tìm kiếm theo tên vai trò
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(r => r.Name != null && r.Name.Contains(search));
+            }
+            
+            query = query.OrderBy(r => r.Name);
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
+            ViewBag.TotalItems = total;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.Search = search;
+
+            return View(items);
+        }
+
+        // AJAX methods
+        [HttpGet]
+        public async Task<IActionResult> GetRole(string id)
+        {
+            var role = await _roleManager.FindByIdAsync(id);
+            if (role == null) return NotFound();
+            return Json(new { id = role.Id, roleCode = role.RoleCode, name = role.Name, status = (int)role.Status });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAjax([FromForm] string roleCode, [FromForm] string name)
+        {
+            if (string.IsNullOrWhiteSpace(roleCode))
+                return Json(new { success = false, message = "Mã vai trò không được để trống" });
+
+            if (string.IsNullOrWhiteSpace(name))
+                return Json(new { success = false, message = "Tên vai trò không được để trống" });
+
+            var exists = await _roleManager.Roles.AnyAsync(r => r.RoleCode == roleCode);
+            if (exists)
+                return Json(new { success = false, message = "Mã vai trò đã tồn tại" });
+            
+            var role = new VaiTro { RoleCode = roleCode, Name = name, Status = QuanLyNhanLuc.Models.Enums.Status.Pending };
+            var result = await _roleManager.CreateAsync(role);
+            
+            if (!result.Succeeded)
+                return Json(new { success = false, message = string.Join("; ", result.Errors.Select(e => e.Description)) });
+            
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditAjax([FromForm] string id, [FromForm] string roleCode, [FromForm] string name)
+        {
+            var role = await _roleManager.FindByIdAsync(id);
+            if (role == null)
+                return Json(new { success = false, message = "Không tìm thấy vai trò" });
+
+            if (role.Status == QuanLyNhanLuc.Models.Enums.Status.Approved)
+                return Json(new { success = false, message = "Không thể sửa vai trò đã được duyệt" });
+
+            if (string.IsNullOrWhiteSpace(roleCode))
+                return Json(new { success = false, message = "Mã vai trò không được để trống" });
+
+            var exists = await _roleManager.Roles.AnyAsync(r => r.RoleCode == roleCode && r.Id != id);
+            if (exists)
+                return Json(new { success = false, message = "Mã vai trò đã tồn tại" });
+            
+            role.RoleCode = roleCode;
+            role.Name = name;
+            var result = await _roleManager.UpdateAsync(role);
+            
+            if (!result.Succeeded)
+                return Json(new { success = false, message = string.Join("; ", result.Errors.Select(e => e.Description)) });
+            
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAjax([FromForm] string id)
+        {
+            var role = await _roleManager.FindByIdAsync(id);
+            if (role == null)
+                return Json(new { success = false, message = "Không tìm thấy vai trò" });
+            
+            var result = await _roleManager.DeleteAsync(role);
+            
+            if (!result.Succeeded)
+                return Json(new { success = false, message = string.Join("; ", result.Errors.Select(e => e.Description)) });
+            
+            return Json(new { success = true });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAssignMenu(string id)
+        {
+            var vaiTro = await _context.VaiTros.FindAsync(id);
+            if (vaiTro == null) return NotFound();
+            
+            var menuList = await _context.MenuQuanTris.OrderBy(m => m.ViTri).ToListAsync();
+            var selectedList = await _context.VaiTroMenus
+                .Where(vm => vm.VaiTroId == vaiTro.Id)
+                .Select(vm => vm.MenuId)
+                .ToListAsync();
+            
+            var model = new AssignMenuViewModel 
+            { 
+                VaiTro = vaiTro, 
+                MenuList = menuList, 
+                SelectedMenuIds = selectedList 
+            };
+            
+            return PartialView("_AssignMenuPartial", model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AssignMenuAjax([FromForm] string roleId, [FromForm] List<Guid>? selectedMenuIds)
+        {
+            var vaiTro = await _context.VaiTros.FindAsync(roleId);
+            if (vaiTro == null)
+                return Json(new { success = false, message = "Không tìm thấy vai trò" });
+            
+            var existing = _context.VaiTroMenus.Where(vm => vm.VaiTroId == vaiTro.Id);
+            _context.VaiTroMenus.RemoveRange(existing);
+            
+            if (selectedMenuIds != null)
+            {
+                foreach (var mid in selectedMenuIds)
+                {
+                    _context.VaiTroMenus.Add(new VaiTroMenu { VaiTroId = vaiTro.Id, MenuId = mid });
+                }
+            }
+            
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+    }
+}

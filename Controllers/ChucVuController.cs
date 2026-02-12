@@ -17,23 +17,23 @@ namespace QuanLyNhanLuc.Controllers
 
         public async Task<IActionResult> Index(string? search, int? status, int page = 1, int pageSize = 10)
         {
-            var query = _context.ChucVus.AsNoTracking().AsQueryable();
-            
+            IQueryable<ChucVu> query = _context.ChucVus.AsNoTracking().AsQueryable();
+
             // Tìm kiếm theo tên chức vụ
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(x => x.TenChucVu.Contains(search));
             }
-            
+
             // Lọc theo trạng thái
             if (status.HasValue)
             {
                 query = query.Where(x => (int)x.Status == status.Value);
             }
-            
+
             query = query.OrderBy(x => x.TenChucVu);
             var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            List<ChucVu> items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
             ViewBag.TotalItems = total;
@@ -49,77 +49,114 @@ namespace QuanLyNhanLuc.Controllers
         [HttpGet]
         public async Task<IActionResult> GetChucVu(Guid id)
         {
-            var cv = await _context.ChucVus.FindAsync(id);
-            if (cv == null) return NotFound();
-            return Json(new { id = cv.Id, ten = cv.TenChucVu, moTa = cv.MoTa, status = (int)cv.Status });
+            ChucVu? cv = await _context.ChucVus.FindAsync(id);
+            return cv == null
+                ? NotFound()
+                : Json(new { id = cv.Id, chucVuCode = cv.ChucVuCode, ten = cv.TenChucVu, moTa = cv.MoTa, status = (int)cv.Status });
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAjax([FromForm] string tenChucVu, [FromForm] string? moTa)
+        public async Task<IActionResult> CreateAjax([FromForm] string chucVuCode, [FromForm] string tenChucVu, [FromForm] string? moTa)
         {
-            if (string.IsNullOrWhiteSpace(tenChucVu)) 
+            if (string.IsNullOrWhiteSpace(chucVuCode))
+            {
+                return Json(new { success = false, message = "Mã chức vụ không được để trống" });
+            }
+
+            if (string.IsNullOrWhiteSpace(tenChucVu))
+            {
                 return Json(new { success = false, message = "Tên chức vụ không được để trống" });
-            
+            }
+
+            var exists = await _context.ChucVus.AnyAsync(x => x.ChucVuCode == chucVuCode);
+            if (exists)
+            {
+                return Json(new { success = false, message = "Mã chức vụ đã tồn tại" });
+            }
+
             var chucVu = new ChucVu
             {
+                ChucVuCode = chucVuCode,
                 TenChucVu = tenChucVu,
                 MoTa = moTa ?? string.Empty,
-                Status = Status.Approved
+                Status = Status.Pending
             };
-            _context.ChucVus.Add(chucVu);
-            await _context.SaveChangesAsync();
+            _ = _context.ChucVus.Add(chucVu);
+            _ = await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditAjax([FromForm] Guid id, [FromForm] string tenChucVu, [FromForm] string? moTa)
+        public async Task<IActionResult> EditAjax([FromForm] Guid id, [FromForm] string chucVuCode, [FromForm] string tenChucVu, [FromForm] string? moTa)
         {
-            var cv = await _context.ChucVus.FindAsync(id);
-            if (cv == null) 
+            ChucVu? cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null)
+            {
                 return Json(new { success = false, message = "Chức vụ không tồn tại" });
-            
-            if (cv.Status == Status.Approved)
-                return Json(new { success = false, message = "Không thể sửa chức vụ đã được duyệt" });
+            }
 
+            if (cv.Status == Status.Approved)
+            {
+                return Json(new { success = false, message = "Không thể sửa chức vụ đã được duyệt" });
+            }
+
+            if (string.IsNullOrWhiteSpace(chucVuCode))
+            {
+                return Json(new { success = false, message = "Mã chức vụ không được để trống" });
+            }
+
+            var exists = await _context.ChucVus.AnyAsync(x => x.ChucVuCode == chucVuCode && x.Id != id);
+            if (exists)
+            {
+                return Json(new { success = false, message = "Mã chức vụ đã tồn tại" });
+            }
+
+            cv.ChucVuCode = chucVuCode;
             cv.TenChucVu = tenChucVu;
             cv.MoTa = moTa ?? string.Empty;
-            await _context.SaveChangesAsync();
+            _ = await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
 
         [HttpPost]
         public async Task<IActionResult> DeleteAjax([FromForm] Guid id)
         {
-            var cv = await _context.ChucVus.FindAsync(id);
-            if (cv == null) 
+            ChucVu? cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null)
+            {
                 return Json(new { success = false, message = "Chức vụ không tồn tại" });
+            }
 
-            _context.ChucVus.Remove(cv);
-            await _context.SaveChangesAsync();
+            _ = _context.ChucVus.Remove(cv);
+            _ = await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
 
         [HttpPost]
         public async Task<IActionResult> ApproveAjax([FromForm] Guid id)
         {
-            var cv = await _context.ChucVus.FindAsync(id);
-            if (cv == null) 
+            ChucVu? cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null)
+            {
                 return Json(new { success = false, message = "Chức vụ không tồn tại" });
+            }
 
             cv.Status = Status.Approved;
-            await _context.SaveChangesAsync();
+            _ = await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
 
         [HttpPost]
         public async Task<IActionResult> RejectAjax([FromForm] Guid id)
         {
-            var cv = await _context.ChucVus.FindAsync(id);
-            if (cv == null) 
+            ChucVu? cv = await _context.ChucVus.FindAsync(id);
+            if (cv == null)
+            {
                 return Json(new { success = false, message = "Chức vụ không tồn tại" });
+            }
 
             cv.Status = Status.Rejected;
-            await _context.SaveChangesAsync();
+            _ = await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
     }

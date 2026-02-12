@@ -1,0 +1,24 @@
+﻿using System.ComponentModel;
+
+namespace QuanLyNhanLuc.Models.Enums;
+
+public enum TrangThaiThuTuc
+{
+    [Description("Nộp đơn")]
+    NopDon = 1,
+
+    [Description("Trưởng phòng duyệt")]
+    TruongPhongDuyet = 2,
+
+    [Description("Kế toán duyệt")]
+    KeToanDuyet = 3,
+
+    [Description("Giám đốc duyệt")]
+    GiamDocDuyet = 4,
+
+    [Description("Hoàn thành")]
+    HoanThanh = 5,
+
+    [Description("Từ chối")]
+    TuChoi = 99
+}

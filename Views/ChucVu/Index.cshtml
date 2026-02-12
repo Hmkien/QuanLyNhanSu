@@ -29,7 +29,7 @@
 </div>
 
 <div class="d-flex justify-content-between gap-4 mb-4">
-    <h2 class="text-primary">Danh sách chức vụ</h2>
+<h2 class="text-primary">Chức vụ</h2>
     <div class="d-flex gap-2">
         <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
         <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Thêm mới</button>
@@ -38,7 +38,6 @@
 
 <!-- Search Form -->
 <div class=" mb-3">
-    <div class="card-body py-2">
         <form method="get" asp-action="Index" class="row g-2 align-items-center">
             <div class="col-md-4">
                 <div class="input-group input-group-sm">
@@ -59,13 +58,13 @@
                 <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
             </div>
         </form>
-    </div>
 </div>
 
 <table class="table table-bordered table-hover">
 <thead>
     <tr>
         <th>STT</th>
+        <th>Mã chức vụ</th>
         <th>Tên chức vụ</th>
         <th>Mô tả</th>
         <th>Trạng thái</th>
@@ -78,6 +77,7 @@
     {
         <tr>
             <td>@stt</td>
+            <td><span >@item.ChucVuCode</span></td>
             <td>@item.TenChucVu</td>
             <td>@item.MoTa</td>
             <td>
@@ -161,6 +161,10 @@
                 <form id="chucVuForm">
                     <input type="hidden" id="chucVuId" name="id" />
                     <div class="mb-3">
+                        <label class="form-label">Mã chức vụ <span class="text-danger">*</span></label>
+                        <input id="chucVuCode" name="chucVuCode" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Tên chức vụ <span class="text-danger">*</span></label>
                         <input id="chucVuName" name="tenChucVu" class="form-control" required />
                     </div>
@@ -179,15 +183,16 @@
     </div>
 </div>
 
+<!-- Modal Xóa -->
 <div class="modal fade" id="chucVuDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Xóa chức vụ</h5>
+                <h5 class="modal-title">Xác nhận xóa</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Bạn có chắc chắn muốn xóa chức vụ này?</p>
+                <p>Bạn có chắc chắn muốn xóa?</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -205,9 +210,9 @@
             // Create
             $("button[data-action='create']").on('click', function() {
                 $('#chucVuModalTitle').text('Thêm chức vụ');
+                $('#chucVuForm')[0].reset();
                 $('#chucVuId').val('');
-                $('#chucVuName').val('');
-                $('#chucVuMoTa').val('');
+                $('#chucVuCode').prop('readonly', false);
                 $('#chucVuError').hide();
                 new bootstrap.Modal(document.getElementById('chucVuModal')).show();
             });
@@ -219,6 +224,7 @@
                 $('#chucVuError').hide();
                 $.get('/ChucVu/GetChucVu', { id: id }).done(function(res) {
                     $('#chucVuId').val(res.id);
+                    $('#chucVuCode').val(res.chucVuCode).prop('readonly', true);
                     $('#chucVuName').val(res.ten);
                     $('#chucVuMoTa').val(res.moTa);
                     new bootstrap.Modal(document.getElementById('chucVuModal')).show();
@@ -230,15 +236,26 @@
             // Save (create/edit)
             $('#chucVuSaveBtn').on('click', function() {
                 var id = $('#chucVuId').val();
+                var code = $('#chucVuCode').val();
                 var name = $('#chucVuName').val();
                 var moTa = $('#chucVuMoTa').val();
+                
+                if (!code || code.trim() === '') {
+                    $('#chucVuError').text('Mã chức vụ không được để trống').show();
+                    return;
+                }
+                
+                if (!name || name.trim() === '') {
+                    $('#chucVuError').text('Tên chức vụ không được để trống').show();
+                    return;
+                }
+                
                 var url = id ? '/ChucVu/EditAjax' : '/ChucVu/CreateAjax';
-                var data = id ? { id: id, tenChucVu: name, moTa: moTa } : { tenChucVu: name, moTa: moTa };
                 var action = id ? 'cập nhật' : 'thêm mới';
-                $.post(url, data).done(function(res) {
+                
+                $.post(url, $('#chucVuForm').serialize()).done(function(res) {
                     if (res.success) {
-                        Notification.success('Đã ' + action + ' chức vụ thành công');
-                        location.reload();
+                        Notification.successAndReload('Đã ' + action + ' chức vụ thành công');
                     } else { 
                         $('#chucVuError').text(res.message).show();
                         Notification.error(res.message || 'Có lỗi xảy ra khi ' + action);
@@ -256,62 +273,57 @@
             });
             
             $('#chucVuDeleteConfirmBtn').on('click', function() {
-                            if (!deleteId) return;
+                if (!deleteId) return;
                 
-                            // Disable button to prevent double click
-                            $(this).prop('disabled', true).text('Đang xóa...');
+                $(this).prop('disabled', true).text('Đang xóa...');
                 
-                            $.post('/ChucVu/DeleteAjax', { id: deleteId })
-                                .done(function(res) {
-                                    if (res.success) {
-                                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('chucVuDeleteModal'));
-                                        if (modalInstance) modalInstance.hide();
-                                        Notification.success('Đã xóa chức vụ thành công');
-                                        location.reload();
-                                    } else {
-                                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('chucVuDeleteModal'));
-                                        if (modalInstance) modalInstance.hide();
-                                        Notification.error(res.message || 'Có lỗi xảy ra khi xóa');
-                                        $('#chucVuDeleteConfirmBtn').prop('disabled', false).text('Xóa');
-                                    }
-                                })
-                                .fail(function() {
-                                    var modalInstance = bootstrap.Modal.getInstance(document.getElementById('chucVuDeleteModal'));
-                                    if (modalInstance) modalInstance.hide();
-                                    Notification.error('Có lỗi xảy ra khi xóa');
-                                    $('#chucVuDeleteConfirmBtn').prop('disabled', false).text('Xóa');
-                                });
-                        });
+                $.post('/ChucVu/DeleteAjax', { id: deleteId })
+                    .done(function(res) {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('chucVuDeleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        
+                        if (res.success) {
+                            Notification.successAndReload('Đã xóa chức vụ thành công');
+                        } else {
+                            Notification.error(res.message || 'Có lỗi xảy ra khi xóa');
+                            $('#chucVuDeleteConfirmBtn').prop('disabled', false).text('Xóa');
+                        }
+                    })
+                    .fail(function() {
+                        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('chucVuDeleteModal'));
+                        if (modalInstance) modalInstance.hide();
+                        Notification.error('Có lỗi xảy ra khi xóa');
+                        $('#chucVuDeleteConfirmBtn').prop('disabled', false).text('Xóa');
+                    });
+            });
 
-                        // Approve - không cần confirm
-                        $(document).on('click', "a[data-action='approve']", function() {
-                            var id = $(this).data('id');
-                            $.post('/ChucVu/ApproveAjax', { id: id }).done(function(res) {
-                                if (res.success) {
-                                    Notification.success('Đã duyệt chức vụ thành công');
-                                    location.reload();
-                                } else {
-                                    Notification.error(res.message || 'Có lỗi xảy ra khi duyệt');
-                                }
-                            }).fail(function() {
-                                Notification.error('Có lỗi xảy ra khi duyệt');
-                            });
-                        });
+            // Approve - không cần confirm
+            $(document).on('click', "a[data-action='approve']", function() {
+                var id = $(this).data('id');
+                $.post('/ChucVu/ApproveAjax', { id: id }).done(function(res) {
+                    if (res.success) {
+                        Notification.successAndReload('Đã duyệt chức vụ thành công');
+                    } else {
+                        Notification.error(res.message || 'Có lỗi xảy ra khi duyệt');
+                    }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra khi duyệt');
+                });
+            });
 
-                        // Reject - không cần confirm
-                        $(document).on('click', "a[data-action='reject']", function() {
-                            var id = $(this).data('id');
-                            $.post('/ChucVu/RejectAjax', { id: id }).done(function(res) {
-                                if (res.success) {
-                                    Notification.warning('Đã huỷ duyệt chức vụ');
-                                    location.reload();
-                                } else {
-                                    Notification.error(res.message || 'Có lỗi xảy ra khi huỷ duyệt');
-                                }
-                            }).fail(function() {
-                                Notification.error('Có lỗi xảy ra khi huỷ duyệt');
-                            });
-                        });
+            // Reject - không cần confirm
+            $(document).on('click', "a[data-action='reject']", function() {
+                var id = $(this).data('id');
+                $.post('/ChucVu/RejectAjax', { id: id }).done(function(res) {
+                    if (res.success) {
+                        Notification.successAndReload('Đã huỷ duyệt chức vụ');
+                    } else {
+                        Notification.error(res.message || 'Có lỗi xảy ra khi huỷ duyệt');
+                    }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra khi huỷ duyệt');
+                });
+            });
                     });
                 </script>
             }

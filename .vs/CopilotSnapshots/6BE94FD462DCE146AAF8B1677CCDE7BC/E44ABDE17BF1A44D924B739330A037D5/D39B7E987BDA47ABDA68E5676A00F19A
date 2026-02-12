@@ -1,0 +1,139 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using QuanLyNhanLuc.Constants;
+using QuanLyNhanLuc.Models.Entities;
+
+namespace QuanLyNhanLuc.Data;
+
+public static class DbInitializer
+{
+    public static void Initialize(QLNLContext context)
+    {
+        // Ensure database created
+        _ = context.Database.EnsureCreated();
+
+        // If PhongBans already exist, skip initial seeding
+        if (context.PhongBans.Any())
+        {
+            return;
+        }
+
+        // Seed sample PhongBan
+        PhongBan[] phongBans = new PhongBan[]
+        {
+            new() { MaPhongBan = "FE", TenPhongBan = "Frontend", MoTa = "Phòng phát triển Frontend" },
+            new() { MaPhongBan = "BE", TenPhongBan = "Backend", MoTa = "Phòng phát triển Backend" },
+            new() { MaPhongBan = "QA", TenPhongBan = "Quality Assurance", MoTa = "Phòng kiểm thử chất lượng" },
+            new() { MaPhongBan = "HR", TenPhongBan = "Human Resources", MoTa = "Phòng nhân sự" }
+        };
+        context.PhongBans.AddRange(phongBans);
+        _ = context.SaveChanges();
+
+        // Seed sample NhanSu
+        NhanSu[] nhanSus = new NhanSu[]
+        {
+            new() { MaNhanVien = "NS001", HoVaTen = "Nguyễn Văn A", PhongBanId = phongBans[0].Id },
+            new() { MaNhanVien = "NS002", HoVaTen = "Trần Thị B", PhongBanId = phongBans[1].Id },
+            new() { MaNhanVien = "NS003", HoVaTen = "Lê Văn C", PhongBanId = phongBans[2].Id },
+            new() { MaNhanVien = "NS004", HoVaTen = "Phạm Thị D", PhongBanId = phongBans[3].Id }
+        };
+        context.NhanSus.AddRange(nhanSus);
+        _ = context.SaveChanges();
+    }
+
+    public static async Task SeedAsync(IServiceProvider services)
+    {
+        using IServiceScope scope = services.CreateScope();
+        IServiceProvider provider = scope.ServiceProvider;
+        UserManager<NguoiDung> userManager = provider.GetRequiredService<UserManager<NguoiDung>>();
+        RoleManager<VaiTro> roleManager = provider.GetRequiredService<RoleManager<VaiTro>>();
+        QLNLContext context = provider.GetRequiredService<QLNLContext>();
+
+        // Create default menus if not exist (seed with specific IDs and structure)
+        if (!context.MenuQuanTris.Any())
+        {
+            List<MenuQuanTri> menus =
+            [
+                new MenuQuanTri { Id = Guid.Parse("63C38823-FFD5-4226-A41B-7002F32C9CDB"), ActionName = "Index", ControllerName = "TongQuan", Created = DateTime.Parse("2025-03-30 22:46:10.4936145"), DuongDan = null, IconClass = "bi bi-speedometer2", Status = 0, TenMenu = "Tổng quan", ViTri = 1 },
+                new MenuQuanTri { Id = Guid.Parse("07DFB47A-09DF-4EA7-95BF-7764CA26A72A"), ActionName = "DanhSachTaiKhoan", ControllerName = "TaiKhoan", Created = DateTime.Parse("2025-03-30 22:45:57.2799841"), DuongDan = "TaiKhoan/DanhSachTaiKhoan", IconClass = "bi bi-person-gear", Status = 0, TenMenu = "Quản lý tài khoản", ViTri = 2 },
+                new MenuQuanTri { Id = Guid.Parse("1BE8837C-9D0D-48D4-A384-9BDAC553F24A"), ControllerName = null, ActionName = null, Created = DateTime.Parse("2025-03-30 22:46:29.3625944"), DuongDan = "/NhanSu", IconClass = "fas fa-users", Status = 0, TenMenu = "Hồ Sơ nhân sự", ViTri = 3 },
+                new MenuQuanTri { Id = Guid.Parse("712E85EB-26B4-4582-B2AC-2F57FDD18CF7"), ActionName = "DanhSachNhanVien", ControllerName = "NhanSu", Created = DateTime.Parse("2025-03-30 22:47:00.9811792"), DuongDan = "/NhanSu/DanhSachNhanVien", ParentId = Guid.Parse("1BE8837C-9D0D-48D4-A384-9BDAC553F24A"), Status = 0, TenMenu = "Danh sách nhân viên", ViTri = 1 },
+                new MenuQuanTri { Id = Guid.Parse("1CEE0741-8BD6-449A-AFCC-6039D640F484"), ActionName = "DanhSachThucTap", ControllerName = "NhanSu", Created = DateTime.Parse("2025-03-30 22:47:39.7514576"), DuongDan = "/NhanSu/DanhSachThucTap", ParentId = Guid.Parse("1BE8837C-9D0D-48D4-A384-9BDAC553F24A"), Status = 0, TenMenu = "Nhân viên thực tập", ViTri = 2 },
+                new MenuQuanTri { Id = Guid.Parse("24B59615-DDA6-4429-BF8A-58E7EDBE61DB"), ActionName = "Index", ControllerName = "ThuTucHanhChinh", Created = DateTime.Parse("2025-03-30 22:48:02.2026642"), DuongDan = "/ThuTucHanhChinh", IconClass = "bi bi-file-earmark-bar-graph", Status = 0, TenMenu = "Thủ tục hành chính", ViTri = 4 },
+                new MenuQuanTri { Id = Guid.Parse("08D178B2-90A7-460C-A9E0-EEF6B2606F8C"), ActionName = "Index", ControllerName = "BaoHiem", Created = DateTime.Parse("2025-03-30 22:48:15.3677253"), DuongDan = "/BaoHiem", IconClass = "bi bi-check-square", Status = 0, TenMenu = "Bảo Hiểm", ViTri = 5 },
+                new MenuQuanTri { Id = Guid.Parse("90C0F4DC-9B46-445E-9C95-FCC5340EA5EC"), ControllerName = null, ActionName = null, Created = DateTime.Parse("2025-03-30 16:10:22.5059336"), DuongDan = "/ChamCong/BangChamCong", IconClass = "bi bi-fingerprint", Status = 0, TenMenu = "Chấm công", ViTri = 6 },
+                new MenuQuanTri { Id = Guid.Parse("CB9791E7-8B61-421B-AA00-874E7DD91F58"), ActionName = "BangChamCong", ControllerName = "ChamCong", Created = DateTime.Parse("2025-03-30 22:48:40.252211"), DuongDan = "/ChamCong/BangChamCong", ParentId = Guid.Parse("90C0F4DC-9B46-445E-9C95-FCC5340EA5EC"), Status = 0, TenMenu = "Bảng chấm công", ViTri = 1 },
+                new MenuQuanTri { Id = Guid.Parse("6498AA53-E803-408C-B33E-21653A7BB315"), ActionName = "LichLamThem", ControllerName = "ChamCong", Created = DateTime.Parse("2025-03-30 22:49:00.2364696"), DuongDan = "/ChamCong/LichLamThem", ParentId = Guid.Parse("90C0F4DC-9B46-445E-9C95-FCC5340EA5EC"), Status = 0, TenMenu = "Lịch làm thêm", ViTri = 2 },
+                new MenuQuanTri { Id = Guid.Parse("333D44BE-78E1-44A0-AEA0-C65DD916513F"), ControllerName = null, ActionName = null, Created = DateTime.Parse("2025-03-30 16:12:05.4456954"), DuongDan = "/Luong/BangLuong", IconClass = "bi bi-cash-coin", Status = 0, TenMenu = "Tính lương", ViTri = 7 },
+                new MenuQuanTri { Id = Guid.Parse("AB993311-5B15-4410-9B4E-5262B61F7066"), ActionName = "BangLuong", ControllerName = "Luong", Created = DateTime.Parse("2025-03-30 22:49:31.0037326"), DuongDan = "/Luong/BangLuong", ParentId = Guid.Parse("333D44BE-78E1-44A0-AEA0-C65DD916513F"), Status = 0, TenMenu = "Bảng lương", ViTri = 1 },
+                new MenuQuanTri { Id = Guid.Parse("507A768E-2AC0-4CCB-BB63-CEF172ECD53B"), ActionName = "DanhSachThuongPhat", ControllerName = "Luong", Created = DateTime.Parse("2025-03-30 22:56:00.1261299"), DuongDan = "/Luong/BangLuong", ParentId = Guid.Parse("333D44BE-78E1-44A0-AEA0-C65DD916513F"), Status = 0, TenMenu = "Danh sách thưởng phạt", ViTri = 2 },
+                new MenuQuanTri { Id = Guid.Parse("66268968-2E64-4242-ACBE-05FE99013A6E"), ActionName = "CheDoNhanVien", ControllerName = "Luong", Created = DateTime.Parse("2025-03-30 22:56:18.2350049"), DuongDan = "/Luong/BangLuong", ParentId = Guid.Parse("333D44BE-78E1-44A0-AEA0-C65DD916513F"), Status = 0, TenMenu = "Chế độ lương nhân viên", ViTri = 3 },
+                new MenuQuanTri { Id = Guid.Parse("970DCEEE-086E-4C25-AD0B-6F1260541604"), ActionName = "PhuCapNhanVien", ControllerName = "Luong", Created = DateTime.Parse("2025-03-30 22:56:39.9832672"), DuongDan = "/Luong/BangLuong", ParentId = Guid.Parse("333D44BE-78E1-44A0-AEA0-C65DD916513F"), Status = 0, TenMenu = "Phụ cấp nhân viên", ViTri = 4 },
+                new MenuQuanTri { Id = Guid.Parse("248DE6AF-5399-4BB7-9716-3214E2F1928B"), ActionName = "Index", ControllerName = "BaoCao", Created = DateTime.Parse("2025-03-30 22:55:19.5889738"), DuongDan = "/BaoCao", IconClass = "bi bi-clipboard2-data", Status = 0, TenMenu = "Báo cáo", ViTri = 8 },
+                new MenuQuanTri { Id = Guid.Parse("8F94FDB6-589A-47CE-BCED-7F3DB336DFA3"), ActionName = "Index", ControllerName = "QuanTriHeThong", Created = DateTime.Parse("2025-03-30 22:50:05.6062653"), DuongDan = "/QuanTriHeThong/QuanLyMenu", IconClass = "bi bi-menu-button-fill", Status = 0, TenMenu = "Quản trị hệ thống", ViTri = 9 },
+                new MenuQuanTri { Id = Guid.Parse("CFA7C610-0278-4F48-B799-F93ACC107DB5"), ActionName = "Index", ControllerName = "VaiTro", Created = DateTime.Parse("2025-03-30 22:53:26.6180473"), ParentId = Guid.Parse("8F94FDB6-589A-47CE-BCED-7F3DB336DFA3"), Status = 0, TenMenu = "Vai trò", ViTri = 1 },
+                new MenuQuanTri { Id = Guid.Parse("31765483-D967-4B79-A5FE-61E847728DD7"), ActionName = "Index", ControllerName = "QuanTriHeThong", Created = DateTime.Parse("2025-03-30 22:54:50.2058115"), ParentId = Guid.Parse("8F94FDB6-589A-47CE-BCED-7F3DB336DFA3"), Status = 0, TenMenu = "Quản lý menu", ViTri = 1 },
+                new MenuQuanTri { Id = Guid.Parse("A60CF0F7-60AB-47B9-A400-FA86FF98CF8C"), ActionName = "Index", ControllerName = "Department", Created = DateTime.Parse("2025-03-31 19:40:45.7535784"), ParentId = Guid.Parse("8F94FDB6-589A-47CE-BCED-7F3DB336DFA3"), Status = 0, TenMenu = "Phòng ban", ViTri = 3 },
+                new MenuQuanTri { Id = Guid.Parse("79052E0A-4A0C-4C0A-9F8F-271F72675179"), ActionName = "Index", ControllerName = "PhanLoaiNhanSu", Created = DateTime.Parse("2025-03-31 19:41:13.2501985"), ParentId = Guid.Parse("8F94FDB6-589A-47CE-BCED-7F3DB336DFA3"), Status = 0, TenMenu = "Phân loại nhân sự", ViTri = 4 },
+                new MenuQuanTri { Id = Guid.Parse("5A6E6B65-A02E-4DB5-9496-AE62EC5BED87"), ActionName = "Index", ControllerName = "ChucVu", Created = DateTime.Parse("2025-03-31 19:41:39.9285395"), ParentId = Guid.Parse("8F94FDB6-589A-47CE-BCED-7F3DB336DFA3"), Status = 0, TenMenu = "Chức vụ", ViTri = 5 },
+                new MenuQuanTri { Id = Guid.Parse("A58B9598-2FE5-4FA3-9275-A6099F6FD78C"), ActionName = "Index", ControllerName = "Home", Created = DateTime.Parse("2025-04-01 19:59:16.0193411"), IconClass = "fa-solid fa-house", Status = 0, TenMenu = "Trang chủ", ViTri = 1 }
+            ];
+
+            context.MenuQuanTris.AddRange(menus);
+            _ = await context.SaveChangesAsync();
+        }
+        // Create super admin user
+        const string adminEmail = "admin@gmail.com";
+        const string adminPassword = "123456aA@";
+        NguoiDung? existing = await userManager.FindByEmailAsync(adminEmail);
+        if (existing == null)
+        {
+            NguoiDung admin = new()
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                isSuperAdmin = true
+            };
+            IdentityResult createResult = await userManager.CreateAsync(admin, adminPassword);
+            if (createResult.Succeeded)
+            {
+                _ = await userManager.AddToRoleAsync(admin, RoleNames.Admin);
+            }
+        }
+
+        // Create HR user for testing
+        const string hrEmail = "hr@gmail.com";
+        NguoiDung? hrUser = await userManager.FindByEmailAsync(hrEmail);
+        if (hrUser == null)
+        {
+            hrUser = new()
+            {
+                UserName = hrEmail,
+                Email = hrEmail,
+                EmailConfirmed = true
+            };
+            IdentityResult hrResult = await userManager.CreateAsync(hrUser, adminPassword);
+            if (hrResult.Succeeded)
+            {
+                _ = await userManager.AddToRoleAsync(hrUser, RoleNames.HR);
+            }
+        }
+
+        // Assign all menus to Admin role (VaiTroMenu)
+        VaiTro? roleEntity = await context.VaiTros.FirstOrDefaultAsync(r => r.Name == RoleNames.Admin);
+        if (roleEntity != null)
+        {
+            List<Guid> menuIds = await context.MenuQuanTris.Select(m => m.Id).ToListAsync();
+            foreach (Guid menuId in menuIds)
+            {
+                bool exists = await context.VaiTroMenus.AnyAsync(vm => vm.VaiTroId == roleEntity.Id && vm.MenuId == menuId);
+                if (!exists)
+                {
+                    _ = context.VaiTroMenus.Add(new VaiTroMenu { VaiTroId = roleEntity.Id, MenuId = menuId });
+                }
+            }
+            _ = await context.SaveChangesAsync();
+        }
+    }
+}

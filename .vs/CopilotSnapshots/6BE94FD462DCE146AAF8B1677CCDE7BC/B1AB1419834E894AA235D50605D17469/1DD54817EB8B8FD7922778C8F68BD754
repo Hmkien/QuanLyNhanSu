@@ -1,0 +1,568 @@
+﻿@model IEnumerable<QuanLyNhanLuc.Models.Entities.ThuTucHanhChinh>
+@using QuanLyNhanLuc.Models.Enums
+@using QuanLyNhanLuc.Helpers
+
+@{
+    ViewData["Title"] = "Thủ tục hành chính";
+    var canCreate = ViewBag.CanCreate ?? false;
+    var canApprove = ViewBag.CanApprove ?? false;
+    var isTruongPhong = ViewBag.IsTruongPhong ?? false;
+    var isKeToan = ViewBag.IsKeToan ?? false;
+    var isGiamDoc = ViewBag.IsGiamDoc ?? false;
+    var isAdmin = ViewBag.IsAdmin ?? false;
+    var currentNhanSuId = ViewBag.CurrentNhanSuId as Guid?;
+}
+
+<style>
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status-nopdon { background-color: #e3f2fd; color: #1565c0; }
+    .status-truongphong { background-color: #fff3cd; color: #856404; }
+    .status-ketoan { background-color: #d1ecf1; color: #0c5460; }
+    .status-hoanthanh { background-color: #d4edda; color: #155724; }
+    .status-tuchoi { background-color: #f8d7da; color: #721c24; }
+    .clickable-name { cursor: pointer; color: #0d6efd; text-decoration: none; }
+    .clickable-name:hover { text-decoration: underline; }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb custom-breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none text-secondary"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a class="text-decoration-none text-secondary">Quản lý</a>
+                </li>
+                <li class="breadcrumb-item active text-primary" aria-current="page">Thủ tục hành chính</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between gap-4 mb-4">
+    <h2 class="text-primary">Thủ tục hành chính</h2>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel</button>
+        @if (canCreate)
+        {
+            <button class="btn btn-primary" data-action="create"><i class="fas fa-plus me-2"></i>Đăng ký thủ tục</button>
+        }
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="mb-3">
+    <form method="get" asp-action="Index" class="row g-2 align-items-center">
+        <div class="col-md-3">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Tìm kiếm họ tên, mã thủ tục..." value="@ViewBag.Search" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select name="loaiThuTuc" class="form-select form-select-sm">
+                <option value="">-- Loại thủ tục --</option>
+                @foreach (LoaiThuTuc type in Enum.GetValues<LoaiThuTuc>())
+                {
+                    <option value="@((int)type)" selected="@(ViewBag.LoaiThuTuc == (int)type)">@EnumHelper.GetEnumDescription(type)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="trangThai" class="form-select form-select-sm">
+                <option value="">-- Trạng thái --</option>
+                @foreach (TrangThaiThuTuc status in Enum.GetValues<TrangThaiThuTuc>())
+                {
+                    <option value="@((int)status)" selected="@(ViewBag.TrangThai == (int)status)">@EnumHelper.GetEnumDescription(status)</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
+        </div>
+    </form>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Mã thủ tục</th>
+            <th>Họ tên</th>
+            <th>Phòng ban</th>
+            <th>Loại thủ tục</th>
+            <th>Ngày nộp</th>
+            <th>Từ ngày</th>
+            <th>Đến ngày</th>
+            <th>Số ngày</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var stt = 1; }
+        @foreach (var item in Model)
+        {
+            var canEdit = item.TrangThai == TrangThaiThuTuc.NopDon && item.NhanSuId == currentNhanSuId;
+            var canApproveThis = (isTruongPhong && item.TrangThai == TrangThaiThuTuc.NopDon) ||
+                                 (isKeToan && item.TrangThai == TrangThaiThuTuc.TruongPhongDuyet) ||
+                                 (isGiamDoc && item.TrangThai == TrangThaiThuTuc.KeToanDuyet) ||
+                                 isAdmin;
+            
+            <tr>
+                <td>@stt</td>
+                <td><span>@item.MaThuTuc</span></td>
+                <td>
+                    <a class="text-primary text-decoration-none" href="javascript:void(0)"  data-action="view" data-id="@item.Id">
+                       @item.NhanSu.HoVaTen
+                    </a>
+                </td>
+                <td>@(item.NhanSu.PhongBan?.TenPhongBan ?? "-")</td>
+                <td>@EnumHelper.GetEnumDescription(item.LoaiThuTuc)</td>
+                <td>@item.NgayNop.ToString("dd/MM/yyyy")</td>
+                <td>@item.NgayBatDau.ToString("dd/MM/yyyy")</td>
+                <td>@(item.NgayKetThuc?.ToString("dd/MM/yyyy") ?? "-")</td>
+                <td class="text-center">@(item.SoNgay?.ToString("0.#") ?? "-")</td>
+                <td>
+                    @if (item.TrangThai == TrangThaiThuTuc.NopDon)
+                    {
+                        <span class="status-badge status-nopdon">@EnumHelper.GetEnumDescription(item.TrangThai)</span>
+                    }
+                    else if (item.TrangThai == TrangThaiThuTuc.TruongPhongDuyet)
+                    {
+                        <span class="status-badge status-truongphong">@EnumHelper.GetEnumDescription(item.TrangThai)</span>
+                    }
+                    else if (item.TrangThai == TrangThaiThuTuc.KeToanDuyet)
+                    {
+                        <span class="status-badge status-ketoan">@EnumHelper.GetEnumDescription(item.TrangThai)</span>
+                    }
+                    else if (item.TrangThai == TrangThaiThuTuc.HoanThanh)
+                    {
+                        <span class="status-badge status-hoanthanh">@EnumHelper.GetEnumDescription(item.TrangThai)</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-tuchoi">@EnumHelper.GetEnumDescription(item.TrangThai)</span>
+                    }
+                </td>
+                <td class="text-center">
+                    @if (canEdit)
+                    {
+                        <a href="javascript:void(0)" data-action="edit" data-id="@item.Id" title="Sửa" class="me-2">
+                            <i class="bi bi-pen text-primary"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="delete" data-id="@item.Id" title="Xóa">
+                            <i class="bi bi-trash text-danger"></i>
+                        </a>
+                    }
+                    else if (canApproveThis)
+                    {
+                        <a href="javascript:void(0)" data-action="approve" data-id="@item.Id" title="Duyệt" class="me-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                        </a>
+                        <a href="javascript:void(0)" data-action="reject" data-id="@item.Id" title="Từ chối">
+                            <i class="bi bi-x-circle text-danger"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">-</span>
+                    }
+                </td>
+            </tr>
+            stt++;
+        }
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="11" class="text-center text-muted">Không có dữ liệu</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-primary">Tổng số bản ghi: @(ViewBag.TotalItems ?? Model.Count())</span>
+    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{
+                    int current = ViewBag.CurrentPage;
+                    int total = ViewBag.TotalPages;
+                    string search = ViewBag.Search ?? "";
+                    int? loaiThuTuc = ViewBag.LoaiThuTuc;
+                    int? trangThai = ViewBag.TrangThai;
+                }
+                <li class="page-item @(current == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current - 1, pageSize = ViewBag.PageSize, search, loaiThuTuc, trangThai })">«</a>
+                </li>
+                @for (int i = 1; i <= total; i++)
+                {
+                    <li class="page-item @(i == current ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = ViewBag.PageSize, search, loaiThuTuc, trangThai })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(current == total ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = current + 1, pageSize = ViewBag.PageSize, search, loaiThuTuc, trangThai })">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<!-- Modal Form Thêm/Sửa -->
+<div class="modal fade" id="formModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="thuTucForm" enctype="multipart/form-data">
+                    <input type="hidden" id="thuTucId" name="id" />
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Loại thủ tục <span class="text-danger">*</span></label>
+                            <select id="loaiThuTuc" name="loaiThuTuc" class="form-select" required>
+                                <option value="">-- Chọn loại --</option>
+                                @foreach (LoaiThuTuc type in Enum.GetValues<LoaiThuTuc>())
+                                {
+                                    <option value="@((int)type)">@EnumHelper.GetEnumDescription(type)</option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input type="checkbox" id="dangKyHoiCo" class="form-check-input" />
+                                <label class="form-check-label" for="dangKyHoiCo">
+                                    <strong>Đăng ký hồi cố</strong><br/>
+                                    <small class="text-muted">(Cho phép chọn ngày quá khứ)</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Từ ngày <span class="text-danger">*</span></label>
+                            <input type="date" id="ngayBatDau" name="ngayBatDau" class="form-control" required />
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Đến ngày</label>
+                            <input type="date" id="ngayKetThuc" name="ngayKetThuc" class="form-control" />
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Số ngày</label>
+                            <input type="number" id="soNgay" name="soNgay" class="form-control" step="0.5" readonly />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Lý do <span class="text-danger">*</span></label>
+                        <textarea id="lyDo" name="lyDo" class="form-control" rows="3" required placeholder="Nhập lý do đăng ký thủ tục..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Tệp đính kèm</label>
+                        <input type="file" id="tepDinhKem" name="tepDinhKem" class="form-control" 
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                        <small class="text-muted">Hỗ trợ: PDF, Word, Excel, Ảnh (tối đa 5MB)</small>
+                        <div id="currentFile" class="mt-2"></div>
+                    </div>
+
+                    <div class="text-danger" id="formError" style="display:none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" id="saveBtn" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i>Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi tiết -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Chi tiết thủ tục hành chính</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Đang tải...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa thủ tục này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="deleteConfirmBtn" class="btn btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Duyệt/Từ chối -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approveModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="approveId" />
+                <input type="hidden" id="approveAction" />
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea id="ghiChu" class="form-control" rows="3" placeholder="Nhập ghi chú (không bắt buộc)..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="approveConfirmBtn" class="btn btn-primary">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            var deleteId = null;
+            var today = new Date().toISOString().split('T')[0];
+
+            // Đặt giá trị min cho date picker
+            function setDateRestrictions() {
+                var isHoiCo = $('#dangKyHoiCo').is(':checked');
+                if (isHoiCo) {
+                    $('#ngayBatDau').removeAttr('min');
+                    $('#ngayKetThuc').removeAttr('min');
+                } else {
+                    $('#ngayBatDau').attr('min', today);
+                    $('#ngayKetThuc').attr('min', today);
+                }
+            }
+
+            $('#dangKyHoiCo').on('change', setDateRestrictions);
+
+            // Tính số ngày tự động
+            $('#ngayBatDau, #ngayKetThuc').on('change', function() {
+                var start = $('#ngayBatDau').val();
+                var end = $('#ngayKetThuc').val();
+                if (start && end) {
+                    var startDate = new Date(start);
+                    var endDate = new Date(end);
+                    if (endDate >= startDate) {
+                        var diffTime = Math.abs(endDate - startDate);
+                        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                        $('#soNgay').val(diffDays);
+                    } else {
+                        $('#soNgay').val('');
+                        Notification.error('Ngày kết thúc phải sau ngày bắt đầu');
+                    }
+                }
+            });
+
+            // Create
+            $("button[data-action='create']").on('click', function() {
+                $('#formModalTitle').text('Đăng ký thủ tục hành chính');
+                $('#thuTucForm')[0].reset();
+                $('#thuTucId').val('');
+                $('#dangKyHoiCo').prop('checked', false);
+                $('#currentFile').html('');
+                $('#formError').hide();
+                setDateRestrictions();
+                new bootstrap.Modal(document.getElementById('formModal')).show();
+            });
+
+            // Edit - Load data from server
+            $(document).on('click', "a[data-action='edit']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $('#formModalTitle').text('Chỉnh sửa thủ tục');
+                $('#formError').hide();
+                $('#thuTucId').val(id);
+                
+                // Load chi tiết để lấy dữ liệu
+                $.get('/ThuTucHanhChinh/GetChiTiet', { id: id }).done(function(html) {
+                    var $html = $(html);
+                    var loaiThuTuc = $html.find('[data-loai-thu-tuc]').data('loai-thu-tuc');
+                    var ngayBatDau = $html.find('[data-ngay-bat-dau]').data('ngay-bat-dau');
+                    var ngayKetThuc = $html.find('[data-ngay-ket-thuc]').data('ngay-ket-thuc');
+                    var soNgay = $html.find('[data-so-ngay]').data('so-ngay');
+                    var lyDo = $html.find('[data-ly-do]').text().trim();
+                    var tepDinhKem = $html.find('[data-tep-dinh-kem]').attr('href');
+                    
+                    $('#loaiThuTuc').val(loaiThuTuc);
+                    $('#ngayBatDau').val(ngayBatDau);
+                    $('#ngayKetThuc').val(ngayKetThuc);
+                    $('#soNgay').val(soNgay);
+                    $('#lyDo').val(lyDo);
+                    
+                    if (tepDinhKem) {
+                        $('#currentFile').html('<small class="text-muted">File hiện tại: <a href="' + tepDinhKem + '" target="_blank">Xem file</a></small>');
+                    }
+                    
+                    new bootstrap.Modal(document.getElementById('formModal')).show();
+                }).fail(function() {
+                    Notification.error('Không thể tải thông tin thủ tục');
+                });
+            });
+
+            // Save
+            $('#saveBtn').on('click', function() {
+                if (!$('#thuTucForm')[0].checkValidity()) {
+                    $('#thuTucForm')[0].reportValidity();
+                    return;
+                }
+
+                var formData = new FormData($('#thuTucForm')[0]);
+                var id = $('#thuTucId').val();
+                var url = id ? '/ThuTucHanhChinh/EditAjax' : '/ThuTucHanhChinh/CreateAjax';
+                
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Đang lưu...');
+                
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (res.success) {
+                            bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+                            Notification.successAndReload('Đã lưu thủ tục thành công');
+                        } else {
+                            $('#formError').text(res.message).show();
+                            Notification.error(res.message);
+                            $('#saveBtn').prop('disabled', false).html('<i class="bi bi-save me-2"></i>Lưu');
+                        }
+                    },
+                    error: function() {
+                        $('#formError').text('Có lỗi xảy ra').show();
+                        Notification.error('Có lỗi xảy ra');
+                        $('#saveBtn').prop('disabled', false).html('<i class="bi bi-save me-2"></i>Lưu');
+                    }
+                });
+            });
+
+            // View detail
+            $(document).on('click', "a[data-action='view']", function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                $('#detailBody').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Đang tải...</p></div>');
+                var modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                modal.show();
+                
+                $.get('/ThuTucHanhChinh/GetChiTiet', { id: id }).done(function(html) {
+                    $('#detailBody').html(html);
+                }).fail(function() {
+                    $('#detailBody').html('<div class="alert alert-danger">Có lỗi xảy ra khi tải dữ liệu</div>');
+                });
+            });
+
+            // Delete
+            $(document).on('click', "a[data-action='delete']", function(e) {
+                e.preventDefault();
+                deleteId = $(this).data('id');
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
+
+            $('#deleteConfirmBtn').on('click', function() {
+                if (!deleteId) return;
+                $(this).prop('disabled', true).text('Đang xóa...');
+                
+                $.post('/ThuTucHanhChinh/DeleteAjax', { id: deleteId })
+                    .done(function(res) {
+                        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                        if (res.success) {
+                            Notification.successAndReload('Đã xóa thủ tục thành công');
+                        } else {
+                            Notification.error(res.message);
+                            $('#deleteConfirmBtn').prop('disabled', false).text('Xóa');
+                        }
+                    })
+                    .fail(function() {
+                        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                        Notification.error('Có lỗi xảy ra');
+                        $('#deleteConfirmBtn').prop('disabled', false).text('Xóa');
+                    });
+            });
+
+            // Approve
+            $(document).on('click', "a[data-action='approve']", function(e) {
+                e.preventDefault();
+                $('#approveModalTitle').html('<i class="bi bi-check-circle text-success me-2"></i>Duyệt thủ tục');
+                $('#approveId').val($(this).data('id'));
+                $('#approveAction').val('approve');
+                $('#ghiChu').val('');
+                $('#approveConfirmBtn').removeClass('btn-danger').addClass('btn-success').text('Duyệt');
+                new bootstrap.Modal(document.getElementById('approveModal')).show();
+            });
+
+            // Reject
+            $(document).on('click', "a[data-action='reject']", function(e) {
+                e.preventDefault();
+                $('#approveModalTitle').html('<i class="bi bi-x-circle text-danger me-2"></i>Từ chối thủ tục');
+                $('#approveId').val($(this).data('id'));
+                $('#approveAction').val('reject');
+                $('#ghiChu').val('');
+                $('#approveConfirmBtn').removeClass('btn-success').addClass('btn-danger').text('Từ chối');
+                new bootstrap.Modal(document.getElementById('approveModal')).show();
+            });
+
+            $('#approveConfirmBtn').on('click', function() {
+                var id = $('#approveId').val();
+                var action = $('#approveAction').val();
+                var ghiChu = $('#ghiChu').val();
+                var url = action === 'approve' ? '/ThuTucHanhChinh/ApproveAjax' : '/ThuTucHanhChinh/RejectAjax';
+                
+                $(this).prop('disabled', true).text('Đang xử lý...');
+                
+                $.post(url, { id: id, ghiChu: ghiChu }).done(function(res) {
+                    bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+                    if (res.success) {
+                        var msg = action === 'approve' ? 'Đã duyệt thủ tục thành công' : 'Đã từ chối thủ tục';
+                        Notification.successAndReload(msg);
+                    } else {
+                        Notification.error(res.message);
+                        $('#approveConfirmBtn').prop('disabled', false).text(action === 'approve' ? 'Duyệt' : 'Từ chối');
+                    }
+                }).fail(function() {
+                    Notification.error('Có lỗi xảy ra');
+                    bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+                    $('#approveConfirmBtn').prop('disabled', false).text(action === 'approve' ? 'Duyệt' : 'Từ chối');
+                });
+            });
+        });
+    </script>
+}
